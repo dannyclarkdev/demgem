@@ -1,0 +1,309 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/*
+ * demgem design tokens.
+ * Dark is the default. The inline script in the layout sets data-theme before paint.
+ * Utilities use the semantic names below (bg-canvas, text-ink, border-line, ...),
+ * so components rarely need dark: variants.
+ */
+:root {
+    color-scheme: dark;
+    --canvas: oklch(0.17 0.012 55);
+    --panel: oklch(0.205 0.012 55);
+    --raised: oklch(0.25 0.013 55);
+    --line: oklch(0.30 0.012 55);
+    --line-strong: oklch(0.40 0.014 55);
+    --ink: oklch(0.94 0.018 85);
+    --ink-muted: oklch(0.74 0.02 80);
+    --ink-faint: oklch(0.55 0.016 75);
+    --ember: oklch(0.78 0.15 62);
+    --ember-strong: oklch(0.85 0.16 72);
+    --on-ember: oklch(0.2 0.03 60);
+    --danger: oklch(0.7 0.19 25);
+    --success: oklch(0.76 0.15 150);
+    --dm: oklch(0.74 0.13 305);
+    --noise-opacity: 0.045;
+}
+
+[data-theme='light'] {
+    color-scheme: light;
+    --canvas: oklch(0.965 0.012 85);
+    --panel: oklch(0.99 0.006 85);
+    --raised: oklch(0.945 0.012 85);
+    --line: oklch(0.885 0.012 80);
+    --line-strong: oklch(0.80 0.014 75);
+    --ink: oklch(0.24 0.02 55);
+    --ink-muted: oklch(0.45 0.02 55);
+    --ink-faint: oklch(0.6 0.018 60);
+    --ember: oklch(0.62 0.16 50);
+    --ember-strong: oklch(0.54 0.17 45);
+    --on-ember: oklch(0.985 0.01 85);
+    --danger: oklch(0.55 0.2 25);
+    --success: oklch(0.55 0.15 150);
+    --dm: oklch(0.5 0.15 305);
+    --noise-opacity: 0.03;
+}
+
+@theme inline {
+    --color-canvas: var(--canvas);
+    --color-panel: var(--panel);
+    --color-raised: var(--raised);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-ink: var(--ink);
+    --color-ink-muted: var(--ink-muted);
+    --color-ink-faint: var(--ink-faint);
+    --color-ember: var(--ember);
+    --color-ember-strong: var(--ember-strong);
+    --color-on-ember: var(--on-ember);
+    --color-danger: var(--danger);
+    --color-success: var(--success);
+    --color-dm: var(--dm);
+}
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    --font-mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+    --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    --animate-fade: fade 0.3s ease-out both;
+
+    @keyframes rise {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @keyframes fade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+@layer base {
+    html {
+        background-color: var(--canvas);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        min-height: 100dvh;
+        font-family: var(--font-sans);
+        background-image: radial-gradient(
+            120rem 60rem at -10% -20%,
+            color-mix(in oklch, var(--ember) 9%, transparent),
+            transparent 60%
+        );
+    }
+
+    /* Paper grain. Fixed, non-interactive, very faint. */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        pointer-events: none;
+        opacity: var(--noise-opacity);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    h1,
+    h2,
+    h3,
+    .font-display {
+        font-family: var(--font-display);
+        font-optical-sizing: auto;
+        letter-spacing: -0.01em;
+    }
+
+    ::selection {
+        background: color-mix(in oklch, var(--ember) 35%, transparent);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--ember);
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    a,
+    button {
+        transition:
+            color 120ms ease,
+            background-color 120ms ease,
+            border-color 120ms ease,
+            opacity 120ms ease;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+    .eyebrow {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+    }
+
+    .hairline {
+        border-color: var(--line);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-rise,
+    .animate-fade {
+        animation: none;
+    }
+}
+
+@layer components {
+    .ui-input {
+        @apply block w-full rounded-md border border-line bg-canvas px-3 py-2 text-sm text-ink shadow-[inset_0_1px_0_0_rgb(0_0_0/0.08)] placeholder:text-ink-faint;
+        @apply focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/25;
+    }
+
+    .ui-input--error {
+        @apply border-danger focus:border-danger focus:ring-danger/25;
+    }
+}
+
+/* Rendered entity Markdown. Keep it calm: this is reference text read at the table. */
+@layer components {
+    .prose-entity {
+        @apply max-w-none text-[15px] leading-relaxed text-ink;
+    }
+    .prose-entity > * + * {
+        @apply mt-4;
+    }
+    .prose-entity h1,
+    .prose-entity h2,
+    .prose-entity h3,
+    .prose-entity h4 {
+        @apply font-display font-semibold tracking-tight text-ink;
+    }
+    .prose-entity h1 {
+        @apply mt-8 text-2xl;
+    }
+    .prose-entity h2 {
+        @apply mt-8 text-xl;
+    }
+    .prose-entity h3 {
+        @apply mt-6 text-lg;
+    }
+    .prose-entity p {
+        @apply text-ink;
+    }
+    .prose-entity a {
+        @apply font-medium text-ember underline decoration-ember/40 underline-offset-4 hover:decoration-ember;
+    }
+    .prose-entity strong {
+        @apply font-semibold text-ink;
+    }
+    .prose-entity em {
+        @apply italic;
+    }
+    .prose-entity ul {
+        @apply list-disc space-y-1 pl-6;
+    }
+    .prose-entity ol {
+        @apply list-decimal space-y-1 pl-6;
+    }
+    .prose-entity blockquote {
+        @apply border-l-2 border-ember/50 pl-4 text-ink-muted italic;
+    }
+    .prose-entity code {
+        @apply rounded bg-raised px-1 py-0.5 font-mono text-[13px] text-ink;
+    }
+    .prose-entity pre {
+        @apply overflow-x-auto rounded-md border border-line bg-raised p-4 font-mono text-[13px];
+    }
+    .prose-entity pre code {
+        @apply bg-transparent p-0;
+    }
+    .prose-entity hr {
+        @apply my-8 border-line;
+    }
+    .prose-entity table {
+        @apply w-full border-collapse text-sm;
+    }
+    .prose-entity th,
+    .prose-entity td {
+        @apply border border-line px-3 py-1.5 text-left align-top;
+    }
+    .prose-entity th {
+        @apply bg-raised font-semibold;
+    }
+    .prose-entity img {
+        @apply max-w-full rounded-md;
+    }
+}
+
+/* Wiki links and the editor. */
+@layer components {
+    .ui-editor-btn {
+        @apply inline-flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs text-ink-faint hover:bg-raised hover:text-ink;
+    }
+    .ui-editor-btn--active {
+        @apply bg-raised text-ink;
+    }
+
+    .prose-entity a.wiki-link {
+        @apply text-ember no-underline decoration-ember/40 underline-offset-4 hover:underline;
+    }
+    .prose-entity a.wiki-link::before {
+        content: '';
+        display: inline-block;
+        width: 0.35em;
+        height: 0.35em;
+        margin-right: 0.3em;
+        border-radius: 9999px;
+        background: currentColor;
+        opacity: 0.6;
+        vertical-align: middle;
+    }
+    .wiki-link--plain {
+        color: inherit;
+    }
+    .wiki-link--missing {
+        position: relative;
+        display: inline-block;
+    }
+    a.wiki-link--missing,
+    .wiki-link__missing-btn {
+        @apply cursor-pointer border-b border-dashed border-ink-faint text-ink-muted hover:border-ember hover:text-ember;
+        font: inherit;
+        background: none;
+        padding: 0;
+    }
+    .wiki-link__menu {
+        @apply absolute top-full left-0 z-30 mt-1 flex min-w-40 flex-col rounded-md border border-line bg-panel py-1 text-sm shadow-xl shadow-black/40;
+    }
+    .wiki-link__menu-title {
+        @apply px-3 pt-1 pb-1.5 text-[11px] tracking-wide text-ink-faint uppercase;
+    }
+    .wiki-link__option {
+        @apply px-3 py-1 text-ink-muted no-underline hover:bg-raised hover:text-ink;
+    }
+}
