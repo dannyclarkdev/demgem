@@ -78,6 +78,10 @@ class DemoCampaignSeeder extends Seeder
             'tags' => ['militia'],
         ]);
         $make(EntityType::Character, 'Mara Voss', [
+            'custom_fields' => [
+                ['key' => 'Rank', 'value' => 'Commander'],
+                ['key' => 'Owes the party', 'value' => 'One favour, unnamed'],
+            ],
             'body' => 'Commander of the [[Tidewardens]]. Blunt, tired, honest. Owes the party a favor after the harbor fire.',
             'dm_notes' => 'Secretly negotiating with the Drowned Court. Will betray the party if the duchy is at stake.',
             'tags' => ['ally', 'npc'],
@@ -94,7 +98,21 @@ class DemoCampaignSeeder extends Seeder
         $make(EntityType::Character, 'Wren Ashgrove', [
             'is_pc' => true,
             'player_user_id' => $player->id,
+            'character_class' => 'Rogue',
+            'level' => 5,
+            'sheet_url' => 'https://www.dndbeyond.com/characters/example-wren',
+            'custom_fields' => [
+                ['key' => 'Race', 'value' => 'Human'],
+                ['key' => 'Background', 'value' => 'Urchin'],
+            ],
             'body' => 'Rogue. Grew up on the pilings of [[Harrowgate]]. Looking for the sister the tide took.',
+            'tags' => ['pc'],
+        ]);
+        $make(EntityType::Character, 'Halder Bream', [
+            'is_pc' => true,
+            'character_class' => 'Cleric of the Tide',
+            'level' => 5,
+            'body' => 'Cleric. Came down from the dry country to see what a drowned god sounds like.',
             'tags' => ['pc'],
         ]);
         $make(EntityType::Item, 'Ember Throne', [
@@ -159,6 +177,7 @@ class DemoCampaignSeeder extends Seeder
             'status' => SessionStatus::Played,
         ]);
         $second->update([
+            'recap' => 'They went down at low tide and found the customs house dry inside, which nobody has explained yet.',
             'live_notes' => "Party went down at low tide. Found the old customs house intact.\nWren recognised the door knocker. Did not say why.\nSpent 40g bribing the gate sergeant.\nEnded mid-corridor, water rising.",
         ]);
 

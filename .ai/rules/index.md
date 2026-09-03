@@ -5,7 +5,10 @@ Before planning or editing, find the row whose globs match the file's path and r
 | Applies to | Rule file |
 | --- | --- |
 | app/Actions/** | .ai/rules/actions.md |
+| app/Actions/Campaigns/** | .ai/rules/campaigns.md |
+| resources/css/** | .ai/rules/css.md |
 | app/Support/Dice/** | .ai/rules/dice.md |
+| app/Livewire/Entities/** | .ai/rules/entities.md |
 | app/Livewire/** | .ai/rules/livewire.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Models/** | .ai/rules/models.md |

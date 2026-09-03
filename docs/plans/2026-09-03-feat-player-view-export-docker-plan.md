@@ -471,43 +471,43 @@ Success: a GM records Race, Alignment, and Patron on an NPC, and finds the NPC l
 - [x] Prep, Run, the tracker, the drawer, and the quest page work at 1024px and 768px, in dark and light, with 16px body text, 44px tap targets on the controls a GM uses mid-game, and no hover-only controls.
 - [x] A second GM device shows a round change within 15 seconds without a manual refresh.
 - [x] Every acceptance box in the slice 2 and slice 3 plans is ticked against a named test or a checked screen.
-- [ ] A GM sets a class, a level, and a sheet link on any character, and they render on the character page and the character index.
-- [ ] A player edits the class, level, and sheet link on their own PC, and cannot edit another player's PC.
-- [ ] A `javascript:` sheet link is refused with a message and writes nothing; an `https:` link renders with `rel="noopener noreferrer nofollow"`.
-- [ ] The three character fields are rejected on a location, a faction, an item, a quest, and a note.
-- [ ] `/characters?pc=1` lists the party only, and the filter survives a refresh through the URL.
-- [ ] The dashboard shows the party with images, classes, and levels, filtered by what the viewer may see.
-- [ ] `/story` shows every recap the viewer may read, oldest first, with wiki links resolved through the viewer's visibility.
-- [ ] A GM sees unpublished recaps marked as drafts and played sessions with no recap marked as gaps, each linking to the editor.
-- [ ] A GM downloads a JSON export holding the campaign, members, entities, sessions, encounters, tables, and dice rolls.
-- [ ] The export filename carries the campaign name and the date, and the browser downloads it rather than rendering it.
-- [ ] `docker compose up -d` produces a running app, a migrated database, and a working registration form, from a clean clone.
-- [ ] Restarting the stack keeps the database, the uploaded images, and every signed-in session.
-- [ ] A GM adds custom fields to an entity, sees them in order, and finds that entity by searching a value. *(Phase 5; drop this line if the phase is cut.)*
+- [x] A GM sets a class, a level, and a sheet link on any character, and they render on the character page and the character index.
+- [x] A player edits the class, level, and sheet link on their own PC, and cannot edit another player's PC.
+- [x] A `javascript:` sheet link is refused with a message and writes nothing; an `https:` link renders with `rel="noopener noreferrer nofollow"`.
+- [x] The three character fields are rejected on a location, a faction, an item, a quest, and a note.
+- [x] `/characters?pc=1` lists the party only, and the filter survives a refresh through the URL.
+- [x] The dashboard shows the party with images, classes, and levels, filtered by what the viewer may see.
+- [x] `/story` shows every recap the viewer may read, oldest first, with wiki links resolved through the viewer's visibility.
+- [x] A GM sees unpublished recaps marked as drafts and played sessions with no recap marked as gaps, each linking to the editor.
+- [x] A GM downloads a JSON export holding the campaign, members, entities, sessions, encounters, tables, and dice rolls.
+- [x] The export filename carries the campaign name and the date, and the browser downloads it rather than rendering it.
+- [x] `docker compose up -d` produces a running app, a migrated database, and a working registration form, from a clean clone.
+- [x] Restarting the stack keeps the database, the uploaded images, and every signed-in session.
+- [x] A GM adds custom fields to an entity, sees them in order, and finds that entity by searching a value. *(Phase 5; drop this line if the phase is cut.)*
 
 ### Non-functional
 
-- [ ] **No unpublished recap text reaches a player's HTML, Livewire snapshot, or the story page's pagination.**
-- [ ] **A player's export request is refused with 403, and a non-member's with 404.**
-- [ ] **No email address, password hash, remember token, two-factor secret, or invite token appears anywhere in an export body.**
-- [ ] Soft-deleted entities and sessions are absent from the export.
-- [ ] A hidden PC is absent from a player's party card and party filter; a player's own hidden PC is present in both.
-- [ ] `Model::shouldBeStrict()` is on, so the story page, the party card, and every export section eager-load, and no test throws a lazy-load exception.
-- [ ] The story page costs a constant number of queries, whatever the page holds.
-- [ ] The export streams: the response is a streamed response, and a test reads it with `streamedContent()` and decodes it whole.
-- [ ] `ExportCoverageTest` fails when a campaign-scoped table is neither exported nor documented as excluded.
+- [x] **No unpublished recap text reaches a player's HTML, Livewire snapshot, or the story page's pagination.**
+- [x] **A player's export request is refused with 403, and a non-member's with 404.**
+- [x] **No email address, password hash, remember token, two-factor secret, or invite token appears anywhere in an export body.**
+- [x] Soft-deleted entities and sessions are absent from the export.
+- [x] A hidden PC is absent from a player's party card and party filter; a player's own hidden PC is present in both.
+- [x] `Model::shouldBeStrict()` is on, so the story page, the party card, and every export section eager-load, and no test throws a lazy-load exception.
+- [x] The story page costs a constant number of queries, whatever the page holds.
+- [x] The export streams: the response is a streamed response, and a test reads it with `streamedContent()` and decodes it whole.
+- [x] `ExportCoverageTest` fails when a campaign-scoped table is neither exported nor documented as excluded.
 - [ ] The Docker image builds in CI and answers `/up` within 60 seconds of `docker compose up -d`.
-- [ ] The container refuses to start with no `APP_KEY` and prints the command that makes one.
-- [ ] A named volume over `storage` does not break the app: the framework directories are recreated on boot.
-- [ ] Custom field values render escaped, and `<script>` in a value is inert. *(Phase 5.)*
+- [x] The container refuses to start with no `APP_KEY` and prints the command that makes one.
+- [x] A named volume over `storage` does not break the app: the framework directories are recreated on boot.
+- [x] Custom field values render escaped, and `<script>` in a value is inert. *(Phase 5.)*
 
 ### Quality gates
 
 - [ ] Pest suite green on SQLite locally and on Postgres in CI.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] Zero new `x-ui.*` components, or a written reason for each one added.
-- [ ] Every new query on `entities` and `game_sessions` goes through `visibleTo()`, and `CampaignPolicy::export()` names its surfaces in a docblock as the other abilities do.
-- [ ] `npm run build` clean.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] Zero new `x-ui.*` components, or a written reason for each one added.
+- [x] Every new query on `entities` and `game_sessions` goes through `visibleTo()`, and `CampaignPolicy::export()` names its surfaces in a docblock as the other abilities do.
+- [x] `npm run build` clean.
 
 ## Dependencies & Risks
 
