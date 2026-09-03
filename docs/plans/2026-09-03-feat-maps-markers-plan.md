@@ -218,7 +218,8 @@ Deliverables:
 - Migration `create_map_markers_table`.
 - `App\Models\MapMarker`, `Entity::markers()`, and the factory.
 - `app/Actions/Maps/`: `PlaceMarker`, `MoveMarker`, `UpdateMarker`, `RemoveMarker`.
-- Place by clicking, name by autocomplete or by hand, drag to move, click to edit, delete.
+- Place by clicking, name by hand or from a picker, drag to move, click to edit, delete.
+- **A select, not the autocomplete.** The picker only renders while a pin is open, so it costs one query on the uncommon render and none on the common one, and it needs no new endpoint. A campaign with hundreds of entities will outgrow it; that is the moment to reach for the autocomplete, and not before.
 - `x-ui.map-pin`.
 - `map_markers` joins `ExportCampaign::NESTED_TABLES` as `entities[].markers`, in this commit.
 
@@ -279,36 +280,36 @@ Success: the party is looking at the map when the GM reveals the door.
 
 ### Functional
 
-- [ ] A GM creates a map, uploads an image, and opens it.
-- [ ] The viewer pans and zooms with a mouse, a trackpad, and two fingers, and cannot lose the image off screen.
-- [ ] A GM places a pin by clicking, names it from the autocomplete or by hand, drags it, and deletes it.
-- [ ] A pin whose target entity is deleted keeps its label and loses its link.
-- [ ] A GM reveals and hides a pin, and can reveal or hide every pin at once.
-- [ ] A player opens a shared map and sees only the revealed pins.
+- [x] A GM creates a map, uploads an image, and opens it.
+- [x] The viewer pans and zooms with a mouse, a trackpad, and two fingers, and cannot lose the image off screen.
+- [x] A GM places a pin by clicking, names it, drags it, and deletes it. *(A select, not an autocomplete; see below.)*
+- [x] A pin whose target entity is deleted keeps its label and loses its link.
+- [x] A GM reveals and hides a pin, and can reveal or hide every pin at once.
+- [x] A player opens a shared map and sees only the revealed pins.
 - [ ] A pin that targets a map opens that map.
 - [ ] A map page lists the maps it appears on.
-- [ ] A map joins search, wiki links, backlinks, tags, and the JSON export.
+- [x] A map joins search, wiki links, backlinks, tags, and the JSON export.
 - [ ] The GM reveals a pin mid-session and the party's open maps follow. *(Phase 5; drop this line if the phase is cut.)*
 
 ### Non-functional
 
-- [ ] **A hidden pin's label and coordinates are absent from a player's HTML and Livewire snapshot.**
-- [ ] **A revealed pin whose target a player may not see is absent as well.**
-- [ ] A DM-only map is a 404 for a player, not a 403.
-- [ ] Panning and zooming send no request to the server.
-- [ ] The viewer costs a constant number of queries, whatever the map holds.
-- [ ] Coordinates are stored as percentages, and a value outside 0–100 is clamped before it is written.
-- [ ] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
+- [x] **A hidden pin's label and coordinates are absent from a player's HTML and Livewire snapshot.**
+- [x] **A revealed pin whose target a player may not see is absent as well.**
+- [x] A DM-only map is a 404 for a player, not a 403.
+- [x] Panning and zooming send no request to the server.
+- [x] The viewer costs a constant number of queries, whatever the map holds.
+- [x] Coordinates are stored as percentages, and a value outside 0–100 is clamped before it is written.
+- [x] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
 - [ ] The map page works at 1024px and 768px, dark and light, with 16px body text and 44px controls, and the viewer works by touch.
 
 ### Quality gates
 
 - [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
 - [ ] Larastan level 6 clean. Pint clean.
-- [ ] At most one new `x-ui.*` component, with the reason written down.
+- [x] At most one new `x-ui.*` component, with the reason written down: `x-ui.map-pin`.
 - [ ] Every new query on `map_markers` goes through the visibility scope, and the new ability names its surfaces in a docblock.
 - [ ] `npm run build` clean, and the bundle grows by less than 5kB.
-- [ ] No new PHP or JavaScript dependency.
+- [x] No new PHP or JavaScript dependency.
 
 ## Dependencies & Risks
 

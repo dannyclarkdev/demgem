@@ -44,7 +44,7 @@ it('renders the image inside a frame that Alpine drives, not Livewire', function
 
     // Panning and zooming never reach the server: the frame carries pointer handlers
     // and a transform, and no wire:model, wire:click or wire:poll at all.
-    expect($html)->toContain('x-data="mapViewer"')
+    expect($html)->toContain('x-data="mapViewer(')
         ->and($html)->toContain('x-on:pointerdown')
         ->and($html)->toContain('touch-none')
         ->and($html)->toContain($map->imageUrl())
@@ -110,8 +110,8 @@ it('renders the viewer on the entity page and nowhere else', function () {
     $place = Entity::factory()->for($campaign)->type(EntityType::Location)->forPlayers()
         ->create(['name' => 'Harrowgate', 'slug' => 'harrowgate']);
 
-    $this->actingAs($owner)->get($map->url())->assertOk()->assertSee('x-data="mapViewer"', false);
-    $this->actingAs($owner)->get($place->url())->assertOk()->assertDontSee('x-data="mapViewer"', false);
+    $this->actingAs($owner)->get($map->url())->assertOk()->assertSee('x-data="mapViewer(', false);
+    $this->actingAs($owner)->get($place->url())->assertOk()->assertDontSee('x-data="mapViewer(', false);
 });
 
 it('stops rendering the map to a member who was removed mid-session', function () {

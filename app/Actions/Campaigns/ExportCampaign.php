@@ -9,6 +9,7 @@ use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
+use App\Models\MapMarker;
 use App\Models\QuestObjective;
 use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
@@ -43,6 +44,7 @@ class ExportCampaign
         'entity_tag' => 'entities[].tags',
         'entity_viewers' => 'entities[].viewer_user_ids',
         'quest_objectives' => 'entities[].objectives',
+        'map_markers' => 'entities[].markers',
         'scenes' => 'sessions[].scenes',
         'secrets' => 'sessions[].secrets',
         'game_session_entities' => 'sessions[].prepped',
@@ -152,7 +154,7 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'viewers', 'media', 'objectives'])
+            ->with(['tags', 'viewers', 'media', 'objectives', 'markers'])
             ->orderBy('created_at')
             ->cursor()
             ->map(fn (Entity $entity) => [
@@ -181,6 +183,15 @@ class ExportCampaign
                         'body' => $objective->body,
                         'completed_at' => $objective->completed_at?->toIso8601String(),
                         'completed_in_session_id' => $objective->completed_in_session_id,
+                    ])->values()->all(),
+                'markers' => $entity->markers
+                    ->map(fn (MapMarker $marker) => [
+                        'id' => $marker->id,
+                        'target_entity_id' => $marker->target_entity_id,
+                        'label' => $marker->label,
+                        'x' => $marker->x,
+                        'y' => $marker->y,
+                        'player_visible' => $marker->player_visible,
                     ])->values()->all(),
                 'image' => $this->media($entity->getFirstMedia('image')),
                 'created_at' => $entity->created_at?->toIso8601String(),

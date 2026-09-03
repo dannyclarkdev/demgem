@@ -168,6 +168,6 @@ it('renders the map through the viewer and keeps it out of the sidebar', functio
     // The map gets the viewer and the whole width. The aside's picture markup, which
     // wraps a thumbnail in a link to the original, is absent: a map is not a
     // thumbnail of anything.
-    expect($html)->toContain('x-data="mapViewer"')
+    expect($html)->toContain('x-data="mapViewer(')
         ->and($html)->not->toContain('rounded-lg border border-line object-cover');
 });
