@@ -28,19 +28,7 @@
          its way. Every other type wears its picture in the sidebar. --}}
     @if ($entity->isMap())
         <div class="mb-6">
-            @if ($entity->imageUrl())
-                <img src="{{ $entity->imageUrl() }}" alt="{{ $entity->name }}" class="w-full rounded-lg border border-line" loading="eager">
-            @else
-                <x-ui.empty-state
-                    icon="map"
-                    title="No image yet"
-                    description="A map needs a picture. Upload one and it fills this space."
-                >
-                    @can('update', $entity)
-                        <x-ui.button :href="$entity->editUrl()" size="sm" icon="edit">Upload the map</x-ui.button>
-                    @endcan
-                </x-ui.empty-state>
-            @endif
+            <livewire:maps.viewer :campaign="$campaign" :map-id="$entity->id" :wire:key="'map-'.$entity->id" />
         </div>
     @endif
 

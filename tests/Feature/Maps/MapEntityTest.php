@@ -149,7 +149,7 @@ it('puts a map in search, in the sidebar count, and in the export', function () 
         ->and(collect($payload['entities'])->firstWhere('name', 'The Duchy of Vell')['type'])->toBe('map');
 });
 
-it('renders the map full width and keeps it out of the sidebar', function () {
+it('renders the map through the viewer and keeps it out of the sidebar', function () {
     $campaign = Campaign::factory()->create();
     $owner = ownerOf($campaign);
 
@@ -165,8 +165,9 @@ it('renders the map full width and keeps it out of the sidebar', function () {
 
     $html = $this->actingAs($owner)->get($map->url())->assertOk()->getContent();
 
-    // The aside wraps its picture in a link to the original; the map does not, because
-    // the map is not a thumbnail of anything.
-    expect($html)->toContain('class="w-full rounded-lg border border-line" loading="eager"')
+    // The map gets the viewer and the whole width. The aside's picture markup, which
+    // wraps a thumbnail in a link to the original, is absent: a map is not a
+    // thumbnail of anything.
+    expect($html)->toContain('x-data="mapViewer"')
         ->and($html)->not->toContain('rounded-lg border border-line object-cover');
 });
