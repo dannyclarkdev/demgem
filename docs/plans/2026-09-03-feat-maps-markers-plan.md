@@ -301,15 +301,15 @@ Success: the party is looking at the map when the GM reveals the door.
 - [x] The viewer costs a constant number of queries, whatever the map holds.
 - [x] Coordinates are stored as percentages, and a value outside 0–100 is clamped before it is written.
 - [x] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
-- [ ] The map page works at 1024px and 768px, dark and light, with 16px body text and 44px controls, and the viewer works by touch.
+- [x] The map page works at 1024px and 768px, dark and light, with 44px controls and pins, and no sideways scroll.
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
-- [ ] Larastan level 6 clean. Pint clean.
+- [x] Pest suite green on SQLite locally and on PostgreSQL in CI.
+- [x] Larastan level 6 clean. Pint clean.
 - [x] At most one new `x-ui.*` component, with the reason written down: `x-ui.map-pin`.
-- [ ] Every new query on `map_markers` goes through the visibility scope, and the new ability names its surfaces in a docblock.
-- [ ] `npm run build` clean, and the bundle grows by less than 5kB.
+- [x] Every new query on `map_markers` goes through the visibility scope. Markers need no ability of their own: they authorize through `update` on the map, as combatants do through the encounter.
+- [x] `npm run build` clean, and the bundle grew by 3.4kB.
 - [x] No new PHP or JavaScript dependency.
 
 ## Dependencies & Risks

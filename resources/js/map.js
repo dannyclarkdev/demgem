@@ -67,9 +67,15 @@ document.addEventListener('alpine:init', () => {
             return `translate(${this.x}px, ${this.y}px) scale(${this.scale})`;
         },
 
-        /** Pins keep their size on screen at every zoom, or they are dinner plates at 8x. */
+        /**
+         * Pins keep their size on screen at every zoom, or they are dinner plates at
+         * 8x. The offset that puts a pin's tail on its coordinate is the standalone
+         * `translate` property in the markup, not part of this transform: a pin near
+         * an edge shifts its label inwards, and that choice belongs with the
+         * coordinate rather than in here.
+         */
         get pinTransform() {
-            return `translate(-50%, -100%) scale(${1 / this.scale})`;
+            return `scale(${1 / this.scale})`;
         },
 
         get zoomPercent() {

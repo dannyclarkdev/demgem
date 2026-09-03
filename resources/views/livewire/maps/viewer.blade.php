@@ -84,11 +84,25 @@
                     >
 
                     @foreach ($markers as $marker)
+                        {{-- A pin near an edge keeps its tail on the coordinate and
+                             leans its label inwards, or the label is clipped by the
+                             frame and the name is lost on a narrow screen. --}}
+                        @php
+                            // The tail is inset 20px from the leaning edge: ml-4/mr-4
+                            // is 16px and the tail is 8px wide, so its centre is 16+4
+                            // in. The translate pays that back, and the tail lands on
+                            // the coordinate whichever way the label leans.
+                            [$shift, $origin, $align] = match (true) {
+                                $marker->x < 18 => ['-20px -100%', 'origin-bottom-left', 'left'],
+                                $marker->x > 82 => ['calc(-100% + 20px) -100%', 'origin-bottom-right', 'right'],
+                                default => ['-50% -100%', 'origin-bottom', 'center'],
+                            };
+                        @endphp
                         <button
                             type="button"
                             wire:key="pin-{{ $marker->id }}"
-                            class="absolute z-10 origin-bottom {{ $isDm ? 'cursor-pointer' : 'cursor-default' }}"
-                            style="left: {{ $marker->x }}%; top: {{ $marker->y }}%;"
+                            class="absolute z-10 {{ $origin }} {{ $isDm ? 'cursor-pointer' : 'cursor-default' }}"
+                            style="left: {{ $marker->x }}%; top: {{ $marker->y }}%; translate: {{ $shift }};"
                             x-bind:style="{ transform: pinTransform }"
                             @if ($isDm)
                                 x-on:pointerdown="startPinDrag($event, @js($marker->id))"
@@ -104,11 +118,19 @@
                                 :label="$marker->label"
                                 :hidden="$isDm && ! $marker->isVisibleToPlayers()"
                                 :opens-map="$marker->opensAMap()"
+                                :align="$align"
                             />
                         </button>
                     @endforeach
                 </div>
             </div>
+
+            {{-- A player with an empty map is not looking at a bug. Say which it is. --}}
+            @if (! $isDm && $markers->isEmpty())
+                <p class="border-t border-line px-3 py-2 text-sm text-ink-faint">
+                    Nothing marked on this one yet. Pins turn up here as the party finds the places.
+                </p>
+            @endif
 
             @if ($isDm)
                 @php

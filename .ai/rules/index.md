@@ -14,7 +14,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Events/** | .ai/rules/events.md |
 | app/Livewire/** | .ai/rules/livewire.md |
 | database/migrations/** | .ai/rules/migrations.md |
-| app/Models/** | .ai/rules/models.md |
+| app/Models/**, app/Models/MapMarker.php | .ai/rules/models.md |
 | app/Observers/** | .ai/rules/observers.md |
 | routes/web.php | .ai/rules/routes.md |
 | app/Livewire/Table/** | .ai/rules/table.md |

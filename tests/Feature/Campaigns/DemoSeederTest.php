@@ -5,6 +5,7 @@ use App\Models\Campaign;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
+use App\Models\MapMarker;
 use App\Models\RandomTable;
 use App\Models\User;
 use App\Support\CurrentCampaign;
@@ -30,7 +31,13 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and(Entity::query()->count())->toBeGreaterThan(10)
         ->and(GameSession::query()->count())->toBe(3)
         ->and(Encounter::query()->count())->toBe(1)
-        ->and(RandomTable::query()->count())->toBe(2);
+        ->and(RandomTable::query()->count())->toBe(2)
+        // Two maps, one nested in the other, with half the pins revealed. A demo
+        // that shows an empty map sells the feature badly.
+        ->and(Entity::query()->where('type', 'map')->count())->toBe(2)
+        ->and(MapMarker::query()->count())->toBe(8)
+        ->and(MapMarker::query()->where('player_visible', true)->count())->toBe(5)
+        ->and(MapMarker::query()->whereNotNull('target_entity_id')->count())->toBeGreaterThan(0);
 
     // Slice 4's own features have to be in the demo, or they sell themselves badly.
     $party = Entity::query()->where('is_pc', true)->orderBy('name')->get();
@@ -62,6 +69,8 @@ it('renders every demo screen for the GM it seeds', function () {
         route('tables.index', $campaign),
         route('entities.index', [$campaign, 'characters']),
         route('entities.index', [$campaign, 'quests']),
+        route('entities.index', [$campaign, 'maps']),
+        route('entities.show', [$campaign, 'maps', 'the-duchy-of-vell']),
         route('campaigns.export', $campaign),
     ] as $url) {
         $this->actingAs($dm)->get($url)->assertOk();
