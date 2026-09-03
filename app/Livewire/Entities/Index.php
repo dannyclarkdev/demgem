@@ -3,6 +3,7 @@
 namespace App\Livewire\Entities;
 
 use App\Enums\EntityType;
+use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
@@ -30,6 +31,10 @@ class Index extends Component
     #[Url]
     public string $visibility = '';
 
+    /** Quests only. A filtered quest log should be a link a GM can paste to the party. */
+    #[Url(as: 'status')]
+    public string $questStatus = '';
+
     public function mount(Campaign $campaign, string $type): void
     {
         $this->enterCampaign($campaign);
@@ -51,6 +56,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedQuestStatus(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         /** @var User $user */
@@ -58,14 +68,18 @@ class Index extends Component
         $role = $this->role();
         $search = mb_strtolower(trim($this->search));
         $visibilityFilter = $role->isDm() ? Visibility::tryFrom($this->visibility) : null;
+        $isQuest = $this->entityType === EntityType::Quest;
+        $statusFilter = $isQuest ? QuestStatus::tryFrom($this->questStatus) : null;
 
         $entities = Entity::query()
             ->ofType($this->entityType)
             ->visibleTo($user, $role)
             ->with(['tags', 'parent', 'player', 'media'])
+            ->when($isQuest, fn (Builder $q) => $q->with('objectives'))
             ->when($search !== '', fn (Builder $q) => $q->whereRaw('lower(name) like ?', ['%'.$search.'%']))
             ->when($this->tag !== '', fn (Builder $q) => $q->whereHas('tags', fn (Builder $t) => $t->where('slug', $this->tag)))
             ->when($visibilityFilter !== null, fn (Builder $q) => $q->where('visibility', $visibilityFilter?->value))
+            ->when($statusFilter !== null, fn (Builder $q) => $q->where('quest_status', $statusFilter?->value))
             ->orderBy('name')
             ->paginate(25);
 
@@ -87,6 +101,8 @@ class Index extends Component
             'role' => $role,
             'viewer' => $user,
             'visibilities' => Visibility::cases(),
+            'isQuest' => $isQuest,
+            'questStatuses' => QuestStatus::cases(),
         ])->title($this->entityType->plural());
     }
 }

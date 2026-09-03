@@ -10,7 +10,22 @@
         <x-ui.button :href="$session->url()" variant="ghost" size="sm">Session</x-ui.button>
     </x-ui.page-header>
 
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <x-ui.drawer name="tools" title="Tools" icon="dice">
+        <div x-data="{ tab: 'dice' }" class="flex h-full flex-col">
+            <x-ui.tabs class="shrink-0 px-2" :tabs="[
+                'dice' => ['label' => 'Dice', 'icon' => 'dice'],
+                'tables' => ['label' => 'Tables', 'icon' => 'list'],
+            ]" />
+            <div x-show="tab === 'dice'" class="min-h-0 flex-1">
+                <livewire:dice.tray :campaign="$campaign" :session="$session" :wire:key="'dice-'.$session->id" />
+            </div>
+            <div x-show="tab === 'tables'" x-cloak class="min-h-0 flex-1">
+                <livewire:random-tables.roller :campaign="$campaign" :wire:key="'roller-'.$session->id" />
+            </div>
+        </div>
+    </x-ui.drawer>
+
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div class="space-y-6">
             @if ($strongStartHtml !== '')
                 <x-ui.card title="Strong start">
@@ -18,9 +33,62 @@
                 </x-ui.card>
             @endif
 
+            {{-- Combat is the main event when combat is happening, so the tracker takes the
+                 main column rather than the aside, which is already full. --}}
+            @if ($encounters->isEmpty())
+                <x-ui.card>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <x-ui.icon name="swords" class="size-5 text-ink-faint" />
+                        <p class="min-w-0 flex-1 text-sm text-ink-muted">No fight running. Start one and the turn order opens here.</p>
+                        <x-ui.button size="sm" icon="plus" wire:click="startEncounter">Start an encounter</x-ui.button>
+                    </div>
+                </x-ui.card>
+            @else
+                @foreach ($encounters as $encounter)
+                    <x-ui.card :padding="false" wire:key="run-encounter-{{ $encounter->id }}">
+                        <x-slot:header>
+                            <a href="{{ $encounter->url() }}" class="text-xs text-ink-faint hover:text-ink">Open on its own page</a>
+                        </x-slot:header>
+                        <h2 class="border-b border-line px-5 py-3 font-display text-base font-semibold">{{ $encounter->name }}</h2>
+                        <livewire:encounters.tracker :campaign="$campaign" :encounter="$encounter" :wire:key="'tracker-'.$encounter->id" />
+                    </x-ui.card>
+                @endforeach
+
+                <div class="text-right">
+                    <x-ui.button variant="ghost" size="sm" icon="plus" wire:click="startEncounter">Another encounter</x-ui.button>
+                </div>
+            @endif
+
             <x-ui.card>
                 <livewire:sessions.live-notes :campaign="$campaign" :session="$session" :wire:key="'live-notes-'.$session->id" />
             </x-ui.card>
+
+            @if ($activeQuests->isNotEmpty())
+                <x-ui.card title="Active quests" :padding="false">
+                    <x-slot:header>
+                        <span class="text-xs text-ink-faint">Ticking one here records {{ $session->label() }}</span>
+                    </x-slot:header>
+                    <ul class="divide-y divide-line">
+                        @foreach ($activeQuests as $quest)
+                            <li class="px-5 py-4">
+                                <a href="{{ $quest->url() }}" class="flex items-center gap-2 font-medium text-ink hover:text-ember">
+                                    <x-ui.icon name="target" class="size-4 shrink-0 text-ember" />
+                                    {{ $quest->name }}
+                                </a>
+                                <div class="mt-2">
+                                    <livewire:quests.objectives
+                                        :campaign="$campaign"
+                                        :quest="$quest"
+                                        :session="$session"
+                                        :compact="true"
+                                        :wire:key="'run-objectives-'.$quest->id"
+                                    />
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </x-ui.card>
+            @endif
 
             <x-ui.card title="Scenes" :padding="false">
                 @if ($scenes->isEmpty())

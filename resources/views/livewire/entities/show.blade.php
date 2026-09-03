@@ -10,6 +10,9 @@
     </nav>
 
     <x-ui.page-header :title="$entity->name" :eyebrow="$entity->type->label().($entity->is_pc ? ' · Player character' : '')">
+        @if ($questStatus)
+            <x-ui.badge :variant="$questStatus->badgeVariant()" :icon="$questStatus->icon()">{{ $questStatus->label() }}</x-ui.badge>
+        @endif
         @if ($role->isDm())
             <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
         @endif
@@ -21,7 +24,7 @@
         @endcan
     </x-ui.page-header>
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
+    <div class="grid gap-6 xl:grid-cols-[1fr_18rem]">
         <div class="space-y-6">
             <x-ui.card>
                 @if ($bodyHtml !== '')
@@ -30,6 +33,22 @@
                     <p class="text-sm text-ink-faint">Nothing written yet.</p>
                 @endif
             </x-ui.card>
+
+            @if ($entity->isQuest())
+                <x-ui.card title="Objectives">
+                    <livewire:quests.objectives
+                        :campaign="$campaign"
+                        :quest="$entity"
+                        :wire:key="'objectives-'.$entity->id"
+                    />
+                </x-ui.card>
+
+                @if ($rewardsHtml !== '')
+                    <x-ui.card title="Rewards">
+                        <div class="prose-entity">{!! $rewardsHtml !!}</div>
+                    </x-ui.card>
+                @endif
+            @endif
 
             @if ($dmNotesHtml !== null)
                 <x-ui.card class="border-dm/30">
@@ -57,6 +76,17 @@
                     @else
                         <p class="text-sm text-ink-faint">Unassigned</p>
                     @endif
+                </div>
+            @endif
+
+            {{-- A hidden giver renders nothing at all, not a placeholder. --}}
+            @if ($giver)
+                <div>
+                    <p class="eyebrow mb-2">Given by</p>
+                    <a href="{{ $giver->url() }}" class="flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
+                        <x-ui.icon :name="$giver->type->icon()" class="size-3.5 text-ink-faint" />
+                        {{ $giver->name }}
+                    </a>
                 </div>
             @endif
 

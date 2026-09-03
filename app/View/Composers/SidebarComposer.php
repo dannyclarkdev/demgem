@@ -3,8 +3,10 @@
 namespace App\View\Composers;
 
 use App\Enums\EntityType;
+use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
+use App\Models\RandomTable;
 use App\Models\User;
 use App\Support\CurrentCampaign;
 use Illuminate\Contracts\View\View;
@@ -25,6 +27,8 @@ class SidebarComposer
 
         $counts = [];
         $sessionCount = 0;
+        $encounterCount = 0;
+        $tableCount = 0;
 
         if ($user !== null && $campaign !== null && $role !== null) {
             $counts = Entity::query()
@@ -36,6 +40,12 @@ class SidebarComposer
                 ->all();
 
             $sessionCount = GameSession::query()->visibleTo($role)->count();
+
+            // GM-only tools, so the queries are skipped rather than filtered afterwards.
+            if ($role->isDm()) {
+                $encounterCount = Encounter::query()->count();
+                $tableCount = RandomTable::query()->count();
+            }
         }
 
         $view->with([
@@ -44,6 +54,8 @@ class SidebarComposer
             'entityTypes' => EntityType::cases(),
             'entityCounts' => $counts,
             'sessionCount' => $sessionCount,
+            'encounterCount' => $encounterCount,
+            'tableCount' => $tableCount,
             'userCampaigns' => $user?->campaigns()->orderBy('name')->get() ?? collect(),
         ]);
     }

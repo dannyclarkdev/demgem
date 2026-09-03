@@ -45,13 +45,18 @@ class GameSessionObserver
             ->delete();
     }
 
+    /**
+     * Derived from mentionableFields(), which the saved() check already reads, so the
+     * two lists cannot drift apart.
+     */
     private function sync(GameSession $session): void
     {
-        $this->syncMentions->handle($session, $session->campaign_id, [
-            'strong_start' => $session->strong_start,
-            'live_notes' => $session->live_notes,
-            'recap' => $session->recap,
-            'dm_notes' => $session->dm_notes,
-        ]);
+        $fields = [];
+
+        foreach ($session->mentionableFields() as $field) {
+            $fields[$field] = $session->getAttribute($field);
+        }
+
+        $this->syncMentions->handle($session, $session->campaign_id, $fields);
     }
 }

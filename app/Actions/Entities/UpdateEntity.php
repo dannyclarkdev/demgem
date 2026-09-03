@@ -22,7 +22,10 @@ class UpdateEntity
     {
         return DB::transaction(function () use ($entity, $actor, $data): Entity {
             $attributes = collect($data)
-                ->only(['name', 'body', 'dm_notes', 'visibility', 'parent_id', 'is_pc', 'player_user_id'])
+                ->only([
+                    'name', 'body', 'dm_notes', 'rewards', 'visibility', 'parent_id',
+                    'is_pc', 'player_user_id', 'quest_status', 'giver_entity_id',
+                ])
                 ->all();
 
             if (isset($attributes['name'])) {

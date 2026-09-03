@@ -56,11 +56,23 @@ class EntityPolicy
     }
 
     /**
-     * Visibility, DM notes, parent, PC flag, player assignment, viewers.
+     * Visibility, DM notes, parent, PC flag, player assignment, viewers,
+     * plus the quest status, giver, and rewards.
      */
     public function updateDmFields(User $user, Entity $entity): bool
     {
         return $this->roleFor($user, $entity)?->isDm() ?? false;
+    }
+
+    /**
+     * Adding, editing, reordering, and ticking quest objectives.
+     *
+     * This is not update(): a player may edit their own PC, and nothing about that
+     * should let them tick an objective on a quest they happen to be able to read.
+     */
+    public function manageQuest(User $user, Entity $entity): bool
+    {
+        return $entity->isQuest() && ($this->roleFor($user, $entity)?->isDm() ?? false);
     }
 
     private function roleFor(User $user, Entity $entity): ?CampaignRole

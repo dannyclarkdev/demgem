@@ -27,6 +27,21 @@
             </select>
         @endif
 
+        @if ($isQuest)
+            <div class="flex flex-wrap items-center gap-1.5">
+                @foreach ($questStatuses as $option)
+                    <button
+                        type="button"
+                        wire:click="$set('questStatus', '{{ $questStatus === $option->value ? '' : $option->value }}')"
+                        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition {{ $questStatus === $option->value ? 'border-ember bg-ember/15 text-ember' : 'border-line text-ink-muted hover:border-line-strong hover:text-ink' }}"
+                    >
+                        <x-ui.icon :name="$option->icon()" class="size-3" />
+                        {{ $option->label() }}
+                    </button>
+                @endforeach
+            </div>
+        @endif
+
         @if ($tags->isNotEmpty())
             <div class="flex flex-wrap items-center gap-1.5">
                 @foreach ($tags as $option)
@@ -45,9 +60,9 @@
     </div>
 
     @if ($entities->isEmpty())
-        @if ($search !== '' || $tag !== '' || $visibility !== '')
+        @if ($search !== '' || $tag !== '' || $visibility !== '' || $questStatus !== '')
             <x-ui.empty-state title="Nothing matches" description="Clear the filters to see every {{ strtolower($type->label()) }} you can view." :icon="$type->icon()">
-                <x-ui.button variant="secondary" size="sm" wire:click="$set('search', ''); $set('tag', ''); $set('visibility', '')">Clear filters</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" wire:click="$set('search', ''); $set('tag', ''); $set('visibility', ''); $set('questStatus', '')">Clear filters</x-ui.button>
             </x-ui.empty-state>
         @else
             <x-ui.empty-state title="No {{ strtolower($type->plural()) }} yet" :description="$role->isDm() ? $type->description() : 'The GM has not revealed any '.strtolower($type->plural()).' yet.'" :icon="$type->icon()">
@@ -80,11 +95,21 @@
                                     <p class="truncate text-xs text-ink-faint">in {{ $entity->parent->name }}</p>
                                 @endif
                             </div>
-                            <div class="hidden items-center gap-1.5 sm:flex">
-                                @foreach ($entity->tags->take(3) as $entityTag)
-                                    <x-ui.badge>{{ $entityTag->name }}</x-ui.badge>
-                                @endforeach
-                            </div>
+                            @if ($isQuest)
+                                @php ($progress = $entity->objectiveProgress())
+                                @if ($progress['total'] > 0)
+                                    <x-ui.progress :value="$progress['done']" :max="$progress['total']" class="hidden w-28 sm:flex" />
+                                @endif
+                                @if ($entity->questStatus())
+                                    <x-ui.badge :variant="$entity->questStatus()->badgeVariant()" :icon="$entity->questStatus()->icon()">{{ $entity->questStatus()->label() }}</x-ui.badge>
+                                @endif
+                            @else
+                                <div class="hidden items-center gap-1.5 sm:flex">
+                                    @foreach ($entity->tags->take(3) as $entityTag)
+                                        <x-ui.badge>{{ $entityTag->name }}</x-ui.badge>
+                                    @endforeach
+                                </div>
+                            @endif
                             @if ($role->isDm())
                                 <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
                             @endif

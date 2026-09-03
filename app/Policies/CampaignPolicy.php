@@ -34,6 +34,16 @@ class CampaignPolicy
         return $campaign->roleFor($user)?->isDm() ?? false;
     }
 
+    /**
+     * The table tools: the dice tray, the encounter tracker, and the random tables.
+     * All three are GM-only in this slice, and none of them is worth a policy class
+     * of its own until a player can see one.
+     */
+    public function useGmTools(User $user, Campaign $campaign): bool
+    {
+        return $campaign->roleFor($user)?->isDm() ?? false;
+    }
+
     public function changeRoles(User $user, Campaign $campaign): bool
     {
         return $campaign->roleFor($user) === CampaignRole::Owner;

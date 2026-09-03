@@ -3,6 +3,7 @@
 namespace App\Actions\Entities;
 
 use App\Enums\EntityType;
+use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
@@ -22,10 +23,13 @@ class CreateEntity
      *     name: string,
      *     body?: string|null,
      *     dm_notes?: string|null,
+     *     rewards?: string|null,
      *     visibility?: Visibility,
      *     parent_id?: string|null,
      *     is_pc?: bool,
      *     player_user_id?: int|null,
+     *     quest_status?: QuestStatus|null,
+     *     giver_entity_id?: string|null,
      *     tags?: list<string>,
      *     viewer_ids?: list<int>
      * }  $data
@@ -39,10 +43,15 @@ class CreateEntity
                 'slug' => $this->generateSlug->handle($campaign->id, $data['name']),
                 'body' => $data['body'] ?? null,
                 'dm_notes' => $data['dm_notes'] ?? null,
+                'rewards' => $data['rewards'] ?? null,
                 'visibility' => $data['visibility'] ?? Visibility::Dm,
                 'parent_id' => $data['parent_id'] ?? null,
                 'is_pc' => $data['is_pc'] ?? false,
                 'player_user_id' => $data['player_user_id'] ?? null,
+                'quest_status' => $data['type'] === EntityType::Quest
+                    ? ($data['quest_status'] ?? QuestStatus::Available)
+                    : null,
+                'giver_entity_id' => $data['type'] === EntityType::Quest ? ($data['giver_entity_id'] ?? null) : null,
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
             ]);

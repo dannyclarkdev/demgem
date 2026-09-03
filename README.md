@@ -8,7 +8,9 @@ Built with Laravel 13, Livewire 4, Alpine, and Tailwind 4. PostgreSQL in product
 
 Slice 1 is done: accounts, campaigns, members with roles, invite links, entities (characters, locations, factions, items, quests, notes) with Markdown, `[[wiki links]]`, backlinks, GM-only notes, visibility, tags, nesting, images, and search.
 
-Slice 2 is done: sessions with a number, title, date, and status; a prep screen with a strong start, ordered scenes, secrets and clues, and four entity buckets; a run screen with autosaving live notes and one-click secret reveals; and a recap the GM publishes on purpose. Unrevealed secrets carry into the next session. Quests with objectives, the initiative tracker, and dice come next. See `docs/plans/`.
+Slice 2 is done: sessions with a number, title, date, and status; a prep screen with a strong start, ordered scenes, secrets and clues, and four entity buckets; a run screen with autosaving live notes and one-click secret reveals; and a recap the GM publishes on purpose. Unrevealed secrets carry into the next session.
+
+Slice 3 is done: quests with a status, a giver, rewards, and an ordered objective checklist that records the session each step was finished in; an initiative tracker with hit points, conditions, rounds, and a turn marker that survives a refresh; a dice roller with keep-highest, keep-lowest, and advantage; and weighted random tables that can nest one inside another. The tracker sits on the run screen, and dice and tables live in a drawer beside it. The player campaign view, JSON export, and Docker Compose finish the MVP. See `docs/plans/`.
 
 ## Local setup
 

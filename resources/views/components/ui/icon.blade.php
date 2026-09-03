@@ -44,6 +44,14 @@
     @case('arrow-up')<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>@break
     @case('arrow-down')<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>@break
     @case('grip')<circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.4" fill="currentColor" stroke="none"/>@break
+    @case('minus')<line x1="5" y1="12" x2="19" y2="12"/>@break
+    @case('dice')<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/>@break
+    @case('swords')<path d="M14.5 14.5 21 21"/><path d="M3 3h4l10 10-2.5 2.5L4.5 5V3z"/><path d="M21 3h-4L7 13l2.5 2.5L19.5 5V3z"/><path d="M9.5 14.5 3 21"/>@break
+    @case('list')<line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/>@break
+    @case('refresh')<polyline points="21 4 21 10 15 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L21 8"/>@break
+    @case('skip-forward')<polygon points="4 4 15 12 4 20 4 4"/><line x1="19" y1="4" x2="19" y2="20"/>@break
+    @case('heart')<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>@break
+    @case('target')<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>@break
     @default<circle cx="12" cy="12" r="9"/>
 @endswitch
 </svg>

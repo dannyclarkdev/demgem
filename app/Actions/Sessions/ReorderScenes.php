@@ -2,33 +2,21 @@
 
 namespace App\Actions\Sessions;
 
+use App\Actions\Support\ReorderPositions;
 use App\Models\GameSession;
 use App\Models\Scene;
-use Illuminate\Support\Facades\DB;
 
 class ReorderScenes
 {
+    public function __construct(private readonly ReorderPositions $reorder) {}
+
     /**
      * Moves one scene to a zero-based position and rewrites every position in the list.
      * Rewriting the lot keeps them contiguous whichever GM wins a simultaneous drag.
      */
     public function handle(GameSession $session, string $sceneId, int $position): void
     {
-        DB::transaction(function () use ($session, $sceneId, $position): void {
-            $ids = $session->scenes()->pluck('id')->all();
-            $from = array_search($sceneId, $ids, true);
-
-            if ($from === false) {
-                return;
-            }
-
-            array_splice($ids, $from, 1);
-            array_splice($ids, max(0, min($position, count($ids))), 0, [$sceneId]);
-
-            foreach ($ids as $index => $id) {
-                Scene::query()->whereKey($id)->update(['position' => $index]);
-            }
-        });
+        $this->reorder->handle($session->scenes()->getQuery(), $sceneId, $position);
     }
 
     /**

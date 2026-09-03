@@ -3,11 +3,15 @@
 namespace Database\Seeders;
 
 use App\Actions\Campaigns\CreateCampaign;
+use App\Actions\Encounters\AddCombatants;
+use App\Actions\Encounters\CreateEncounter;
 use App\Actions\Entities\CreateEntity;
+use App\Actions\RandomTables\CreateRandomTable;
 use App\Actions\Sessions\CreateSession;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
 use App\Enums\PrepRole;
+use App\Enums\QuestStatus;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
@@ -102,8 +106,14 @@ class DemoCampaignSeeder extends Seeder
             'body' => 'Opens the sea-wall gates. [[Mara Voss]] lent it to the party. She wants it back.',
         ]);
         $make(EntityType::Quest, 'Seal the Undercity', [
-            'body' => "[[Mara Voss]] asks the party to collapse the tunnels under [[Harrowgate]] before the spring tide.\n\nReward: the [[Tidewarden Signet]], permanently.",
+            'quest_status' => QuestStatus::Active,
+            'body' => '[[Mara Voss]] asks the party to collapse the tunnels under [[Harrowgate]] before the spring tide.',
+            'rewards' => 'The [[Tidewarden Signet]], permanently, and a berth in the harbour for as long as the duchy stands.',
             'tags' => ['active'],
+        ]);
+        $make(EntityType::Quest, 'Find Wren\'s sister', [
+            'quest_status' => QuestStatus::Available,
+            'body' => 'Nobody has offered this one. [[Wren Ashgrove]] is going to ask, and the answer will not be kind.',
         ]);
         $make(EntityType::Note, 'Session zero agreements', [
             'body' => "- Horror, not gore.\n- Lines: harm to children.\n- Veils: drowning described, not narrated.\n- We start at 5th level.",
@@ -114,7 +124,11 @@ class DemoCampaignSeeder extends Seeder
             'body' => "- [[The Drowned Duke]] is awake.\n- [[Mara Voss]] is compromised.\n- [[Wren Ashgrove]]'s sister sits at the Duke's right hand.",
         ]);
 
+        // Sessions first: the ticked objectives record the night they were finished.
         $this->seedSessions($campaign, $dm);
+        $this->seedQuestDetails($campaign);
+        $this->seedEncounter($campaign, $dm);
+        $this->seedTables($campaign, $dm);
 
         $this->command->info("Seeded The Drowned Duchy for {$dm->email} (password: password).");
     }
@@ -211,6 +225,106 @@ class DemoCampaignSeeder extends Seeder
                     $third->entities()->attach($entity->id, ['role' => $role->value, 'position' => $position]);
                 }
             }
+        }
+    }
+
+    /**
+     * The active quest gets a giver and five objectives, two of them already ticked in
+     * the first session, so the quest log and the Run screen both have something in them.
+     */
+    private function seedQuestDetails(Campaign $campaign): void
+    {
+        $quest = $campaign->entities()->where('name', 'Seal the Undercity')->first();
+        $mara = $campaign->entities()->where('name', 'Mara Voss')->first();
+
+        if ($quest === null) {
+            return;
+        }
+
+        if ($mara !== null) {
+            $quest->update(['giver_entity_id' => $mara->id]);
+        }
+
+        $objectives = [
+            'Get the tide charts from the Tidewardens',
+            'Find a way into the Undercity that does not flood',
+            'Map the three tunnels under the Salt Cathedral',
+            'Collapse them before the spring tide',
+            'Give the signet back, or do not',
+        ];
+
+        foreach ($objectives as $position => $body) {
+            $quest->objectives()->create([
+                'campaign_id' => $campaign->id,
+                'position' => $position,
+                'body' => $body,
+                'completed_at' => $position < 2 ? now()->subWeeks(3) : null,
+            ]);
+        }
+
+        $first = $campaign->gameSessions()->where('number', 1)->first();
+
+        if ($first !== null) {
+            $quest->objectives()->whereNotNull('completed_at')->update(['completed_in_session_id' => $first->id]);
+        }
+    }
+
+    /**
+     * The fight the third session is prepped for: the party, plus four of the Duke's
+     * drowned, ready to roll initiative.
+     */
+    private function seedEncounter(Campaign $campaign, User $dm): void
+    {
+        $third = $campaign->gameSessions()->where('number', 3)->first();
+        $encounter = app(CreateEncounter::class)->handle($campaign, $dm, 'The stair under the Cathedral', $third);
+        $add = app(AddCombatants::class);
+
+        $add->fromEntities($encounter, $campaign->entities()->where('is_pc', true)->orderBy('name')->get());
+        $add->handle($encounter, 'Drowned thrall', 4, null, 22, 12, 1);
+
+        $duke = $campaign->entities()->where('name', 'The Drowned Duke')->first();
+
+        if ($duke !== null) {
+            $add->handle($encounter, $duke->name, 1, $duke, 187, 18, 5);
+        }
+    }
+
+    /**
+     * Two tables, one nesting the other, so the nesting is visible on the first roll.
+     */
+    private function seedTables(Campaign $campaign, User $dm): void
+    {
+        $create = app(CreateRandomTable::class);
+
+        $names = $create->handle($campaign, $dm, 'Harrowgate names', 'Somebody the party has never met.');
+
+        foreach (['Sella Roke', 'Dann Pell', 'Old Ivry', 'The Cormorant', 'Tass Vane'] as $position => $body) {
+            $names->entries()->create([
+                'campaign_id' => $campaign->id,
+                'position' => $position,
+                'weight' => 1,
+                'body' => $body,
+            ]);
+        }
+
+        $rumours = $create->handle($campaign, $dm, 'Tavern rumours', 'What the regulars are saying at the Drowned Cat.');
+
+        $rows = [
+            ['A caravan out of [[Harrowgate]] is three days late and nobody will say why.', 30, null],
+            ['The sea walls sang last night. Ask about it and people change the subject.', 25, null],
+            ['Somebody is asking after the party by name:', 20, $names->id],
+            ['A [[Tidewardens]] officer was seen leaving the [[Salt Cathedral]] before dawn.', 15, null],
+            ['The tide came in wrong. It went out and did not come back for an hour.', 10, null],
+        ];
+
+        foreach ($rows as $position => [$body, $weight, $nested]) {
+            $rumours->entries()->create([
+                'campaign_id' => $campaign->id,
+                'position' => $position,
+                'weight' => $weight,
+                'body' => $body,
+                'nested_table_id' => $nested,
+            ]);
         }
     }
 }
