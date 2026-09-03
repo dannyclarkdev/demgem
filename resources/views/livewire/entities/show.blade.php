@@ -24,6 +24,45 @@
         @endcan
     </x-ui.page-header>
 
+    @if ($entity->hasCharacterRecord())
+        <div class="mb-6 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-lg border border-line bg-panel px-5 py-4">
+            @if (filled($entity->character_class))
+                <div>
+                    <p class="eyebrow">Class</p>
+                    <p class="mt-0.5 font-medium text-ink">{{ $entity->character_class }}</p>
+                </div>
+            @endif
+
+            @if ($entity->level !== null)
+                <div>
+                    <p class="eyebrow">Level</p>
+                    <p class="mt-0.5 font-medium text-ink">{{ $entity->level }}</p>
+                </div>
+            @endif
+
+            @if ($entity->is_pc && $entity->player)
+                <div>
+                    <p class="eyebrow">Played by</p>
+                    <p class="mt-0.5 font-medium text-ink">{{ $entity->player->name }}</p>
+                </div>
+            @endif
+
+            @if (filled($entity->sheet_url))
+                {{-- The one user-supplied URL in the app rendered as an href outside the
+                     Markdown renderer. url:http,https at write time is what makes it safe. --}}
+                <x-ui.button
+                    :href="$entity->sheet_url"
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    variant="secondary"
+                    size="sm"
+                    icon="external"
+                    class="ml-auto"
+                >{{ $entity->sheetHost() ?? 'Character sheet' }}</x-ui.button>
+            @endif
+        </div>
+    @endif
+
     <div class="grid gap-6 xl:grid-cols-[1fr_18rem]">
         <div class="space-y-6">
             <x-ui.card>
@@ -33,6 +72,20 @@
                     <p class="text-sm text-ink-faint">Nothing written yet.</p>
                 @endif
             </x-ui.card>
+
+            @php ($customFields = $entity->customFields())
+            @if ($customFields !== [])
+                <x-ui.card title="Details">
+                    <dl class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+                        @foreach ($customFields as $field)
+                            <div>
+                                <dt class="eyebrow">{{ $field['key'] }}</dt>
+                                <dd class="mt-0.5 text-ink">{{ $field['value'] }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </x-ui.card>
+            @endif
 
             @if ($entity->isQuest())
                 <x-ui.card title="Objectives">

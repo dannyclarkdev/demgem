@@ -47,6 +47,43 @@
         </x-ui.card>
     </div>
 
+    <x-ui.card title="The party" class="mb-4" :padding="false">
+        <x-slot:header>
+            <a href="{{ route('entities.index', [$campaign, 'characters', 'pc' => 1]) }}" class="text-xs text-ink-faint hover:text-ink">All player characters</a>
+        </x-slot:header>
+
+        @if ($party->isEmpty())
+            <p class="px-5 py-4 text-sm text-ink-faint">
+                {{ $role->isDm() ? 'Mark a character as a player character and the party turns up here.' : 'No player characters yet.' }}
+            </p>
+        @else
+            <ul class="divide-y divide-line">
+                @foreach ($party as $pc)
+                    <li>
+                        <a href="{{ $pc->url() }}" class="flex flex-wrap items-center gap-3 px-5 py-3 hover:bg-raised">
+                            @if ($pc->imageUrl('thumb'))
+                                <img src="{{ $pc->imageUrl('thumb') }}" alt="" class="size-8 shrink-0 rounded-md object-cover">
+                            @else
+                                <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-raised text-ink-muted">
+                                    <x-ui.icon name="user" class="size-4" />
+                                </span>
+                            @endif
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate font-medium text-ink">{{ $pc->name }}</span>
+                                @if (filled($pc->character_class) || $pc->level !== null)
+                                    <span class="block truncate text-sm text-ink-faint">{{ collect([$pc->character_class, $pc->level !== null ? 'level '.$pc->level : null])->filter()->implode(' · ') }}</span>
+                                @endif
+                            </span>
+                            @if ($pc->player)
+                                <span class="shrink-0 text-sm text-ink-muted">{{ $pc->player->name }}</span>
+                            @endif
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-ui.card>
+
     <x-ui.card title="Quests in play" class="mb-4" :padding="false">
         <x-slot:header>
             <a href="{{ route('entities.index', [$campaign, 'quests', 'status' => 'active']) }}" class="text-xs text-ink-faint hover:text-ink">All active quests</a>
@@ -72,7 +109,7 @@
         @endif
     </x-ui.card>
 
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <a href="{{ route('campaigns.members', $campaign) }}" class="rounded-lg border border-line bg-panel p-5 transition hover:border-line-strong">
             <p class="eyebrow">Members</p>
             <p class="mt-2 font-display text-3xl font-semibold">{{ $membersCount }}</p>

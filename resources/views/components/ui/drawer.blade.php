@@ -8,7 +8,7 @@
 
     Open it from anywhere with $dispatch('open-drawer', { name: 'tools' }).
 --}}
-@props(['name', 'title' => null, 'icon' => null, 'width' => 'w-full sm:w-[24rem]'])
+@props(['name', 'title' => null, 'icon' => null, 'width' => 'w-full lg:w-[24rem]'])
 <div
     x-data="{ open: false }"
     x-on:open-drawer.window="if ($event.detail.name === '{{ $name }}') open = true"
@@ -30,7 +30,7 @@
         x-cloak
         x-transition.opacity.duration.150ms
         @click.outside="open = false"
-        class="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col rounded-t-xl border border-line bg-panel shadow-2xl shadow-black/50 sm:inset-x-auto sm:top-0 sm:right-0 sm:bottom-0 sm:max-h-none sm:rounded-none sm:rounded-l-xl sm:border-y-0 sm:border-r-0 {{ $width }}"
+        class="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col rounded-t-xl border border-line bg-panel shadow-2xl shadow-black/50 lg:inset-x-auto lg:top-0 lg:right-0 lg:bottom-0 lg:max-h-none lg:rounded-none lg:rounded-l-xl lg:border-y-0 lg:border-r-0 {{ $width }}"
         role="region"
         :aria-hidden="! open"
         aria-label="{{ $title ?? 'Tools' }}"

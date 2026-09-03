@@ -11,6 +11,18 @@
                 </div>
             </x-ui.card>
 
+            @if ($isCharacter)
+                <x-ui.card title="Character">
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <x-ui.input label="Class" name="character_class" wire:model="character_class" placeholder="Bard" hint="Whatever your system calls it." />
+                        <x-ui.input label="Level" name="level" type="number" min="1" max="100" wire:model="level" placeholder="5" />
+                        <div class="sm:col-span-2">
+                            <x-ui.input label="Character sheet" name="sheet_url" type="url" wire:model="sheet_url" placeholder="https://www.dndbeyond.com/characters/..." hint="A link to the sheet you play from. Opens in a new tab." />
+                        </div>
+                    </div>
+                </x-ui.card>
+            @endif
+
             @if ($canEditDmFields && $isQuest)
                 <x-ui.card title="Rewards">
                     <x-ui.markdown-editor
@@ -25,6 +37,45 @@
                     />
                 </x-ui.card>
             @endif
+
+            <x-ui.card title="Details">
+                <p class="text-sm text-ink-muted">Whatever this campaign tracks: race, alignment, the name of a ship. Plain text, shown in the order you type them.</p>
+
+                @if (count($custom_fields) > 0)
+                    <div class="mt-4 space-y-3">
+                        @foreach ($custom_fields as $index => $field)
+                            <div class="flex flex-wrap items-start gap-2" wire:key="custom-field-{{ $index }}">
+                                <x-ui.input
+                                    name="custom_fields.{{ $index }}.key"
+                                    wire:model="custom_fields.{{ $index }}.key"
+                                    placeholder="Race"
+                                    aria-label="Field name"
+                                    class="w-40"
+                                />
+                                <x-ui.input
+                                    name="custom_fields.{{ $index }}.value"
+                                    wire:model="custom_fields.{{ $index }}.value"
+                                    placeholder="Tiefling"
+                                    aria-label="Field value"
+                                    class="min-w-40 flex-1"
+                                />
+                                <x-ui.button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    icon="x"
+                                    wire:click="removeCustomField({{ $index }})"
+                                    aria-label="Remove {{ $field['key'] !== '' ? $field['key'] : 'this field' }}"
+                                />
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if (count($custom_fields) < 20)
+                    <x-ui.button type="button" variant="secondary" size="sm" icon="plus" wire:click="addCustomField" class="mt-4">Add a field</x-ui.button>
+                @endif
+            </x-ui.card>
 
             @if ($canEditDmFields)
                 <x-ui.card class="border-dm/30">

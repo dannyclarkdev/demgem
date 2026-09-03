@@ -19,7 +19,7 @@
                         @else
                             <div class="flex flex-wrap items-start gap-2.5">
                                 @if ($canManage)
-                                    <button type="button" wire:sort:handle class="mt-1 cursor-grab text-ink-faint hover:text-ink-muted" aria-label="Drag to reorder">
+                                    <button type="button" wire:sort:handle class="-ml-1.5 inline-flex size-8 shrink-0 cursor-grab items-center justify-center text-ink-faint hover:text-ink-muted" aria-label="Drag to reorder">
                                         <x-ui.icon name="grip" class="size-4" />
                                     </button>
                                 @endif
@@ -27,19 +27,21 @@
                                 <button
                                     type="button"
                                     @if ($canManage) wire:click="toggle('{{ $objective->id }}')" @else disabled @endif
-                                    class="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded border {{ $objective->isComplete() ? 'border-success bg-success/15 text-success' : 'border-line-strong text-transparent' }} {{ $canManage ? 'hover:border-ember' : 'cursor-default' }}"
+                                    class="group relative inline-flex size-8 shrink-0 items-center justify-center before:absolute before:-inset-y-1.5 before:content-[''] {{ $canManage ? '' : 'cursor-default' }}"
                                     aria-label="{{ $objective->isComplete() ? 'Reopen this objective' : 'Mark this objective done' }}"
                                     aria-pressed="{{ $objective->isComplete() ? 'true' : 'false' }}"
                                 >
-                                    <x-ui.icon name="check" class="size-3.5" />
+                                    <span class="inline-flex size-5 items-center justify-center rounded border {{ $objective->isComplete() ? 'border-success bg-success/15 text-success' : 'border-line-strong text-transparent' }} {{ $canManage ? 'group-hover:border-ember' : '' }}">
+                                        <x-ui.icon name="check" class="size-3.5" />
+                                    </span>
                                 </button>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="prose-entity text-[15px] {{ $objective->isComplete() ? 'text-ink-faint line-through decoration-ink-faint/60' : '' }}">
+                                    <p class="prose-entity {{ $objective->isComplete() ? 'text-ink-faint line-through decoration-ink-faint/60' : '' }}">
                                         {!! $bodyHtml[$objective->id] !!}
                                     </p>
                                     @if (isset($sessionLabels[$objective->id]))
-                                        <p class="mt-0.5 text-xs text-ink-faint">Finished in {{ $sessionLabels[$objective->id] }}</p>
+                                        <p class="mt-0.5 text-sm text-ink-faint">Finished in {{ $sessionLabels[$objective->id] }}</p>
                                     @endif
                                 </div>
 

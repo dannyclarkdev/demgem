@@ -29,10 +29,14 @@ it('404s an encounter page for a player, with nothing of the fight in the respon
 
     $response = $this->actingAs($player)->get(route('encounters.show', [$campaign, $encounter->id]));
 
+    // Not assertDontSee('59'): the 404 page carries the campaign's ULID in every
+    // sidebar link, Crockford base32 includes every digit, and a two-digit run turns
+    // up by chance often enough to fail a CI run. The tracker's own markup is the
+    // stable proof that no combatant rendered.
     $response->assertNotFound()
         ->assertDontSee('Ambush at the bridge')
         ->assertDontSee('Ogre chief')
-        ->assertDontSee('59');
+        ->assertDontSee('wire:poll', false);
 });
 
 it('404s the tracker component itself for a player', function () {

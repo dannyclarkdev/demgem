@@ -1,7 +1,7 @@
 <div>
     <div class="mb-1.5 flex items-center justify-between gap-2">
         <label for="live-notes" class="text-sm font-medium text-ink-muted">Live notes</label>
-        <span class="flex items-center gap-1.5 text-xs">
+        <span class="flex items-center gap-1.5 text-sm">
             <span wire:dirty wire:target="notes" class="flex items-center gap-1.5 text-ember">
                 <x-ui.icon name="clock" class="size-3.5" /> Saving
             </span>
@@ -24,5 +24,5 @@
         placeholder="What actually happened. Names, numbers, promises."
     ></textarea>
 
-    <p class="mt-1.5 text-xs text-ink-faint">GM only. If another GM types at the same time, the last save wins.</p>
+    <p class="mt-1.5 text-sm text-ink-faint">GM only. If another GM types at the same time, the last save wins.</p>
 </div>

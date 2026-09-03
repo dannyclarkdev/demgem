@@ -46,6 +46,12 @@ class Form extends Component
 
     public string $player_user_id = '';
 
+    public string $character_class = '';
+
+    public ?int $level = null;
+
+    public string $sheet_url = '';
+
     public string $quest_status = '';
 
     public string $giver_entity_id = '';
@@ -53,6 +59,14 @@ class Form extends Component
     public string $rewards = '';
 
     public string $tags = '';
+
+    /**
+     * The GM's key-value pairs, in typed order. A row with an empty key is the empty
+     * row at the bottom of the editor, and it is dropped on save rather than rejected.
+     *
+     * @var list<array{key: string, value: string}>
+     */
+    public array $custom_fields = [];
 
     /** @var list<int> */
     public array $viewer_ids = [];
@@ -86,6 +100,15 @@ class Form extends Component
         $this->name = $entity->name;
         $this->body = $entity->body ?? '';
         $this->tags = $entity->tags->pluck('name')->implode(', ');
+        $this->custom_fields = $entity->customFields();
+
+        // The character record is not a DM field: a player edits their own PC, so these
+        // three load for anybody who passed the update check above.
+        if ($this->isCharacter()) {
+            $this->character_class = $entity->character_class ?? '';
+            $this->level = $entity->level;
+            $this->sheet_url = $entity->sheet_url ?? '';
+        }
 
         // DM-only fields never enter the component state for a player. Public properties ship in the Livewire snapshot.
         if ($this->user()->can('updateDmFields', $entity)) {
@@ -109,6 +132,11 @@ class Form extends Component
         return $this->entityType === EntityType::Quest;
     }
 
+    private function isCharacter(): bool
+    {
+        return $this->entityType === EntityType::Character;
+    }
+
     public function save(CreateEntity $createEntity, UpdateEntity $updateEntity): void
     {
         $isEdit = $this->entity !== null;
@@ -126,7 +154,27 @@ class Form extends Component
             'body' => ['nullable', 'string', 'max:100000'],
             'tags' => ['nullable', 'string', 'max:500'],
             'image' => ['nullable', 'image', 'max:5120'],
+            'custom_fields' => ['array', 'max:20'],
+            'custom_fields.*.key' => ['nullable', 'string', 'max:40'],
+            'custom_fields.*.value' => ['nullable', 'string', 'max:200'],
         ];
+
+        // The character record is not a DM field, so these rules sit outside the block
+        // below: whoever passed the update check may set them, which includes a player
+        // on their own PC. sheet_url is the one user URL in the app rendered as an href
+        // outside MarkdownRenderer, and url:http,https is what stops javascript: from
+        // becoming a link the whole party can click.
+        $rules += $this->isCharacter()
+            ? [
+                'character_class' => ['nullable', 'string', 'max:60'],
+                'level' => ['nullable', 'integer', 'min:1', 'max:100'],
+                'sheet_url' => ['nullable', 'string', 'max:2048', 'url:http,https'],
+            ]
+            : [
+                'character_class' => ['prohibited'],
+                'level' => ['prohibited'],
+                'sheet_url' => ['prohibited'],
+            ];
 
         if ($canEditDmFields) {
             $rules += [
@@ -183,7 +231,16 @@ class Form extends Component
             'name' => $validated['name'],
             'body' => $validated['body'] !== null && $validated['body'] !== '' ? $validated['body'] : null,
             'tags' => $this->parseTags($validated['tags'] ?? ''),
+            'custom_fields' => $this->parseCustomFields($validated['custom_fields'] ?? []),
         ];
+
+        if ($this->isCharacter()) {
+            $data += [
+                'character_class' => filled($validated['character_class'] ?? null) ? trim((string) $validated['character_class']) : null,
+                'level' => $validated['level'] ?? null,
+                'sheet_url' => filled($validated['sheet_url'] ?? null) ? trim((string) $validated['sheet_url']) : null,
+            ];
+        }
 
         if ($canEditDmFields) {
             $isCharacter = $this->entityType === EntityType::Character;
@@ -282,6 +339,47 @@ class Form extends Component
             'giverOptions' => $giverOptions,
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),
         ])->title(($this->entity !== null ? 'Edit ' : 'New ').strtolower($this->entityType->label()));
+    }
+
+    public function addCustomField(): void
+    {
+        if (count($this->custom_fields) < 20) {
+            $this->custom_fields[] = ['key' => '', 'value' => ''];
+        }
+    }
+
+    public function removeCustomField(int $index): void
+    {
+        unset($this->custom_fields[$index]);
+
+        $this->custom_fields = array_values($this->custom_fields);
+    }
+
+    /**
+     * Drops the empty rows, trims both sides, and strips control characters. These
+     * render as plain text in a definition list, so nothing else needs cleaning.
+     *
+     * @param  array<int, mixed>  $input
+     * @return list<array{key: string, value: string}>|null
+     */
+    private function parseCustomFields(array $input): ?array
+    {
+        $fields = collect($input)
+            ->map(fn (mixed $field): array => [
+                'key' => $this->cleanFieldText(is_array($field) ? ($field['key'] ?? '') : ''),
+                'value' => $this->cleanFieldText(is_array($field) ? ($field['value'] ?? '') : ''),
+            ])
+            ->filter(fn (array $field): bool => $field['key'] !== '')
+            ->take(20)
+            ->values()
+            ->all();
+
+        return $fields === [] ? null : $fields;
+    }
+
+    private function cleanFieldText(mixed $value): string
+    {
+        return trim((string) preg_replace('/[\x00-\x1F\x7F]/u', '', (string) $value));
     }
 
     /**

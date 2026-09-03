@@ -47,7 +47,7 @@
                 @foreach ($encounters as $encounter)
                     <x-ui.card :padding="false" wire:key="run-encounter-{{ $encounter->id }}">
                         <x-slot:header>
-                            <a href="{{ $encounter->url() }}" class="text-xs text-ink-faint hover:text-ink">Open on its own page</a>
+                            <a href="{{ $encounter->url() }}" class="text-sm text-ink-faint hover:text-ink">Open on its own page</a>
                         </x-slot:header>
                         <h2 class="border-b border-line px-5 py-3 font-display text-base font-semibold">{{ $encounter->name }}</h2>
                         <livewire:encounters.tracker :campaign="$campaign" :encounter="$encounter" :wire:key="'tracker-'.$encounter->id" />
@@ -66,7 +66,7 @@
             @if ($activeQuests->isNotEmpty())
                 <x-ui.card title="Active quests" :padding="false">
                     <x-slot:header>
-                        <span class="text-xs text-ink-faint">Ticking one here records {{ $session->label() }}</span>
+                        <span class="text-sm text-ink-faint">Ticking one here records {{ $session->label() }}</span>
                     </x-slot:header>
                     <ul class="divide-y divide-line">
                         @foreach ($activeQuests as $quest)
@@ -122,7 +122,7 @@
         <aside class="space-y-6">
             <x-ui.card title="Secrets and clues" :padding="false">
                 <x-slot:header>
-                    <span class="text-xs text-ink-faint">{{ $readySecrets->count() }} left</span>
+                    <span class="text-sm text-ink-faint">{{ $readySecrets->count() }} left</span>
                 </x-slot:header>
 
                 @if ($readySecrets->isEmpty())

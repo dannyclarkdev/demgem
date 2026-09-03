@@ -71,7 +71,10 @@
     --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
     --font-mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
 
-    --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    /* backwards, not both: a filled "transform: none" still computes to a matrix,
+       which makes the wrapper a containing block and pins every position:fixed
+       child (the tools drawer and its button) to the page instead of the viewport. */
+    --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
     --animate-fade: fade 0.3s ease-out both;
 
     @keyframes rise {
@@ -192,7 +195,7 @@
 /* Rendered entity Markdown. Keep it calm: this is reference text read at the table. */
 @layer components {
     .prose-entity {
-        @apply max-w-none text-[15px] leading-relaxed text-ink;
+        @apply max-w-none text-base leading-relaxed text-ink;
     }
     .prose-entity > * + * {
         @apply mt-4;
@@ -234,10 +237,10 @@
         @apply border-l-2 border-ember/50 pl-4 text-ink-muted italic;
     }
     .prose-entity code {
-        @apply rounded bg-raised px-1 py-0.5 font-mono text-[13px] text-ink;
+        @apply rounded bg-raised px-1 py-0.5 font-mono text-sm text-ink;
     }
     .prose-entity pre {
-        @apply overflow-x-auto rounded-md border border-line bg-raised p-4 font-mono text-[13px];
+        @apply overflow-x-auto rounded-md border border-line bg-raised p-4 font-mono text-sm;
     }
     .prose-entity pre code {
         @apply bg-transparent p-0;
@@ -263,7 +266,7 @@
 /* Wiki links and the editor. */
 @layer components {
     .ui-editor-btn {
-        @apply inline-flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs text-ink-faint hover:bg-raised hover:text-ink;
+        @apply inline-flex h-8 min-w-8 items-center justify-center rounded px-2 font-mono text-sm text-ink-faint hover:bg-raised hover:text-ink;
     }
     .ui-editor-btn--active {
         @apply bg-raised text-ink;

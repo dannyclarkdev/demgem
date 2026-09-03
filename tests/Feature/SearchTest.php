@@ -27,6 +27,18 @@ it('finds entities by name and body, scoped to the campaign and the viewer', fun
         ->assertSee('Salt Crypt');
 });
 
+it('finds a character by their class', function () {
+    $campaign = Campaign::factory()->create();
+    Entity::factory()->for($campaign)->forPlayers()->withRecord('Wizard', 4, null)->create(['name' => 'Ilma', 'body' => 'Keeps a raven.']);
+    Entity::factory()->for($campaign)->forPlayers()->create(['name' => 'Coll', 'body' => 'Runs the docks.']);
+
+    $this->actingAs(ownerOf($campaign))
+        ->get(route('search', [$campaign, 'q' => 'wizard']))
+        ->assertOk()
+        ->assertSee('Ilma')
+        ->assertDontSee('Coll');
+});
+
 it('never matches GM notes', function () {
     $campaign = Campaign::factory()->create();
     Entity::factory()->for($campaign)->forPlayers()->withDmNotes('The password is swordfish.')->create(['name' => 'Gatekeeper', 'body' => 'Grumpy.']);

@@ -44,6 +44,18 @@ class CampaignPolicy
         return $campaign->roleFor($user)?->isDm() ?? false;
     }
 
+    /**
+     * The JSON export. Surfaces: the download route and the card in campaign settings.
+     *
+     * GM roles, not the owner alone: a co-GM already sees every field the file holds,
+     * so an owner-only rule would protect nothing and lose the campaign when the owner
+     * disappears, which is the case the export exists for.
+     */
+    public function export(User $user, Campaign $campaign): bool
+    {
+        return $campaign->roleFor($user)?->isDm() ?? false;
+    }
+
     public function changeRoles(User $user, Campaign $campaign): bool
     {
         return $campaign->roleFor($user) === CampaignRole::Owner;

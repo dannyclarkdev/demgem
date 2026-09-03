@@ -75,3 +75,34 @@ jobs:
 
       - name: Test
         run: php artisan test --compact
+
+  docker:
+    name: The image builds and boots
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare the environment
+        run: |
+          cp .env.docker.example .env.docker
+          sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env.docker
+
+      # --wait holds until every healthcheck passes, so a container that comes up
+      # broken fails here rather than on a self-hoster's box.
+      - name: Build and start the stack
+        run: docker compose up -d --build --wait --wait-timeout 240
+
+      - name: Check the app answers
+        run: curl --fail --silent --show-error http://localhost:8000/up
+
+      - name: Check the login page renders
+        run: curl --fail --silent --show-error http://localhost:8000/login | grep -q "demgem"
+
+      - name: Show the logs when something failed
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down --volumes

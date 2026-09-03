@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
@@ -40,10 +41,14 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $body
  * @property string|null $dm_notes
  * @property string|null $rewards
+ * @property array<int, mixed>|null $custom_fields Raw decoded JSON. Read it through customFields().
  * @property Visibility $visibility
  * @property string|null $parent_id
  * @property bool $is_pc
  * @property int|null $player_user_id
+ * @property string|null $character_class
+ * @property int|null $level
+ * @property string|null $sheet_url
  * @property QuestStatus|null $quest_status
  * @property string|null $giver_entity_id
  * @property int|null $created_by
@@ -59,11 +64,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read User|null $player
  * @property-read Entity|null $giver
  * @property-read Collection<int, QuestObjective> $objectives
+ * @property-read Pivot|null $pivot Set when the row was loaded through GameSession::entities()
  */
 #[ObservedBy([EntityObserver::class])]
 #[Fillable([
-    'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'visibility',
-    'parent_id', 'is_pc', 'player_user_id', 'quest_status', 'giver_entity_id',
+    'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility',
+    'parent_id', 'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
+    'quest_status', 'giver_entity_id',
     'created_by', 'updated_by',
 ])]
 class Entity extends Model implements HasMedia
@@ -83,6 +90,8 @@ class Entity extends Model implements HasMedia
             'visibility' => Visibility::class,
             'quest_status' => QuestStatus::class,
             'is_pc' => 'boolean',
+            'level' => 'integer',
+            'custom_fields' => 'array',
         ];
     }
 
@@ -187,6 +196,36 @@ class Entity extends Model implements HasMedia
         return $this->type === EntityType::Quest;
     }
 
+    public function isCharacter(): bool
+    {
+        return $this->type === EntityType::Character;
+    }
+
+    /**
+     * Whether there is a record row to render at all. A character with none of the
+     * four facts renders no row, rather than an empty one.
+     */
+    public function hasCharacterRecord(): bool
+    {
+        return $this->isCharacter()
+            && (filled($this->character_class) || $this->level !== null || filled($this->sheet_url) || $this->is_pc);
+    }
+
+    /**
+     * The host of the sheet link, for a button that says "D&D Beyond" instead of
+     * showing 200 characters of URL.
+     */
+    public function sheetHost(): ?string
+    {
+        if (blank($this->sheet_url)) {
+            return null;
+        }
+
+        $host = parse_url((string) $this->sheet_url, PHP_URL_HOST);
+
+        return is_string($host) ? preg_replace('/^www\\./', '', $host) : null;
+    }
+
     /**
      * A quest with no stored status reads as available. The column is nullable because
      * it is meaningless on the other five types, and a row can reach here from a raw
@@ -220,6 +259,32 @@ class Entity extends Model implements HasMedia
             'done' => $this->objectives()->complete()->count(),
             'total' => $this->objectives()->count(),
         ];
+    }
+
+    /**
+     * The GM's own key-value pairs, in the order they typed them. Plain text on both
+     * sides: a pair is a label and a value, and a GM who wants prose has the body.
+     *
+     * @return list<array{key: string, value: string}>
+     */
+    public function customFields(): array
+    {
+        $fields = $this->custom_fields;
+
+        if (! is_array($fields)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(
+                fn (mixed $field): array => [
+                    'key' => is_array($field) ? trim((string) ($field['key'] ?? '')) : '',
+                    'value' => is_array($field) ? trim((string) ($field['value'] ?? '')) : '',
+                ],
+                $fields,
+            ),
+            fn (array $field): bool => $field['key'] !== '',
+        ));
     }
 
     /**
@@ -313,6 +378,10 @@ class Entity extends Model implements HasMedia
             'name' => $this->name,
             'body' => $this->body,
             'rewards' => $this->rewards,
+            'character_class' => $this->character_class,
+            // The raw JSON text, on purpose: the database engine runs "ilike" against
+            // the column itself, so "tiefling" finds the entity whose Race says so.
+            'custom_fields' => $this->getRawOriginal('custom_fields'),
         ];
     }
 

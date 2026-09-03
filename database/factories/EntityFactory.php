@@ -69,6 +69,19 @@ class EntityFactory extends Factory
         return $this->state(['type' => EntityType::Character, 'is_pc' => true, 'player_user_id' => $user->id]);
     }
 
+    /**
+     * A character record: class, level, and a sheet link.
+     */
+    public function withRecord(string $class = 'Bard', int $level = 5, ?string $sheetUrl = 'https://example.test/sheet'): static
+    {
+        return $this->state([
+            'type' => EntityType::Character,
+            'character_class' => $class,
+            'level' => $level,
+            'sheet_url' => $sheetUrl,
+        ]);
+    }
+
     public function childOf(Entity $parent): static
     {
         return $this->state(['type' => $parent->type, 'parent_id' => $parent->id, 'campaign_id' => $parent->campaign_id]);

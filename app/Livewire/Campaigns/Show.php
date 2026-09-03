@@ -44,6 +44,14 @@ class Show extends Component
                 ->whereNotNull('recap_published_at')
                 ->orderByDesc('recap_published_at')
                 ->first(),
+            'party' => Entity::query()
+                ->ofType(EntityType::Character)
+                ->visibleTo($user, $role)
+                ->where('is_pc', true)
+                ->with(['player', 'media'])
+                ->orderBy('name')
+                ->limit(8)
+                ->get(),
             'activeQuests' => Entity::query()
                 ->ofType(EntityType::Quest)
                 ->visibleTo($user, $role)
