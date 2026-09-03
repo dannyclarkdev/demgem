@@ -536,14 +536,14 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 
 ### Functional
 
-- [ ] A GM sets a quest's status to available, active, completed, or failed, and the badge shows it everywhere a quest appears.
-- [ ] A GM sets a quest giver from any entity type, with characters and factions suggested first.
-- [ ] Rewards render as their own block, and a `[[link]]` inside them resolves and earns a backlink.
-- [ ] Renaming an entity rewrites its links inside a quest's rewards.
-- [ ] A GM adds, edits, removes, and reorders objectives, by drag and by button, and positions stay contiguous after a delete.
-- [ ] Ticking an objective from the Run screen records the session; ticking it from the quest page does not, and unticking clears both columns.
-- [ ] `/quests` filters by status, the filter survives a page refresh through the URL, and each row shows progress like "3 of 7".
-- [ ] The dashboard shows active quests with their objective progress.
+- [x] A GM sets a quest's status to available, active, completed, or failed, and the badge shows it everywhere a quest appears.
+- [x] A GM sets a quest giver from any entity type, with characters and factions suggested first.
+- [x] Rewards render as their own block, and a `[[link]]` inside them resolves and earns a backlink.
+- [x] Renaming an entity rewrites its links inside a quest's rewards.
+- [x] A GM adds, edits, removes, and reorders objectives, by drag and by button, and positions stay contiguous after a delete.
+- [x] Ticking an objective from the Run screen records the session; ticking it from the quest page does not, and unticking clears both columns.
+- [x] `/quests` filters by status, the filter survives a page refresh through the URL, and each row shows progress like "3 of 7".
+- [x] The dashboard shows active quests with their objective progress.
 - [ ] A GM creates an encounter, adds the party in one click, adds four goblins in one action with shared HP and AC, and adds a bare name by hand.
 - [ ] Roll initiative fills every non-PC combatant; Sort by initiative orders them with blanks last.
 - [ ] Next turn advances by position, wraps into the next round, and the turn marker survives a refresh.
@@ -561,8 +561,8 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 
 ### Non-functional
 
-- [ ] **A visible quest with a GM-only giver names no giver in a player's HTML or Livewire snapshot.**
-- [ ] **An objective completed in a hidden session shows no session reference to a player.**
+- [x] **A visible quest with a GM-only giver names no giver in a player's HTML or Livewire snapshot.**
+- [x] **An objective completed in a hidden session shows no session reference to a player.**
 - [ ] No combatant, dice roll, or random table content reaches a player's HTML, snapshot, or JSON. All four routes 404 for a player.
 - [ ] A member removed or demoted mid-encounter stops writing on their next request, **including on the tracker's next poll**.
 - [ ] One database query per tracker poll, asserted in a test.

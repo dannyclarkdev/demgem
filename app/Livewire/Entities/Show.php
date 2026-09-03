@@ -4,6 +4,7 @@ namespace App\Livewire\Entities;
 
 use App\Actions\Entities\DeleteEntity;
 use App\Actions\Sessions\SessionsMentioning;
+use App\Enums\CampaignRole;
 use App\Enums\EntityType;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
@@ -56,6 +57,10 @@ class Show extends Component
             $this->entity->load('viewers');
         }
 
+        if ($this->entity->isQuest()) {
+            $this->entity->load('giver');
+        }
+
         $backlinkSourceIds = Mention::query()
             ->where('target_entity_id', $this->entity->id)
             ->where('source_type', $this->entity->getMorphClass())
@@ -73,7 +78,23 @@ class Show extends Component
             'sessions' => app(SessionsMentioning::class)->handle($this->entity, $role),
             'bodyHtml' => $renderer->render($this->entity->body, $wikiLinks),
             'dmNotesHtml' => $role->isDm() ? $renderer->render($this->entity->dm_notes, $wikiLinks) : null,
+            'rewardsHtml' => $this->entity->isQuest() ? $renderer->render($this->entity->rewards, $wikiLinks) : '',
+            'questStatus' => $this->entity->questStatus(),
+            'giver' => $this->visibleGiver($user, $role),
         ])->title($this->entity->name);
+    }
+
+    /**
+     * The giver is a separate entity with its own visibility, so a quest the party can
+     * read may be given by an NPC they have never met. A hidden giver renders as
+     * nothing at all: the absence of a row is the only safe empty state, because
+     * "hidden" tells them there is somebody.
+     */
+    private function visibleGiver(User $user, CampaignRole $role): ?Entity
+    {
+        $giver = $this->entity->isQuest() ? $this->entity->giver : null;
+
+        return $giver !== null && $giver->isVisibleTo($user, $role) ? $giver : null;
     }
 
     private function user(): User

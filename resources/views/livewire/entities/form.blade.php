@@ -11,6 +11,21 @@
                 </div>
             </x-ui.card>
 
+            @if ($canEditDmFields && $isQuest)
+                <x-ui.card title="Rewards">
+                    <x-ui.markdown-editor
+                        label="What the party gets"
+                        name="rewards"
+                        wire:model="rewards"
+                        rows="5"
+                        :autocomplete-url="$autocompleteUrl"
+                        preview-action="previewRewards"
+                        :preview="$rewardsPreview"
+                        hint="Everyone who can see the quest can read this. Link an item with [[ to make it real."
+                    />
+                </x-ui.card>
+            @endif
+
             @if ($canEditDmFields)
                 <x-ui.card class="border-dm/30">
                     <x-slot:header><x-ui.badge variant="dm" icon="eye-off">GM only</x-ui.badge></x-slot:header>
@@ -35,6 +50,30 @@
                     <p wire:loading wire:target="image" class="text-xs text-ink-faint">Uploading&hellip;</p>
                 </div>
             </x-ui.card>
+
+            @if ($canEditDmFields && $isQuest)
+                <x-ui.card>
+                    <div class="space-y-5">
+                        <div x-data="{ status: @entangle('quest_status') }">
+                            <x-ui.select label="Status" name="quest_status" wire:model="quest_status" x-model="status">
+                                @foreach ($questStatuses as $option)
+                                    <option value="{{ $option->value }}">{{ $option->label() }}</option>
+                                @endforeach
+                            </x-ui.select>
+                            <p class="mt-1.5 text-xs text-ink-faint" x-text="{
+                                @foreach ($questStatuses as $option) '{{ $option->value }}': @js($option->description()), @endforeach
+                            }[status]"></p>
+                        </div>
+
+                        <x-ui.select label="Given by" name="giver_entity_id" wire:model="giver_entity_id" hint="A player only sees the giver if they can see that entity.">
+                            <option value="">Nobody yet</option>
+                            @foreach ($giverOptions as $option)
+                                <option value="{{ $option->id }}">{{ $option->name }} &middot; {{ $option->type->label() }}</option>
+                            @endforeach
+                        </x-ui.select>
+                    </div>
+                </x-ui.card>
+            @endif
 
             @if ($canEditDmFields)
                 <x-ui.card>

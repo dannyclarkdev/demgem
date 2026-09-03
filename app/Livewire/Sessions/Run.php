@@ -4,7 +4,9 @@ namespace App\Livewire\Sessions;
 
 use App\Actions\Sessions\RevealSecret;
 use App\Actions\Sessions\UpdateSession;
+use App\Enums\EntityType;
 use App\Enums\PrepRole;
+use App\Enums\QuestStatus;
 use App\Enums\SessionStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
@@ -16,6 +18,7 @@ use App\Models\Scene;
 use App\Models\Secret;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
@@ -99,7 +102,24 @@ class Run extends Component
             'prepRoles' => PrepRole::cases(),
             'buckets' => $buckets,
             'party' => Entity::query()->where('is_pc', true)->with('player')->orderBy('name')->get(),
+            'activeQuests' => $this->activeQuests(),
         ])->title('Running '.$this->session->label());
+    }
+
+    /**
+     * The quests the party is on tonight. Each one gets its own Objectives component,
+     * handed this session, so a tick records the night it happened.
+     *
+     * @return Collection<int, Entity>
+     */
+    private function activeQuests(): Collection
+    {
+        return Entity::query()
+            ->ofType(EntityType::Quest)
+            ->where('quest_status', QuestStatus::Active->value)
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
     }
 
     private function secret(string $secretId): Secret

@@ -43,4 +43,20 @@ class MarkdownRenderer
 
         return (string) Str::markdown($markdown, self::options(), $extensions);
     }
+
+    /**
+     * One line of Markdown for a place that is already a line: a quest objective, a
+     * random table entry. Same parser and same escaping; the single wrapping paragraph
+     * is unwrapped so the text sits inside a flex row instead of forcing a block.
+     */
+    public function renderInline(?string $markdown, ?WikiLinkRenderer $wikiLinks = null): string
+    {
+        $html = trim($this->render($markdown, $wikiLinks));
+
+        if (str_starts_with($html, '<p>') && str_ends_with($html, '</p>') && substr_count($html, '<p>') === 1) {
+            return trim(substr($html, 3, -4));
+        }
+
+        return $html;
+    }
 }

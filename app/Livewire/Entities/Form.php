@@ -5,6 +5,7 @@ namespace App\Livewire\Entities;
 use App\Actions\Entities\CreateEntity;
 use App\Actions\Entities\UpdateEntity;
 use App\Enums\EntityType;
+use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
@@ -45,6 +46,12 @@ class Form extends Component
 
     public string $player_user_id = '';
 
+    public string $quest_status = '';
+
+    public string $giver_entity_id = '';
+
+    public string $rewards = '';
+
     public string $tags = '';
 
     /** @var list<int> */
@@ -54,6 +61,8 @@ class Form extends Component
 
     public string $dmNotesPreview = '';
 
+    public string $rewardsPreview = '';
+
     public function mount(Campaign $campaign, string $type, ?string $slug = null): void
     {
         $this->enterCampaign($campaign);
@@ -62,6 +71,7 @@ class Form extends Component
         if ($slug === null) {
             $this->authorize('create', [Entity::class, $campaign]);
             $this->name = (string) request()->query('name', '');
+            $this->quest_status = $this->isQuest() ? QuestStatus::Available->value : '';
 
             return;
         }
@@ -85,7 +95,18 @@ class Form extends Component
             $this->is_pc = $entity->is_pc;
             $this->player_user_id = $entity->player_user_id !== null ? (string) $entity->player_user_id : '';
             $this->viewer_ids = $entity->viewers->pluck('id')->all();
+
+            if ($this->isQuest()) {
+                $this->quest_status = ($entity->questStatus() ?? QuestStatus::Available)->value;
+                $this->giver_entity_id = $entity->giver_entity_id ?? '';
+                $this->rewards = $entity->rewards ?? '';
+            }
         }
+    }
+
+    private function isQuest(): bool
+    {
+        return $this->entityType === EntityType::Quest;
     }
 
     public function save(CreateEntity $createEntity, UpdateEntity $updateEntity): void
@@ -123,12 +144,37 @@ class Form extends Component
                 'viewer_ids' => ['array'],
                 'viewer_ids.*' => ['integer', Rule::exists('campaign_members', 'user_id')->where('campaign_id', $this->campaign->id)],
             ];
+
+            // Quest fields exist on every entity row but mean something on one type only,
+            // so they are prohibited elsewhere rather than quietly ignored.
+            $rules += $this->isQuest()
+                ? [
+                    'quest_status' => ['required', Rule::enum(QuestStatus::class)],
+                    'giver_entity_id' => [
+                        'nullable',
+                        Rule::exists('entities', 'id')
+                            ->where('campaign_id', $this->campaign->id)
+                            ->whereNull('deleted_at'),
+                    ],
+                    'rewards' => ['nullable', 'string', 'max:100000'],
+                ]
+                : [
+                    'quest_status' => ['prohibited'],
+                    'giver_entity_id' => ['prohibited'],
+                    'rewards' => ['prohibited'],
+                ];
         }
 
         $validated = $this->validate($rules);
 
         if ($canEditDmFields && $isEdit && ($validated['parent_id'] ?? '') === $this->entity->id) {
             $this->addError('parent_id', 'An entity cannot be its own parent.');
+
+            return;
+        }
+
+        if ($canEditDmFields && $isEdit && ($validated['giver_entity_id'] ?? '') === $this->entity->id) {
+            $this->addError('giver_entity_id', 'A quest cannot give itself.');
 
             return;
         }
@@ -151,6 +197,14 @@ class Form extends Component
                 'player_user_id' => $isCharacter && ($validated['player_user_id'] ?? '') !== '' ? (int) $validated['player_user_id'] : null,
                 'viewer_ids' => $visibility === Visibility::Selected ? array_map('intval', $validated['viewer_ids'] ?? []) : [],
             ];
+
+            if ($this->isQuest()) {
+                $data += [
+                    'quest_status' => QuestStatus::from($validated['quest_status']),
+                    'giver_entity_id' => ($validated['giver_entity_id'] ?? '') !== '' ? $validated['giver_entity_id'] : null,
+                    'rewards' => ($validated['rewards'] ?? '') !== '' ? $validated['rewards'] : null,
+                ];
+            }
         }
 
         $entity = $isEdit
@@ -182,6 +236,11 @@ class Form extends Component
         $this->dmNotesPreview = $this->canEditDmFields() ? $renderer->render($this->dm_notes, $this->wikiLinkRenderer()) : '';
     }
 
+    public function previewRewards(MarkdownRenderer $renderer): void
+    {
+        $this->rewardsPreview = $this->canEditDmFields() ? $renderer->render($this->rewards, $this->wikiLinkRenderer()) : '';
+    }
+
     private function wikiLinkRenderer(): WikiLinkRenderer
     {
         return WikiLinkRenderer::for($this->campaign, $this->user(), $this->role());
@@ -199,6 +258,16 @@ class Form extends Component
             ? $this->campaign->members()->with('user')->get()->sortBy(fn ($m) => $m->user->name)->values()
             : collect();
 
+        // Any entity may give a quest; characters and factions come first because they
+        // almost always are the giver.
+        $giverOptions = $canEditDmFields && $this->isQuest()
+            ? Entity::query()
+                ->when($this->entity, fn ($q) => $q->whereKeyNot($this->entity?->id))
+                ->orderByRaw("case when type in ('character', 'faction') then 0 else 1 end")
+                ->orderBy('name')
+                ->get(['id', 'name', 'type'])
+            : collect();
+
         return view('livewire.entities.form', [
             'type' => $this->entityType,
             'isEdit' => $this->entity !== null,
@@ -208,6 +277,9 @@ class Form extends Component
             'viewerOptions' => $members->filter(fn ($m) => ! $m->role->isDm())->values(),
             'visibilities' => Visibility::cases(),
             'isCharacter' => $this->entityType === EntityType::Character,
+            'isQuest' => $this->isQuest(),
+            'questStatuses' => QuestStatus::cases(),
+            'giverOptions' => $giverOptions,
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),
         ])->title(($this->entity !== null ? 'Edit ' : 'New ').strtolower($this->entityType->label()));
     }

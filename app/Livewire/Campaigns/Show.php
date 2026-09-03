@@ -3,10 +3,14 @@
 namespace App\Livewire\Campaigns;
 
 use App\Enums\CampaignRole;
+use App\Enums\EntityType;
+use App\Enums\QuestStatus;
 use App\Enums\SessionStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
+use App\Models\Entity;
 use App\Models\GameSession;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -21,6 +25,8 @@ class Show extends Component
 
     public function render(): View
     {
+        /** @var User $user */
+        $user = auth()->user();
         $role = $this->role();
 
         $activeInvites = $this->isDm()
@@ -38,6 +44,14 @@ class Show extends Component
                 ->whereNotNull('recap_published_at')
                 ->orderByDesc('recap_published_at')
                 ->first(),
+            'activeQuests' => Entity::query()
+                ->ofType(EntityType::Quest)
+                ->visibleTo($user, $role)
+                ->where('quest_status', QuestStatus::Active->value)
+                ->with('objectives')
+                ->orderBy('name')
+                ->limit(5)
+                ->get(),
         ])->title($this->campaign->name);
     }
 

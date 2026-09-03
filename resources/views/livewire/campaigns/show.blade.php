@@ -47,6 +47,31 @@
         </x-ui.card>
     </div>
 
+    <x-ui.card title="Quests in play" class="mb-4" :padding="false">
+        <x-slot:header>
+            <a href="{{ route('entities.index', [$campaign, 'quests', 'status' => 'active']) }}" class="text-xs text-ink-faint hover:text-ink">All active quests</a>
+        </x-slot:header>
+
+        @if ($activeQuests->isEmpty())
+            <p class="px-5 py-4 text-sm text-ink-faint">
+                {{ $role->isDm() ? 'Set a quest to active and it turns up here and on the Run screen.' : 'The party has not taken on anything yet.' }}
+            </p>
+        @else
+            <ul class="divide-y divide-line">
+                @foreach ($activeQuests as $quest)
+                    @php ($progress = $quest->objectiveProgress())
+                    <li>
+                        <a href="{{ $quest->url() }}" class="flex flex-wrap items-center gap-3 px-5 py-3 hover:bg-raised">
+                            <x-ui.icon name="target" class="size-4 shrink-0 text-ember" />
+                            <span class="min-w-0 flex-1 truncate font-medium text-ink">{{ $quest->name }}</span>
+                            <x-ui.progress :value="$progress['done']" :max="$progress['total']" class="w-32 shrink-0" />
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-ui.card>
+
     <div class="grid gap-4 sm:grid-cols-3">
         <a href="{{ route('campaigns.members', $campaign) }}" class="rounded-lg border border-line bg-panel p-5 transition hover:border-line-strong">
             <p class="eyebrow">Members</p>

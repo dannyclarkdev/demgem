@@ -22,6 +22,33 @@
                 <livewire:sessions.live-notes :campaign="$campaign" :session="$session" :wire:key="'live-notes-'.$session->id" />
             </x-ui.card>
 
+            @if ($activeQuests->isNotEmpty())
+                <x-ui.card title="Active quests" :padding="false">
+                    <x-slot:header>
+                        <span class="text-xs text-ink-faint">Ticking one here records {{ $session->label() }}</span>
+                    </x-slot:header>
+                    <ul class="divide-y divide-line">
+                        @foreach ($activeQuests as $quest)
+                            <li class="px-5 py-4">
+                                <a href="{{ $quest->url() }}" class="flex items-center gap-2 font-medium text-ink hover:text-ember">
+                                    <x-ui.icon name="target" class="size-4 shrink-0 text-ember" />
+                                    {{ $quest->name }}
+                                </a>
+                                <div class="mt-2">
+                                    <livewire:quests.objectives
+                                        :campaign="$campaign"
+                                        :quest="$quest"
+                                        :session="$session"
+                                        :compact="true"
+                                        :wire:key="'run-objectives-'.$quest->id"
+                                    />
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </x-ui.card>
+            @endif
+
             <x-ui.card title="Scenes" :padding="false">
                 @if ($scenes->isEmpty())
                     <p class="px-5 py-4 text-ink-faint">No scenes prepped. Improvise; the party will anyway.</p>
