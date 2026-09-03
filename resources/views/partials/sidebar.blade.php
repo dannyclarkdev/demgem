@@ -42,6 +42,13 @@
         </div>
         <div>
             <p class="eyebrow px-2 pb-2">Play</p>
+            {{-- Every role. It is the player's screen, and the one page they keep open
+                 during a game; a co-GM watches the same thing from a second device. --}}
+            <x-ui.nav-link
+                :href="route('table', $currentCampaign)"
+                :active="request()->routeIs('table')"
+                icon="play"
+            >The table</x-ui.nav-link>
             <x-ui.nav-link
                 :href="route('sessions.index', $currentCampaign)"
                 :active="request()->routeIs('sessions.*')"

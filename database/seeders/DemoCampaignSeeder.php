@@ -3,8 +3,15 @@
 namespace Database\Seeders;
 
 use App\Actions\Campaigns\CreateCampaign;
+use App\Actions\Dice\RollDice;
 use App\Actions\Encounters\AddCombatants;
+use App\Actions\Encounters\ApplyDamage;
 use App\Actions\Encounters\CreateEncounter;
+use App\Actions\Encounters\NextTurn;
+use App\Actions\Encounters\RollInitiative;
+use App\Actions\Encounters\SetConditions;
+use App\Actions\Encounters\SetPlayerVisibility;
+use App\Actions\Encounters\SortByInitiative;
 use App\Actions\Entities\CreateEntity;
 use App\Actions\RandomTables\CreateRandomTable;
 use App\Actions\Sessions\CreateSession;
@@ -147,6 +154,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedQuestDetails($campaign);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
+        $this->seedDiceLog($campaign, $dm, $player);
 
         $this->command->info("Seeded The Drowned Duchy for {$dm->email} (password: password).");
     }
@@ -292,6 +300,14 @@ class DemoCampaignSeeder extends Seeder
      * The fight the third session is prepped for: the party, plus four of the Duke's
      * drowned, ready to roll initiative.
      */
+    /**
+     * A fight already in progress, so /table shows a table on the first run rather
+     * than an empty state.
+     *
+     * Half revealed and half not, because that is the feature: the party sees itself
+     * and the two thralls it has already met, and the Duke waits behind the GM's eye
+     * toggle until the fiction catches up.
+     */
     private function seedEncounter(Campaign $campaign, User $dm): void
     {
         $third = $campaign->gameSessions()->where('number', 3)->first();
@@ -306,6 +322,39 @@ class DemoCampaignSeeder extends Seeder
         if ($duke !== null) {
             $add->handle($encounter, $duke->name, 1, $duke, 187, 18, 5);
         }
+
+        app(RollInitiative::class)->handle($encounter);
+        app(SortByInitiative::class)->handle($encounter);
+        app(NextTurn::class)->handle($encounter);
+
+        $reveal = app(SetPlayerVisibility::class);
+        $thralls = $encounter->combatants()->where('name', 'like', 'Drowned thrall%')->orderBy('position')->get();
+
+        foreach ($thralls->take(2) as $thrall) {
+            $reveal->handle($thrall, true);
+        }
+
+        if ($thralls->isNotEmpty()) {
+            app(ApplyDamage::class)->handle($thralls->first(), 18);
+            app(SetConditions::class)->handle($thralls->first(), ['Prone']);
+        }
+    }
+
+    /**
+     * A handful of rolls in the shared log, from both sides of the screen, so the
+     * feature explains itself the moment somebody opens /table.
+     */
+    private function seedDiceLog(Campaign $campaign, User $dm, User $player): void
+    {
+        $roll = app(RollDice::class);
+
+        $roll->handle($campaign, $dm, '1d20+3', 'Drowned thrall, claw');
+        $roll->handle($campaign, $player, '2d20kh1', 'Wren, stealth');
+        $roll->handle($campaign, $dm, '2d6+2', 'Thrall damage');
+        $roll->handle($campaign, $player, '1d20+5', 'Halder, tide domain save');
+
+        // Behind the screen: the party sees no trace of this one, which is the point.
+        $roll->handle($campaign, $dm, '1d20', 'Does the Duke notice them', null, true);
     }
 
     /**

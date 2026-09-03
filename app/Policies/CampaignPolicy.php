@@ -35,13 +35,26 @@ class CampaignPolicy
     }
 
     /**
-     * The table tools: the dice tray, the encounter tracker, and the random tables.
-     * All three are GM-only in this slice, and none of them is worth a policy class
-     * of its own until a player can see one.
+     * The GM's table tools: the encounter tracker and the random tables. The dice tray
+     * left this ability in slice 5, when the log became shared; see rollDice().
      */
     public function useGmTools(User $user, Campaign $campaign): bool
     {
         return $campaign->roleFor($user)?->isDm() ?? false;
+    }
+
+    /**
+     * Rolling dice. Surfaces: the tray in the Run screen drawer and the tray on /table.
+     *
+     * Owner, co-GM, and player. Not a spectator, who is read-only by definition and
+     * whose roll nobody at the table asked for. A spectator still reads the log: it is
+     * what is happening, and watching is what they are there for.
+     */
+    public function rollDice(User $user, Campaign $campaign): bool
+    {
+        $role = $campaign->roleFor($user);
+
+        return $role !== null && $role !== CampaignRole::Spectator;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Livewire\Dice;
 
 use App\Actions\Dice\RollDice;
 use App\Exceptions\InvalidDiceFormulaException;
+use App\Exceptions\TooManyRollsException;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Models\DiceRoll;
@@ -12,14 +13,17 @@ use App\Models\User;
 use App\Support\Dice\DiceFormula;
 use App\Support\Dice\KeepMode;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
- * The dice tray. Nested, so a roll re-renders the tray and not the screen behind it,
- * and it calls enterCampaign() in its own mount because the hydrate hook runs per
- * component. GM roles only: a player rolling in the app is worth nothing until other
- * people see it, which is the shared log in P2.
+ * The dice tray: the controls, and nothing else. Dice\Log holds the results, because
+ * from slice 5 the log is the campaign's and not this component's.
+ *
+ * Owner, co-GM, and player. Not a spectator, who is read-only. The tray is on the Run
+ * screen drawer and on /table, and a roll from either reaches every open screen.
+ *
+ * Nested, so a roll re-renders the tray and not the screen behind it, and it calls
+ * enterCampaign() in its own mount because the hydrate hook runs per component.
  */
 class Tray extends Component
 {
@@ -34,14 +38,15 @@ class Tray extends Component
     /** '', 'kh' for advantage, 'kl' for disadvantage. Applies to the leading die. */
     public string $advantage = '';
 
-    public const QUICK_DICE = [20, 12, 10, 8, 6, 4, 100];
+    /** The GM's screen. Ignored for anyone else, in the action, on every surface. */
+    public bool $private = false;
 
-    public const LOG_LIMIT = 25;
+    public const QUICK_DICE = [20, 12, 10, 8, 6, 4, 100];
 
     public function mount(Campaign $campaign, ?GameSession $session = null): void
     {
         $this->enterCampaign($campaign);
-        $this->authorize('useGmTools', $campaign);
+        $this->authorize('rollDice', $campaign);
 
         $this->session = $session;
     }
@@ -59,7 +64,7 @@ class Tray extends Component
 
     public function roll(RollDice $rollDice): void
     {
-        $this->authorize('useGmTools', $this->campaign);
+        $this->authorize('rollDice', $this->campaign);
 
         $this->validate([
             'formula' => ['required', 'string', 'max:60'],
@@ -75,8 +80,9 @@ class Tray extends Component
                 DiceFormula::withAdvantage($this->formula, $mode),
                 $this->label,
                 $this->session,
+                $this->private,
             );
-        } catch (InvalidDiceFormulaException $exception) {
+        } catch (InvalidDiceFormulaException|TooManyRollsException $exception) {
             $this->addError('formula', $exception->getMessage());
 
             return;
@@ -85,33 +91,12 @@ class Tray extends Component
         $this->label = '';
     }
 
-    public function clearLog(): void
-    {
-        $this->authorize('useGmTools', $this->campaign);
-
-        DiceRoll::query()->where('user_id', $this->user()->id)->delete();
-    }
-
     public function render(): View
     {
         return view('livewire.dice.tray', [
             'quickDice' => self::QUICK_DICE,
-            'rolls' => $this->recentRolls(),
+            'mayRollPrivately' => DiceRoll::mayRollPrivately($this->role()),
         ]);
-    }
-
-    /**
-     * A GM sees the whole campaign's log, which in this slice is every GM's rolls.
-     *
-     * @return Collection<int, DiceRoll>
-     */
-    private function recentRolls(): Collection
-    {
-        return DiceRoll::query()
-            ->with('user')
-            ->latest()
-            ->limit(self::LOG_LIMIT)
-            ->get();
     }
 
     private function user(): User

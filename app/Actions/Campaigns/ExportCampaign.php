@@ -268,6 +268,7 @@ class ExportCampaign
                         'ac' => $combatant->ac,
                         'conditions' => $combatant->conditions,
                         'position' => $combatant->position,
+                        'player_visible' => $combatant->player_visible,
                     ])->values()->all(),
                 'created_at' => $encounter->created_at?->toIso8601String(),
             ]);
@@ -318,6 +319,7 @@ class ExportCampaign
                 'label' => $roll->label,
                 'total' => $roll->total,
                 'detail' => $roll->detail,
+                'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
             ]);
     }

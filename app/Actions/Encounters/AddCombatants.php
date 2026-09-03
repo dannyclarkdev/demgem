@@ -2,6 +2,7 @@
 
 namespace App\Actions\Encounters;
 
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 use App\Models\Encounter;
 use App\Models\Entity;
@@ -22,9 +23,35 @@ class AddCombatants
      * A quantity above one numbers them, "Goblin 1" through "Goblin 4", which is how a
      * GM refers to them out loud.
      *
+     * The party lands on the player table view straight away; everything else is
+     * hidden until the GM says otherwise. See create().
+     *
      * @return Collection<int, Combatant>
      */
     public function handle(
+        Encounter $encounter,
+        string $name,
+        int $quantity = 1,
+        ?Entity $entity = null,
+        ?int $hp = null,
+        ?int $ac = null,
+        ?int $initiativeBonus = null,
+    ): Collection {
+        $combatants = $this->create($encounter, $name, $quantity, $entity, $hp, $ac, $initiativeBonus);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
+
+        return $combatants;
+    }
+
+    /**
+     * The rows themselves, with no broadcast. Callers that add more than one group
+     * dispatch once when they are done, so a five-person party is one event and not
+     * five re-renders on every open screen.
+     *
+     * @return Collection<int, Combatant>
+     */
+    private function create(
         Encounter $encounter,
         string $name,
         int $quantity = 1,
@@ -53,6 +80,11 @@ class AddCombatants
                     'ac' => $ac,
                     'conditions' => [],
                     'position' => $position++,
+                    // The party is already on the screen at the table, so a PC shows at
+                    // once. Anything else the GM adds waits for the eye toggle, because
+                    // an ambusher that appears on the party's screens before it appears
+                    // in the fiction is the last time they trust the feature.
+                    'player_visible' => $entity->is_pc ?? false,
                 ]));
             }
 
@@ -72,8 +104,10 @@ class AddCombatants
         $added = new Collection;
 
         foreach ($entities as $entity) {
-            $added = $added->concat($this->handle($encounter, $entity->name, 1, $entity));
+            $added = $added->concat($this->create($encounter, $entity->name, 1, $entity));
         }
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
 
         return $added;
     }

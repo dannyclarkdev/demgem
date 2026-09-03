@@ -7,6 +7,10 @@
 # Then open http://localhost:8000 and register. The first account is an ordinary
 # account: demgem has no instance administrator and does not need one.
 #
+# Five services: the app, a queue worker, Reverb for the live table, Postgres, and
+# Redis. The live table needs all three of app, worker and reverb: a broadcast is
+# queued, so a stopped worker means the tracker falls back to its poll.
+#
 # The database credentials are written here rather than read from the environment on
 # purpose. Compose reads .env for interpolation, and a developer's .env points at
 # their own Postgres, which would quietly reconfigure this stack.
@@ -59,6 +63,37 @@ services:
       start_period: 30s
     volumes:
       - storage:/app/storage
+    depends_on:
+      app:
+        condition: service_healthy
+
+  # The live table. Reverb holds every open browser's websocket, and the queued
+  # broadcasts the worker picks up arrive here.
+  #
+  # It is a separate service and not a second process in the app container, because
+  # one process per container is what makes "docker compose logs reverb" and
+  # "restart: unless-stopped" mean anything.
+  #
+  # Set BROADCAST_CONNECTION=null in .env.docker to run the stack without it. The
+  # tracker falls back to its sixty-second poll and nothing else breaks.
+  reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    # The entrypoint treats a command that does not start with "-" as a one-off, so
+    # this container skips the migrations and the config caching the app does.
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "${REVERB_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     depends_on:
       app:
         condition: service_healthy

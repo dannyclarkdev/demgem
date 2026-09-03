@@ -85,6 +85,20 @@
                         @endif
 
                         <div wire:sort:ignore class="ml-auto flex shrink-0 items-center gap-0.5">
+                            {{-- The eye is what the party sees. Off by default for everything
+                                 the GM adds, so a surprise stays a surprise. --}}
+                            <x-ui.button
+                                variant="ghost"
+                                size="icon"
+                                wire:click="toggleVisibility('{{ $combatant->id }}')"
+                                :title="$combatant->isVisibleToPlayers() ? 'The party sees this row' : 'Hidden from the party'"
+                                :aria-label="($combatant->isVisibleToPlayers() ? 'Hide ' : 'Show ').$combatant->name.' on the player table'"
+                            >
+                                <x-ui.icon
+                                    :name="$combatant->isVisibleToPlayers() ? 'eye' : 'eye-off'"
+                                    class="size-4 {{ $combatant->isVisibleToPlayers() ? 'text-ember' : '' }}"
+                                />
+                            </x-ui.button>
                             @if ($combatant->hp !== null)
                                 <x-ui.button variant="ghost" size="icon" wire:click="openDamage('{{ $combatant->id }}')" aria-label="Damage or heal">
                                     <x-ui.icon name="heart" class="size-4" />

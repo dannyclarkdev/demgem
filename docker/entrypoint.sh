@@ -38,6 +38,28 @@ MESSAGE
     exit 1
 fi
 
+# The live table needs three strings that only the self-hoster can invent, and a
+# missing one fails at the table rather than at boot: the browser connects to a
+# server that has no app by that key, and the tracker quietly falls back to polling.
+# Fail here instead, where somebody is reading the output.
+if [ "${BROADCAST_CONNECTION}" = "reverb" ]; then
+    if [ -z "${REVERB_APP_ID}" ] || [ -z "${REVERB_APP_KEY}" ] || [ -z "${REVERB_APP_SECRET}" ]; then
+        cat >&2 <<'MESSAGE'
+demgem cannot start: BROADCAST_CONNECTION is reverb and its credentials are empty.
+
+Make three strings and put them in .env.docker:
+
+    REVERB_APP_ID=$(openssl rand -hex 8)
+    REVERB_APP_KEY=$(openssl rand -hex 16)
+    REVERB_APP_SECRET=$(openssl rand -hex 16)
+
+Or set BROADCAST_CONNECTION=null to run without the live table. The tracker then
+falls back to its sixty-second poll and nothing else changes.
+MESSAGE
+        exit 1
+    fi
+fi
+
 if [ "${AUTO_MIGRATE}" = "true" ]; then
     if [ -n "${DB_HOST}" ]; then
         echo "Waiting for ${DB_HOST}:${DB_PORT:-5432} ..."

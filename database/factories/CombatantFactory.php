@@ -31,6 +31,7 @@ class CombatantFactory extends Factory
             'ac' => null,
             'conditions' => [],
             'position' => 0,
+            'player_visible' => false,
         ];
     }
 
@@ -60,5 +61,14 @@ class CombatantFactory extends Factory
     public function withHealth(int $hp, ?int $maxHp = null): static
     {
         return $this->state(['hp' => $hp, 'max_hp' => $maxHp ?? $hp]);
+    }
+
+    /**
+     * A row the GM revealed to the party. The default is hidden, which is the default
+     * the column carries for everything except a player character.
+     */
+    public function shownToPlayers(): static
+    {
+        return $this->state(['player_visible' => true]);
     }
 }

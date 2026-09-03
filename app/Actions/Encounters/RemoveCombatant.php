@@ -2,6 +2,7 @@
 
 namespace App\Actions\Encounters;
 
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 use Illuminate\Support\Facades\DB;
 
@@ -24,5 +25,7 @@ class RemoveCombatant
 
             $combatant->delete();
         });
+
+        EncounterChanged::dispatch($combatant->campaign_id, $combatant->encounter_id);
     }
 }

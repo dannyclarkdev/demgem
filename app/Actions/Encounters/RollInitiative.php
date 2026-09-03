@@ -3,6 +3,7 @@
 namespace App\Actions\Encounters;
 
 use App\Actions\Dice\RollDice;
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 use App\Models\Encounter;
 
@@ -28,6 +29,10 @@ class RollInitiative
 
             $this->rollFor($combatant);
             $rolled++;
+        }
+
+        if ($rolled > 0) {
+            EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
         }
 
         return $rolled;

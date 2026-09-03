@@ -2,6 +2,7 @@
 
 namespace App\Actions\Encounters;
 
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 
 class ApplyDamage
@@ -26,5 +27,7 @@ class ApplyDamage
         }
 
         $combatant->update(['hp' => $hp]);
+
+        EncounterChanged::dispatch($combatant->campaign_id, $combatant->encounter_id);
     }
 }

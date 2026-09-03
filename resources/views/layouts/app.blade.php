@@ -18,6 +18,10 @@
             })();
         </script>
 
+        {{-- The websocket settings the browser needs. Rendered here, not baked into
+             the bundle, so one built image serves any host. See config/broadcasting.php. --}}
+        <script>window.demgem = @json(['reverb' => config('broadcasting.client')]);</script>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>

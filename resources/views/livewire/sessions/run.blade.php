@@ -10,14 +10,25 @@
         <x-ui.button :href="$session->url()" variant="ghost" size="sm">Session</x-ui.button>
     </x-ui.page-header>
 
+    {{-- Who else has the campaign open. The GM asks it out loud every week, and the
+         presence channel already knows the answer. --}}
+    <div class="mb-6">
+        <livewire:table.presence :campaign="$campaign" :wire:key="'run-presence-'.$session->id" />
+    </div>
+
     <x-ui.drawer name="tools" title="Tools" icon="dice">
         <div x-data="{ tab: 'dice' }" class="flex h-full flex-col">
             <x-ui.tabs class="shrink-0 px-2" :tabs="[
                 'dice' => ['label' => 'Dice', 'icon' => 'dice'],
                 'tables' => ['label' => 'Tables', 'icon' => 'list'],
             ]" />
-            <div x-show="tab === 'dice'" class="min-h-0 flex-1">
-                <livewire:dice.tray :campaign="$campaign" :session="$session" :wire:key="'dice-'.$session->id" />
+            {{-- The tray rolls; the log below it is the campaign's, so a player rolling
+                 at their end of the table turns up here without being read out. --}}
+            <div x-show="tab === 'dice'" class="flex min-h-0 flex-1 flex-col">
+                <div class="shrink-0 border-b border-line">
+                    <livewire:dice.tray :campaign="$campaign" :session="$session" :wire:key="'dice-'.$session->id" />
+                </div>
+                <livewire:dice.log :campaign="$campaign" :wire:key="'dice-log-'.$session->id" />
             </div>
             <div x-show="tab === 'tables'" x-cloak class="min-h-0 flex-1">
                 <livewire:random-tables.roller :campaign="$campaign" :wire:key="'roller-'.$session->id" />

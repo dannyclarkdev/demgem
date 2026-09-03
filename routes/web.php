@@ -25,6 +25,7 @@ use App\Livewire\Sessions\Prep as SessionsPrep;
 use App\Livewire\Sessions\Run as SessionsRun;
 use App\Livewire\Sessions\Show as SessionsShow;
 use App\Livewire\Sessions\Story as SessionsStory;
+use App\Livewire\Table\Show as TableShow;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('type', implode('|', EntityType::slugs()));
@@ -63,6 +64,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/sessions/{number}/edit', SessionsForm::class)->whereNumber('number')->name('sessions.edit');
             Route::get('/sessions/{number}/prep', SessionsPrep::class)->whereNumber('number')->name('sessions.prep');
             Route::get('/sessions/{number}/run', SessionsRun::class)->whereNumber('number')->name('sessions.run');
+
+            // The player's live screen: the fight, and the shared dice log in P3. Open to
+            // every role, because it is the one page a player keeps open during a game
+            // and a co-GM watches the same thing from a second device.
+            //
+            // Singular, and it cannot collide with /tables: {type} is patterned to the
+            // six entity slugs, so no catch-all below can claim it either.
+            Route::get('/table', TableShow::class)->name('table');
 
             // The recap archive, read oldest first. A page of prose, not a schedule,
             // which is why it is not a tab on the sessions index.

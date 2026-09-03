@@ -37,6 +37,7 @@ class DiceRollFactory extends Factory
                 ]],
                 'modifier' => 0,
             ],
+            'private' => false,
         ];
     }
 
@@ -51,5 +52,13 @@ class DiceRollFactory extends Factory
     public function by(User $user): static
     {
         return $this->state(['user_id' => $user->id]);
+    }
+
+    /**
+     * A roll behind the screen. Only the person who made it reads it.
+     */
+    public function behindTheScreen(): static
+    {
+        return $this->state(['private' => true]);
     }
 }
