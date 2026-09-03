@@ -251,7 +251,7 @@ Two more consequences to handle:
 - **Mention churn.** Every autosave changes `live_notes`, so the observer calls `SyncMentions`, which deletes and reinserts that source's rows. Add an early return to `SyncMentions`: build the row set, compare it to the existing rows, and return before opening a transaction when they match. Typing prose then costs one select. This also speeds up entity saves.
 - **Concurrent GMs.** Owner and co-GM typing at once is last-write-wins. Say so in a line of help text under the field. Real collaborative editing needs Reverb and is P2.
 
-The rest of the Run screen is read-mostly: the scene list with notes rendered, the secret list with a Reveal button per row, and the prepped entities grouped by bucket with links that open in a new tab. Wrap the secrets list in `@island(name: 'secrets')` so a reveal does not re-render the whole page.
+The rest of the Run screen is read-mostly: the scene list with notes rendered, the secret list with a Reveal button per row, and the prepped entities grouped by bucket with links that open in a new tab. An `@island` around the secret list was planned and dropped: an island cannot read the variables `render()` passes to the view, so it would force every panel onto computed properties to save a re-render that only happens on a click. The nested live-notes component already covers the case that matters, which is typing.
 
 ### Recap
 

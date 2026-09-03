@@ -8,6 +8,7 @@
             <x-ui.badge variant="dm" icon="eye-off">GM only</x-ui.badge>
         @endif
         @can('update', $session)
+            <x-ui.button :href="route('sessions.run', [$campaign, $session->number])" size="sm" icon="play">Run</x-ui.button>
             <x-ui.button :href="route('sessions.prep', [$campaign, $session->number])" variant="secondary" size="sm" icon="zap">Prep</x-ui.button>
             <x-ui.button :href="route('sessions.edit', [$campaign, $session->number])" variant="ghost" size="sm" icon="edit">Edit</x-ui.button>
         @endcan

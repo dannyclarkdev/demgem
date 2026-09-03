@@ -1,5 +1,6 @@
 <div>
     <x-ui.page-header :title="$session->displayTitle().' — prep'" :eyebrow="$session->label()" description="Write the start, sketch the scenes, and pull in what you need at the table.">
+        <x-ui.button :href="route('sessions.run', [$campaign, $session->number])" size="sm" icon="play">Run it</x-ui.button>
         <x-ui.button :href="$session->url()" variant="ghost" size="sm" icon="arrow-left">Session</x-ui.button>
     </x-ui.page-header>
 
