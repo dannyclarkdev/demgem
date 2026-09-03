@@ -4,8 +4,11 @@ namespace Database\Seeders;
 
 use App\Actions\Campaigns\CreateCampaign;
 use App\Actions\Entities\CreateEntity;
+use App\Actions\Sessions\CreateSession;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
+use App\Enums\PrepRole;
+use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
@@ -111,6 +114,103 @@ class DemoCampaignSeeder extends Seeder
             'body' => "- [[The Drowned Duke]] is awake.\n- [[Mara Voss]] is compromised.\n- [[Wren Ashgrove]]'s sister sits at the Duke's right hand.",
         ]);
 
+        $this->seedSessions($campaign, $dm);
+
         $this->command->info("Seeded The Drowned Duchy for {$dm->email} (password: password).");
+    }
+
+    /**
+     * Three sessions across the loop: one recapped, one waiting on words, one prepped
+     * and ready to run, with two secrets carried over from the first night.
+     */
+    private function seedSessions(Campaign $campaign, User $dm): void
+    {
+        $create = app(CreateSession::class);
+
+        $first = $create->handle($campaign, $dm, [
+            'number' => 1,
+            'title' => 'The Harbor Fire',
+            'scheduled_at' => now()->subWeeks(3)->setTime(19, 0),
+            'status' => SessionStatus::Played,
+        ]);
+        $first->update([
+            'recap' => "The warehouse went up at dusk and took half the north quay with it. [[Mara Voss]] pulled two of you out of the water and asked no questions, which was itself a question.\n\nBy morning the party held the [[Tidewarden Signet]] and a debt nobody has named a price for yet.",
+            'recap_published_at' => now()->subWeeks(3)->addDay(),
+        ]);
+
+        $second = $create->handle($campaign, $dm, [
+            'number' => 2,
+            'title' => 'Under the Pilings',
+            'scheduled_at' => now()->subWeek()->setTime(19, 0),
+            'status' => SessionStatus::Played,
+        ]);
+        $second->update([
+            'live_notes' => "Party went down at low tide. Found the old customs house intact.\nWren recognised the door knocker. Did not say why.\nSpent 40g bribing the gate sergeant.\nEnded mid-corridor, water rising.",
+        ]);
+
+        $third = $create->handle($campaign, $dm, [
+            'number' => 3,
+            'title' => 'The Spring Tide',
+            'scheduled_at' => now()->addDays(4)->setTime(19, 0),
+            'status' => SessionStatus::Planned,
+        ]);
+        $third->update([
+            'strong_start' => 'The water in the corridor stops rising. Then it starts moving the wrong way, back down the stairs, as if something below is drinking.',
+            'dm_notes' => 'Keep [[The Drowned Duke]] off screen. He is a rumour tonight, nothing more.',
+        ]);
+
+        $scenes = [
+            ['The corridor empties', 'The water drains toward the crypt under the [[Salt Cathedral]]. Following it is the obvious move. It is also the wrong one, and that is fine.'],
+            ['The gate sergeant returns', 'He wants the 40 gold back, with interest, and he has six friends.'],
+            ['Mara at the sea wall', '[[Mara Voss]] asks for the [[Tidewarden Signet]] back. She will not say why. She is lying about where she was last night.'],
+        ];
+
+        foreach ($scenes as $position => [$title, $notes]) {
+            $third->scenes()->create([
+                'campaign_id' => $campaign->id,
+                'position' => $position,
+                'title' => $title,
+                'notes' => $notes,
+            ]);
+        }
+
+        $secrets = [
+            [$first, 'The harbor fire was set from inside the warehouse.', true],
+            [$first, 'The gate sergeant takes bribes from the Drowned Court.', false],
+            [$first, "[[Wren Ashgrove]]'s sister was seen alive, underwater, three months ago.", false],
+            [$third, '[[Mara Voss]] has met someone beneath the sea wall twice this month.', false],
+            [$third, 'The [[Salt Cathedral]] crypt has a door that opens from the other side.', false],
+            [$third, 'The [[Ember Throne]] keeps whoever sits on it breathing, and keeps them there.', false],
+        ];
+
+        foreach ($secrets as $position => [$session, $body, $revealed]) {
+            $secret = $campaign->secrets()->create([
+                'game_session_id' => $session->id,
+                'body' => $body,
+                'position' => $position,
+                'created_by' => $dm->id,
+            ]);
+
+            if ($revealed) {
+                $secret->update(['revealed_at' => now()->subWeeks(3), 'revealed_in_session_id' => $session->id]);
+            }
+        }
+
+        $prep = [
+            [PrepRole::Npc, ['Mara Voss', 'Abbess Corvane']],
+            [PrepRole::Location, ['Salt Cathedral', 'Harrowgate']],
+            [PrepRole::Monster, ['The Drowned Duke']],
+            [PrepRole::Treasure, ['Tidewarden Signet']],
+        ];
+
+        foreach ($prep as [$role, $names]) {
+            foreach ($names as $position => $name) {
+                $entity = $campaign->entities()->where('name', $name)->first();
+
+                if ($entity !== null) {
+                    $third->entities()->attach($entity->id, ['role' => $role->value, 'position' => $position]);
+                }
+            }
+        }
     }
 }

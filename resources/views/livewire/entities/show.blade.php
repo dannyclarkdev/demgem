@@ -108,6 +108,25 @@
                 </div>
             @endif
 
+            @if ($sessions->isNotEmpty())
+                <div>
+                    <p class="eyebrow mb-2">Appears in sessions</p>
+                    <ul class="space-y-1">
+                        @foreach ($sessions as $session)
+                            <li>
+                                <a href="{{ $session->url() }}" class="flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
+                                    <x-ui.icon name="calendar" class="size-3.5 shrink-0 text-ink-faint" />
+                                    <span class="truncate">{{ $session->label() }}</span>
+                                    @if ($session->title)
+                                        <span class="truncate text-ink-faint">{{ $session->title }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="text-xs text-ink-faint">
                 Updated {{ $entity->updated_at?->diffForHumans() }}
             </div>

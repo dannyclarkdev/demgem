@@ -1,4 +1,11 @@
-<div>
+@php
+    $canCreate = auth()->user()?->can('create', [\App\Models\Entity::class, $campaign]) ?? false;
+@endphp
+<div
+    @if ($canCreate)
+        @keydown.window="if ($event.key === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $event.preventDefault(); window.location = @js(route('entities.create', [$campaign, $type->slug()])) }"
+    @endif
+>
     <x-ui.page-header :title="$type->plural()" :eyebrow="$campaign->name" :description="$type->description()">
         @can('create', [\App\Models\Entity::class, $campaign])
             <x-ui.button :href="route('entities.create', [$campaign, $type->slug()])" icon="plus">New {{ strtolower($type->label()) }}</x-ui.button>

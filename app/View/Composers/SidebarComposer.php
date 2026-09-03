@@ -4,6 +4,7 @@ namespace App\View\Composers;
 
 use App\Enums\EntityType;
 use App\Models\Entity;
+use App\Models\GameSession;
 use App\Models\User;
 use App\Support\CurrentCampaign;
 use Illuminate\Contracts\View\View;
@@ -23,6 +24,7 @@ class SidebarComposer
         $role = $this->current->role();
 
         $counts = [];
+        $sessionCount = 0;
 
         if ($user !== null && $campaign !== null && $role !== null) {
             $counts = Entity::query()
@@ -32,6 +34,8 @@ class SidebarComposer
                 ->groupBy('type')
                 ->pluck('aggregate', 'type')
                 ->all();
+
+            $sessionCount = GameSession::query()->visibleTo($role)->count();
         }
 
         $view->with([
@@ -39,6 +43,7 @@ class SidebarComposer
             'currentRole' => $role,
             'entityTypes' => EntityType::cases(),
             'entityCounts' => $counts,
+            'sessionCount' => $sessionCount,
             'userCampaigns' => $user?->campaigns()->orderBy('name')->get() ?? collect(),
         ]);
     }

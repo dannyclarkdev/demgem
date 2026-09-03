@@ -30,6 +30,8 @@ class Settings extends Component
 
     public string $ruleset = '';
 
+    public string $timezone = 'UTC';
+
     public string $newOwnerId = '';
 
     public string $deleteConfirmation = '';
@@ -42,6 +44,7 @@ class Settings extends Component
         $this->name = $campaign->name;
         $this->description = $campaign->description ?? '';
         $this->ruleset = $campaign->ruleset->value;
+        $this->timezone = $campaign->timezone;
     }
 
     public function save(): void
@@ -52,6 +55,7 @@ class Settings extends Component
             'name' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:2000'],
             'ruleset' => ['required', Rule::enum(Ruleset::class)],
+            'timezone' => ['required', 'timezone'],
             'cover' => ['nullable', 'image', 'max:8192'],
         ]);
 
@@ -69,6 +73,7 @@ class Settings extends Component
             'name' => $validated['name'],
             'description' => $validated['description'] ?: null,
             'ruleset' => $validated['ruleset'],
+            'timezone' => $validated['timezone'],
         ]);
 
         session()->flash('status', 'Campaign settings saved.');
@@ -117,6 +122,7 @@ class Settings extends Component
         return view('livewire.campaigns.settings', [
             'role' => $role,
             'rulesets' => Ruleset::cases(),
+            'timezones' => timezone_identifiers_list(),
             'transferCandidates' => $role === CampaignRole::Owner
                 ? $this->campaign->members()->with('user')->where('role', '!=', CampaignRole::Owner)->get()->sortBy('user.name')
                 : collect(),

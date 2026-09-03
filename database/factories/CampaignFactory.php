@@ -23,6 +23,7 @@ class CampaignFactory extends Factory
             'name' => Str::title(fake()->unique()->words(3, true)),
             'description' => fake()->sentence(),
             'ruleset' => Ruleset::Generic,
+            'timezone' => 'UTC',
             'created_by' => User::factory(),
         ];
     }

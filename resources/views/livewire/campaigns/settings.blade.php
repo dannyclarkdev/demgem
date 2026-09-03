@@ -10,6 +10,11 @@
                     <option value="{{ $option->value }}">{{ $option->label() }}</option>
                 @endforeach
             </x-ui.select>
+            <x-ui.select label="Timezone" name="timezone" wire:model="timezone" hint="Session times are shown in this zone. The table plays in one place.">
+                @foreach ($timezones as $option)
+                    <option value="{{ $option }}">{{ str_replace('_', ' ', $option) }}</option>
+                @endforeach
+            </x-ui.select>
             <div class="space-y-3" x-data="{ removing: @entangle('removeCover') }">
                 @if ($campaign->coverUrl())
                     <img src="{{ $campaign->coverUrl('card') }}" alt="" class="h-32 w-full rounded-md border border-line object-cover" :class="removing ? 'opacity-30' : ''">

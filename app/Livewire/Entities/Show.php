@@ -3,6 +3,7 @@
 namespace App\Livewire\Entities;
 
 use App\Actions\Entities\DeleteEntity;
+use App\Actions\Sessions\SessionsMentioning;
 use App\Enums\EntityType;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
@@ -69,6 +70,7 @@ class Show extends Component
             'ancestors' => $this->entity->ancestors()->filter(fn (Entity $ancestor) => $ancestor->isVisibleTo($user, $role))->values(),
             'children' => $this->entity->children()->visibleTo($user, $role)->orderBy('name')->get(),
             'backlinks' => Entity::query()->whereIn('id', $backlinkSourceIds)->visibleTo($user, $role)->orderBy('name')->get(),
+            'sessions' => app(SessionsMentioning::class)->handle($this->entity, $role),
             'bodyHtml' => $renderer->render($this->entity->body, $wikiLinks),
             'dmNotesHtml' => $role->isDm() ? $renderer->render($this->entity->dm_notes, $wikiLinks) : null,
         ])->title($this->entity->name);
