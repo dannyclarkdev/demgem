@@ -33,6 +33,19 @@
         </form>
     </x-ui.card>
 
+    <x-ui.card title="Export">
+        <p class="text-sm text-ink-muted">
+            One JSON file holding this campaign: every entity with its GM notes, every session with its prep,
+            secrets, and recaps, the quests, the encounters, the tables, and the dice log.
+        </p>
+        <p class="mt-2 text-sm text-ink-faint">
+            It leaves out email addresses, invite links, and deleted things. Images travel as links, not files.
+        </p>
+        <div class="mt-4">
+            <x-ui.button :href="route('campaigns.export', $campaign)" variant="secondary" icon="arrow-down">Download JSON</x-ui.button>
+        </div>
+    </x-ui.card>
+
     @if ($role === \App\Enums\CampaignRole::Owner)
         <x-ui.card title="Transfer ownership">
             <p class="text-sm text-ink-muted">The new owner gets full control. You stay in the campaign as a co-GM.</p>

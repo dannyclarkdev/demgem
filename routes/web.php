@@ -2,6 +2,7 @@
 
 use App\Enums\EntityType;
 use App\Http\Controllers\AutocompleteController;
+use App\Http\Controllers\CampaignExportController;
 use App\Http\Controllers\InviteController;
 use App\Http\Middleware\EnsureCampaignMember;
 use App\Livewire\Campaigns\Create as CampaignsCreate;
@@ -47,6 +48,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/', CampaignsShow::class)->name('campaigns.show');
             Route::get('/settings', CampaignsSettings::class)->name('campaigns.settings');
             Route::get('/members', CampaignsMembers::class)->name('campaigns.members');
+
+            // Your data leaves with you. Streamed, so a campaign of any size costs the
+            // same memory and starts downloading at once. GM roles only.
+            Route::get('/export', CampaignExportController::class)
+                ->middleware('throttle:5,1')
+                ->name('campaigns.export');
             Route::get('/autocomplete', AutocompleteController::class)->name('entities.autocomplete');
             Route::get('/search', Search::class)->name('search');
 

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
@@ -62,6 +63,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read User|null $player
  * @property-read Entity|null $giver
  * @property-read Collection<int, QuestObjective> $objectives
+ * @property-read Pivot|null $pivot Set when the row was loaded through GameSession::entities()
  */
 #[ObservedBy([EntityObserver::class])]
 #[Fillable([
