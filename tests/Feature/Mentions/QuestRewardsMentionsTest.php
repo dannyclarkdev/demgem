@@ -94,9 +94,11 @@ it('puts rewards in the search index and keeps GM notes out', function () {
         'dm_notes' => 'It is cursed.',
     ]);
 
+    // Strict on purpose: the point of this assertion is that dm_notes is absent.
     expect($quest->toSearchableArray())->toBe([
         'name' => $quest->name,
         'body' => 'Clear the barrow.',
         'rewards' => 'The Sunblade.',
+        'character_class' => null,
     ]);
 });

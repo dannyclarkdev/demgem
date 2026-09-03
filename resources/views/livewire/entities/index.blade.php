@@ -27,6 +27,19 @@
             </select>
         @endif
 
+        @if ($isCharacter)
+            <div class="flex flex-wrap items-center gap-1.5">
+                <button
+                    type="button"
+                    wire:click="$set('partyOnly', '{{ $partyOnly === '1' ? '' : '1' }}')"
+                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition {{ $partyOnly === '1' ? 'border-ember bg-ember/15 text-ember' : 'border-line text-ink-muted hover:border-line-strong hover:text-ink' }}"
+                >
+                    <x-ui.icon name="users" class="size-3" />
+                    The party
+                </button>
+            </div>
+        @endif
+
         @if ($isQuest)
             <div class="flex flex-wrap items-center gap-1.5">
                 @foreach ($questStatuses as $option)
@@ -60,9 +73,9 @@
     </div>
 
     @if ($entities->isEmpty())
-        @if ($search !== '' || $tag !== '' || $visibility !== '' || $questStatus !== '')
+        @if ($search !== '' || $tag !== '' || $visibility !== '' || $questStatus !== '' || $partyOnly !== '')
             <x-ui.empty-state title="Nothing matches" description="Clear the filters to see every {{ strtolower($type->label()) }} you can view." :icon="$type->icon()">
-                <x-ui.button variant="secondary" size="sm" wire:click="$set('search', ''); $set('tag', ''); $set('visibility', ''); $set('questStatus', '')">Clear filters</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" wire:click="$set('search', ''); $set('tag', ''); $set('visibility', ''); $set('questStatus', ''); $set('partyOnly', '')">Clear filters</x-ui.button>
             </x-ui.empty-state>
         @else
             <x-ui.empty-state title="No {{ strtolower($type->plural()) }} yet" :description="$role->isDm() ? $type->description() : 'The GM has not revealed any '.strtolower($type->plural()).' yet.'" :icon="$type->icon()">
@@ -93,6 +106,8 @@
                                 </p>
                                 @if ($entity->parent && $entity->parent->isVisibleTo($viewer, $role))
                                     <p class="truncate text-xs text-ink-faint">in {{ $entity->parent->name }}</p>
+                                @elseif ($isCharacter && (filled($entity->character_class) || $entity->level !== null))
+                                    <p class="truncate text-sm text-ink-faint">{{ collect([$entity->character_class, $entity->level !== null ? 'level '.$entity->level : null])->filter()->implode(' · ') }}</p>
                                 @endif
                             </div>
                             @if ($isQuest)

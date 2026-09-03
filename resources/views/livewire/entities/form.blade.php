@@ -11,6 +11,18 @@
                 </div>
             </x-ui.card>
 
+            @if ($isCharacter)
+                <x-ui.card title="Character">
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <x-ui.input label="Class" name="character_class" wire:model="character_class" placeholder="Bard" hint="Whatever your system calls it." />
+                        <x-ui.input label="Level" name="level" type="number" min="1" max="100" wire:model="level" placeholder="5" />
+                        <div class="sm:col-span-2">
+                            <x-ui.input label="Character sheet" name="sheet_url" type="url" wire:model="sheet_url" placeholder="https://www.dndbeyond.com/characters/..." hint="A link to the sheet you play from. Opens in a new tab." />
+                        </div>
+                    </div>
+                </x-ui.card>
+            @endif
+
             @if ($canEditDmFields && $isQuest)
                 <x-ui.card title="Rewards">
                     <x-ui.markdown-editor

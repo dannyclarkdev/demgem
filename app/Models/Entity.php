@@ -44,6 +44,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $parent_id
  * @property bool $is_pc
  * @property int|null $player_user_id
+ * @property string|null $character_class
+ * @property int|null $level
+ * @property string|null $sheet_url
  * @property QuestStatus|null $quest_status
  * @property string|null $giver_entity_id
  * @property int|null $created_by
@@ -63,7 +66,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[ObservedBy([EntityObserver::class])]
 #[Fillable([
     'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'visibility',
-    'parent_id', 'is_pc', 'player_user_id', 'quest_status', 'giver_entity_id',
+    'parent_id', 'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
+    'quest_status', 'giver_entity_id',
     'created_by', 'updated_by',
 ])]
 class Entity extends Model implements HasMedia
@@ -83,6 +87,7 @@ class Entity extends Model implements HasMedia
             'visibility' => Visibility::class,
             'quest_status' => QuestStatus::class,
             'is_pc' => 'boolean',
+            'level' => 'integer',
         ];
     }
 
@@ -185,6 +190,36 @@ class Entity extends Model implements HasMedia
     public function isQuest(): bool
     {
         return $this->type === EntityType::Quest;
+    }
+
+    public function isCharacter(): bool
+    {
+        return $this->type === EntityType::Character;
+    }
+
+    /**
+     * Whether there is a record row to render at all. A character with none of the
+     * four facts renders no row, rather than an empty one.
+     */
+    public function hasCharacterRecord(): bool
+    {
+        return $this->isCharacter()
+            && (filled($this->character_class) || $this->level !== null || filled($this->sheet_url) || $this->is_pc);
+    }
+
+    /**
+     * The host of the sheet link, for a button that says "D&D Beyond" instead of
+     * showing 200 characters of URL.
+     */
+    public function sheetHost(): ?string
+    {
+        if (blank($this->sheet_url)) {
+            return null;
+        }
+
+        $host = parse_url((string) $this->sheet_url, PHP_URL_HOST);
+
+        return is_string($host) ? preg_replace('/^www\\./', '', $host) : null;
     }
 
     /**
@@ -313,6 +348,7 @@ class Entity extends Model implements HasMedia
             'name' => $this->name,
             'body' => $this->body,
             'rewards' => $this->rewards,
+            'character_class' => $this->character_class,
         ];
     }
 

@@ -24,7 +24,8 @@ class UpdateEntity
             $attributes = collect($data)
                 ->only([
                     'name', 'body', 'dm_notes', 'rewards', 'visibility', 'parent_id',
-                    'is_pc', 'player_user_id', 'quest_status', 'giver_entity_id',
+                    'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
+                    'quest_status', 'giver_entity_id',
                 ])
                 ->all();
 

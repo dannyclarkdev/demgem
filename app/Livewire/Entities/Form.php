@@ -46,6 +46,12 @@ class Form extends Component
 
     public string $player_user_id = '';
 
+    public string $character_class = '';
+
+    public ?int $level = null;
+
+    public string $sheet_url = '';
+
     public string $quest_status = '';
 
     public string $giver_entity_id = '';
@@ -87,6 +93,14 @@ class Form extends Component
         $this->body = $entity->body ?? '';
         $this->tags = $entity->tags->pluck('name')->implode(', ');
 
+        // The character record is not a DM field: a player edits their own PC, so these
+        // three load for anybody who passed the update check above.
+        if ($this->isCharacter()) {
+            $this->character_class = $entity->character_class ?? '';
+            $this->level = $entity->level;
+            $this->sheet_url = $entity->sheet_url ?? '';
+        }
+
         // DM-only fields never enter the component state for a player. Public properties ship in the Livewire snapshot.
         if ($this->user()->can('updateDmFields', $entity)) {
             $this->dm_notes = $entity->dm_notes ?? '';
@@ -109,6 +123,11 @@ class Form extends Component
         return $this->entityType === EntityType::Quest;
     }
 
+    private function isCharacter(): bool
+    {
+        return $this->entityType === EntityType::Character;
+    }
+
     public function save(CreateEntity $createEntity, UpdateEntity $updateEntity): void
     {
         $isEdit = $this->entity !== null;
@@ -127,6 +146,23 @@ class Form extends Component
             'tags' => ['nullable', 'string', 'max:500'],
             'image' => ['nullable', 'image', 'max:5120'],
         ];
+
+        // The character record is not a DM field, so these rules sit outside the block
+        // below: whoever passed the update check may set them, which includes a player
+        // on their own PC. sheet_url is the one user URL in the app rendered as an href
+        // outside MarkdownRenderer, and url:http,https is what stops javascript: from
+        // becoming a link the whole party can click.
+        $rules += $this->isCharacter()
+            ? [
+                'character_class' => ['nullable', 'string', 'max:60'],
+                'level' => ['nullable', 'integer', 'min:1', 'max:100'],
+                'sheet_url' => ['nullable', 'string', 'max:2048', 'url:http,https'],
+            ]
+            : [
+                'character_class' => ['prohibited'],
+                'level' => ['prohibited'],
+                'sheet_url' => ['prohibited'],
+            ];
 
         if ($canEditDmFields) {
             $rules += [
@@ -184,6 +220,14 @@ class Form extends Component
             'body' => $validated['body'] !== null && $validated['body'] !== '' ? $validated['body'] : null,
             'tags' => $this->parseTags($validated['tags'] ?? ''),
         ];
+
+        if ($this->isCharacter()) {
+            $data += [
+                'character_class' => filled($validated['character_class'] ?? null) ? trim((string) $validated['character_class']) : null,
+                'level' => $validated['level'] ?? null,
+                'sheet_url' => filled($validated['sheet_url'] ?? null) ? trim((string) $validated['sheet_url']) : null,
+            ];
+        }
 
         if ($canEditDmFields) {
             $isCharacter = $this->entityType === EntityType::Character;
