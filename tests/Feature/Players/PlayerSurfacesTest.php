@@ -14,7 +14,7 @@ use App\Models\RandomTableEntry;
 use App\Models\Secret;
 
 /**
- * The whole player surface in one place. Three slices built GM tools beside player
+ * The whole player surface in one place. Four slices built GM tools beside player
  * screens, and this walks a player through every page they can open and checks that
  * none of the GM half reached them: not the prose, not the tools, not the links.
  *
@@ -96,6 +96,7 @@ it('shows a player no GM prose on any page they can open', function (string $rou
     }
 })->with([
     'dashboard' => ['campaigns.show', []],
+    'table' => ['table', []],
     'sessions' => ['sessions.index', []],
     'session' => ['sessions.show', [1]],
     'story' => ['story', []],
@@ -118,7 +119,7 @@ it('offers a player no link into the GM half of the app', function () {
         route('campaigns.settings', $campaign),
     ];
 
-    foreach (['campaigns.show', 'sessions.index', 'story', 'campaigns.members'] as $routeName) {
+    foreach (['campaigns.show', 'sessions.index', 'story', 'campaigns.members', 'table'] as $routeName) {
         $response = $this->actingAs($player)->get(route($routeName, $campaign))->assertOk();
 
         foreach ($forbiddenUrls as $url) {

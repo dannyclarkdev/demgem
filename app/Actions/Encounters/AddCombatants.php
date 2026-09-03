@@ -23,6 +23,9 @@ class AddCombatants
      * A quantity above one numbers them, "Goblin 1" through "Goblin 4", which is how a
      * GM refers to them out loud.
      *
+     * The party lands on the player table view straight away; everything else is
+     * hidden until the GM says otherwise. See create().
+     *
      * @return Collection<int, Combatant>
      */
     public function handle(
@@ -77,6 +80,11 @@ class AddCombatants
                     'ac' => $ac,
                     'conditions' => [],
                     'position' => $position++,
+                    // The party is already on the screen at the table, so a PC shows at
+                    // once. Anything else the GM adds waits for the eye toggle, because
+                    // an ambusher that appears on the party's screens before it appears
+                    // in the fiction is the last time they trust the feature.
+                    'player_visible' => $entity->is_pc ?? false,
                 ]));
             }
 

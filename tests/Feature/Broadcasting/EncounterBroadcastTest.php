@@ -9,6 +9,7 @@ use App\Actions\Encounters\RemoveCombatant;
 use App\Actions\Encounters\ReorderCombatants;
 use App\Actions\Encounters\RollInitiative;
 use App\Actions\Encounters\SetConditions;
+use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
 use App\Enums\CampaignRole;
 use App\Events\EncounterChanged;
@@ -48,7 +49,9 @@ it('carries two ids and nothing else', function () {
     $payload = json_encode((new EncounterChanged($campaign->id, $encounter->id))->broadcastWith(), JSON_THROW_ON_ERROR);
 
     // The whole security design in one assertion: a listener re-renders under its own
-    // viewer's role, so the wire carries nothing that would need filtering.
+    // viewer's role, so the wire carries nothing that would need filtering. Revealing
+    // a hidden combatant and hiding it again send exactly these same two ids.
+    //
     // The exact match is the assertion that counts; the three strings after it read as
     // documentation. There is deliberately no check for the hit points: the payload is
     // a ULID, Crockford base32 has every digit, and "59" turns up in one by chance.
@@ -73,6 +76,10 @@ it('broadcasts once for every change a GM makes', function (string $action) {
         'damage' => app(ApplyDamage::class)->handle($combatant, 5),
         'conditions' => app(SetConditions::class)->handle($combatant, ['prone']),
         'next turn' => app(NextTurn::class)->handle($encounter),
+        'end' => app(NextTurn::class)->end($encounter),
+        'reopen' => app(NextTurn::class)->reopen($encounter),
+        'reset' => app(NextTurn::class)->reset($encounter),
+        'reveal' => app(SetPlayerVisibility::class)->toggle($combatant),
         'sort' => app(SortByInitiative::class)->handle($encounter),
         'reorder' => app(ReorderCombatants::class)->handle($encounter, $combatant->id, 1),
         'move' => app(ReorderCombatants::class)->move($encounter, $combatant, 1),
@@ -81,7 +88,10 @@ it('broadcasts once for every change a GM makes', function (string $action) {
     };
 
     Event::assertDispatchedTimes(EncounterChanged::class, 1);
-})->with(['create', 'add', 'damage', 'conditions', 'next turn', 'sort', 'reorder', 'move', 'remove', 'delete']);
+})->with([
+    'create', 'add', 'damage', 'conditions', 'next turn', 'end', 'reopen', 'reset',
+    'reveal', 'sort', 'reorder', 'move', 'remove', 'delete',
+]);
 
 it('broadcasts once when the whole party joins the fight, not once a head', function () {
     $campaign = Campaign::factory()->create();

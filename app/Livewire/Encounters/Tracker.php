@@ -9,6 +9,7 @@ use App\Actions\Encounters\RemoveCombatant;
 use App\Actions\Encounters\ReorderCombatants;
 use App\Actions\Encounters\RollInitiative;
 use App\Actions\Encounters\SetConditions;
+use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
 use App\Enums\PrepRole;
 use App\Livewire\Concerns\InteractsWithCampaign;
@@ -237,6 +238,17 @@ class Tracker extends Component
         $this->authorize('update', $this->encounter);
 
         $removeCombatant->handle($this->combatant($combatantId));
+    }
+
+    /**
+     * Shows or hides one row on the party's screens. GM only, like everything else
+     * here: the tracker authorizes update() on the encounter for every call.
+     */
+    public function toggleVisibility(string $combatantId, SetPlayerVisibility $setPlayerVisibility): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $setPlayerVisibility->toggle($this->combatant($combatantId));
     }
 
     /**

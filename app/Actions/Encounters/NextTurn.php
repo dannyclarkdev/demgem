@@ -56,15 +56,22 @@ class NextTurn
      * Ends the fight but keeps the round count. Every transition is legal in both
      * directions, as slice 2 decided for session status: a GM who ends a fight by
      * mistake must be able to un-end it.
+     *
+     * The status decides whether /table shows a fight at all, so ending one is a
+     * change the party's screens must hear about, not only the GM's.
      */
     public function end(Encounter $encounter): void
     {
         $encounter->update(['status' => EncounterStatus::Done]);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
     }
 
     public function reopen(Encounter $encounter): void
     {
         $encounter->update(['status' => EncounterStatus::Active]);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
     }
 
     /**
@@ -77,5 +84,7 @@ class NextTurn
             'round' => 0,
             'status' => EncounterStatus::Planning,
         ]);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
     }
 }
