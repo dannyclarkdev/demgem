@@ -4,10 +4,14 @@
 
     A roll normally arrives over the socket. The poll is the same sixty-second backstop
     the tracker and the fight keep, for a dropped socket and a slept laptop.
+
+    Prose here is 14px or more, because a player reads this from across a table. The
+    face pips stay at 11px: they are numerals in boxes, the same size the tracker uses
+    for an initiative, and they are read as a group rather than as words.
 --}}
 {{-- h-full: the caller decides how tall the log is. The Run screen drawer gives it
      the rest of the panel; /table gives it a fixed box beside the party. --}}
-<div wire:poll.visible.{{ $pollSeconds }}s class="flex h-full min-h-0 flex-col">
+<div wire:poll.visible.{{ $pollSeconds }}s class="flex h-full min-h-0 flex-col text-base">
     <div class="min-h-0 flex-1 overflow-y-auto">
         @if ($rolls->isEmpty())
             <p class="p-4 text-sm text-ink-faint">Nothing rolled yet. Try 4d6kh3.</p>
@@ -19,7 +23,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                 <span class="font-medium text-ink">{{ $roll->user->name }}</span>
-                                <span class="font-mono text-xs text-ink-muted">{{ $roll->formula }}</span>
+                                <span class="font-mono text-sm text-ink-muted">{{ $roll->formula }}</span>
                                 @if ($roll->private)
                                     <x-ui.badge variant="dm" icon="eye-off">Behind the screen</x-ui.badge>
                                 @endif
@@ -33,10 +37,10 @@
                                 @endif
                             </p>
                             @if ($roll->label)
-                                <p class="mt-0.5 truncate text-xs text-ink-faint">{{ $roll->label }}</p>
+                                <p class="mt-0.5 truncate text-sm text-ink-faint">{{ $roll->label }}</p>
                             @endif
                         </div>
-                        <span class="shrink-0 text-[11px] text-ink-faint">{{ $roll->created_at?->setTimezone($campaign->timezone)->format('H:i') }}</span>
+                        <span class="shrink-0 text-sm text-ink-faint">{{ $roll->created_at?->setTimezone($campaign->timezone)->format('H:i') }}</span>
                     </li>
                 @endforeach
             </ul>

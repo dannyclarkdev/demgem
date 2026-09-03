@@ -6,7 +6,11 @@
     is down every dot is honestly unlit.
 --}}
 <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-    <span class="text-ink-faint">{{ $hereCount }} of {{ $members->count() }} here</span>
+    {{-- Zero means the channel has not answered, not that the table is empty: you are
+         always in your own presence set. Say what is true in both cases. --}}
+    <span class="text-ink-faint">
+        {{ $hereCount === 0 ? 'Waiting for the table' : $hereCount.' of '.$members->count().' here' }}
+    </span>
 
     @foreach ($members as $member)
         @php ($isHere = in_array($member->user_id, $hereIds, true))

@@ -55,12 +55,15 @@ it('says how many of the table are here, and names everyone either way', functio
         ->assertSee('Coll the Watcher');
 });
 
-it('counts nobody before the channel answers', function () {
+it('says it is waiting before the channel answers, rather than claiming an empty table', function () {
     [$campaign, $gm] = tableWithFourMembers();
 
+    // Zero is never the truth: whoever is reading the strip is at the table by
+    // definition. Zero means the socket has not answered yet, or is down.
     Livewire::actingAs($gm)
         ->test(Presence::class, ['campaign' => $campaign])
-        ->assertSee('0 of 4 here');
+        ->assertSee('Waiting for the table')
+        ->assertDontSee('0 of 4 here');
 });
 
 it('follows somebody opening the campaign and closing it again', function () {
@@ -121,7 +124,7 @@ it('shrugs off a payload with no ids in it', function () {
         ->test(Presence::class, ['campaign' => $campaign])
         ->call('here', [['name' => 'No id here'], 'not even an array'])
         ->assertOk()
-        ->assertSee('0 of 4 here');
+        ->assertSee('Waiting for the table');
 });
 
 it('puts the strip on the table and on the Run screen', function () {
@@ -129,17 +132,17 @@ it('puts the strip on the table and on the Run screen', function () {
 
     $this->actingAs($gm)->get(route('table', $campaign))
         ->assertOk()
-        ->assertSee('0 of 4 here');
+        ->assertSee('Waiting for the table');
 
     GameSession::factory()->for($campaign)->number(1)->create();
 
     $this->actingAs($gm)->get(route('sessions.run', [$campaign, 1]))
         ->assertOk()
-        ->assertSee('0 of 4 here');
+        ->assertSee('Waiting for the table');
 
     $this->actingAs($wren)->get(route('table', $campaign))
         ->assertOk()
-        ->assertSee('0 of 4 here');
+        ->assertSee('Waiting for the table');
 });
 
 it('stops showing the roster to a member who was removed mid-session', function () {

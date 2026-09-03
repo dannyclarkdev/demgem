@@ -347,16 +347,16 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 - [x] `/table` costs a constant number of queries, whatever the fight holds.
 - [x] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
 - [x] No `VITE_` value decides where the browser connects: the layout renders the settings at runtime.
-- [ ] `/table` and the Run screen with the log open work at 1024px and 768px, in dark and light, with 16px body text and 44px tap targets on the controls a GM uses mid-game.
+- [x] `/table` and the Run screen with the log open work at 1024px and 768px, in dark and light, with 16px body text and 44px tap targets on the controls a GM uses mid-game.
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
-- [ ] Larastan level 6 clean. Pint clean.
+- [x] Pest suite green on SQLite locally and on PostgreSQL in CI.
+- [x] Larastan level 6 clean. Pint clean.
 - [x] The Docker job builds, boots, and reaches Reverb.
 - [x] At most one new `x-ui.*` component, with the reason written down: `x-ui.presence-dot`.
 - [x] Every new query on `combatants` and `dice_rolls` goes through a policy, and each new ability names its surfaces in a docblock.
-- [ ] `npm run build` clean.
+- [x] `npm run build` clean.
 
 ## Dependencies & Risks
 
