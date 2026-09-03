@@ -14,4 +14,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Models/** | .ai/rules/models.md |
 | app/Observers/** | .ai/rules/observers.md |
 | routes/web.php | .ai/rules/routes.md |
+| tests/** | .ai/rules/tests.md |
 | resources/views/** | .ai/rules/views.md |

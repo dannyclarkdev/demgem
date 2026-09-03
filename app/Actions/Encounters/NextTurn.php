@@ -3,6 +3,7 @@
 namespace App\Actions\Encounters;
 
 use App\Enums\EncounterStatus;
+use App\Events\EncounterChanged;
 use App\Models\Encounter;
 
 class NextTurn
@@ -34,6 +35,8 @@ class NextTurn
                 'round' => max(1, $encounter->round),
             ]);
 
+            EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
+
             return;
         }
 
@@ -45,6 +48,8 @@ class NextTurn
             'status' => EncounterStatus::Active,
             'round' => $wrapped ? $encounter->round + 1 : max(1, $encounter->round),
         ]);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
     }
 
     /**

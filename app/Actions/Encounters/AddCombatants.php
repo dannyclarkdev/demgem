@@ -2,6 +2,7 @@
 
 namespace App\Actions\Encounters;
 
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 use App\Models\Encounter;
 use App\Models\Entity;
@@ -25,6 +26,29 @@ class AddCombatants
      * @return Collection<int, Combatant>
      */
     public function handle(
+        Encounter $encounter,
+        string $name,
+        int $quantity = 1,
+        ?Entity $entity = null,
+        ?int $hp = null,
+        ?int $ac = null,
+        ?int $initiativeBonus = null,
+    ): Collection {
+        $combatants = $this->create($encounter, $name, $quantity, $entity, $hp, $ac, $initiativeBonus);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
+
+        return $combatants;
+    }
+
+    /**
+     * The rows themselves, with no broadcast. Callers that add more than one group
+     * dispatch once when they are done, so a five-person party is one event and not
+     * five re-renders on every open screen.
+     *
+     * @return Collection<int, Combatant>
+     */
+    private function create(
         Encounter $encounter,
         string $name,
         int $quantity = 1,
@@ -72,8 +96,10 @@ class AddCombatants
         $added = new Collection;
 
         foreach ($entities as $entity) {
-            $added = $added->concat($this->handle($encounter, $entity->name, 1, $entity));
+            $added = $added->concat($this->create($encounter, $entity->name, 1, $entity));
         }
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
 
         return $added;
     }

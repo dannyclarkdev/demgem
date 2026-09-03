@@ -3,6 +3,7 @@
 namespace App\Actions\Encounters;
 
 use App\Enums\EncounterStatus;
+use App\Events\EncounterChanged;
 use App\Models\Campaign;
 use App\Models\Encounter;
 use App\Models\GameSession;
@@ -16,7 +17,7 @@ class CreateEncounter
      */
     public function handle(Campaign $campaign, User $actor, string $name, ?GameSession $session = null): Encounter
     {
-        return Encounter::create([
+        $encounter = Encounter::create([
             'campaign_id' => $campaign->id,
             'game_session_id' => $session?->id,
             'name' => trim($name),
@@ -24,5 +25,9 @@ class CreateEncounter
             'round' => 0,
             'created_by' => $actor->id,
         ]);
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
+
+        return $encounter;
     }
 }

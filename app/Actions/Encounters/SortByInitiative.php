@@ -2,6 +2,7 @@
 
 namespace App\Actions\Encounters;
 
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 use App\Models\Encounter;
 use Illuminate\Support\Facades\DB;
@@ -31,5 +32,7 @@ class SortByInitiative
                 Combatant::query()->whereKey($id)->update(['position' => $index]);
             }
         });
+
+        EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Encounters;
 
+use App\Events\EncounterChanged;
 use App\Models\Combatant;
 use Illuminate\Support\Str;
 
@@ -16,6 +17,8 @@ class SetConditions
     public function handle(Combatant $combatant, array $conditions): void
     {
         $combatant->update(['conditions' => $this->clean($conditions)]);
+
+        EncounterChanged::dispatch($combatant->campaign_id, $combatant->encounter_id);
     }
 
     public function add(Combatant $combatant, string $condition): void

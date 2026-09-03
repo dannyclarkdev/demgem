@@ -6,10 +6,10 @@ use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
 use App\Actions\Encounters\NextTurn;
 use App\Actions\Encounters\RemoveCombatant;
+use App\Actions\Encounters\ReorderCombatants;
 use App\Actions\Encounters\RollInitiative;
 use App\Actions\Encounters\SetConditions;
 use App\Actions\Encounters\SortByInitiative;
-use App\Actions\Support\ReorderPositions;
 use App\Enums\PrepRole;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
@@ -18,19 +18,23 @@ use App\Models\Encounter;
 use App\Models\Entity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
  * The turn order at the table, read from four feet away.
  *
- * It polls every fifteen seconds with .visible, because two GM devices at one table
- * is the ordinary case and a stale round number actively misleads. Three rules keep
- * the poll safe rather than annoying:
+ * Every change to a fight arrives over the campaign's presence channel and lands
+ * here, so a GM advancing the turn moves every screen at the table at once.
  *
- *   1. Nothing is live-bound. Every edit is an explicit action, so a poll cannot
- *      clobber a value the GM is still typing.
- *   2. .visible plus fifteen seconds, so a backgrounded tab stops.
- *   3. One eager-loaded query per poll, asserted in a test.
+ * The poll stays as a backstop at sixty seconds, because a socket drops, a laptop
+ * sleeps, and a GM who missed a round would rather wait than refresh. Its three
+ * original rules still hold:
+ *
+ *   1. Nothing is live-bound. Every edit is an explicit action, so neither a poll
+ *      nor a broadcast can clobber a value the GM is still typing.
+ *   2. .visible, so a backgrounded tab stops.
+ *   3. One eager-loaded query per render, asserted in a test.
  *
  * Nested, so it embeds on the Run screen and on its own page, and it calls
  * enterCampaign() in its own mount because the hydrate hook runs per component.
@@ -41,7 +45,7 @@ class Tracker extends Component
 
     public Encounter $encounter;
 
-    public const POLL_SECONDS = 15;
+    public const POLL_SECONDS = 60;
 
     public string $newName = '';
 
@@ -238,20 +242,35 @@ class Tracker extends Component
     /**
      * Drag and drop. Livewire hands us the item id and its new zero-based position.
      */
-    public function reorder(string $combatantId, int $position, ReorderPositions $reorder): void
+    public function reorder(string $combatantId, int $position, ReorderCombatants $reorder): void
     {
         $this->authorize('update', $this->encounter);
 
-        $reorder->handle($this->encounter->combatants()->getQuery(), $combatantId, $position);
+        $reorder->handle($this->encounter, $combatantId, $position);
     }
 
-    public function move(string $combatantId, int $offset, ReorderPositions $reorder): void
+    public function move(string $combatantId, int $offset, ReorderCombatants $reorder): void
     {
         $this->authorize('update', $this->encounter);
 
-        $combatant = $this->combatant($combatantId);
+        $reorder->move($this->encounter, $this->combatant($combatantId), $offset);
+    }
 
-        $reorder->move($this->encounter->combatants()->getQuery(), $combatant->id, $combatant->position, $offset);
+    /**
+     * Somebody else changed this fight.
+     *
+     * The re-render is the whole point of the listener: it runs on the server under
+     * this viewer's own role, so every visibility rule applies exactly as it does on
+     * a normal request, and the broadcast never has to carry anything worth hiding.
+     *
+     * @param  array{encounterId?: string}  $event
+     */
+    #[On('echo-presence:campaign.{campaign.id},.encounter.changed')]
+    public function encounterChanged(array $event): void
+    {
+        if (($event['encounterId'] ?? null) !== $this->encounter->id) {
+            $this->skipRender();
+        }
     }
 
     public function render(): View
