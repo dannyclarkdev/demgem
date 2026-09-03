@@ -1,4 +1,11 @@
-<div>
+@php
+    $canCreate = auth()->user()?->can('create', [\App\Models\GameSession::class, $campaign]) ?? false;
+@endphp
+<div
+    @if ($canCreate)
+        @keydown.window="if ($event.key === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $event.preventDefault(); window.location = @js(route('sessions.create', $campaign)) }"
+    @endif
+>
     <x-ui.page-header title="Sessions" :eyebrow="$campaign->name" description="Prep, play, recap. The loop the campaign runs on.">
         @can('create', [\App\Models\GameSession::class, $campaign])
             <x-ui.button :href="route('sessions.create', $campaign)" icon="plus">New session</x-ui.button>
