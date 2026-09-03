@@ -3,9 +3,11 @@
 namespace Database\Factories;
 
 use App\Enums\EntityType;
+use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\QuestObjective;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -75,5 +77,43 @@ class EntityFactory extends Factory
     public function withDmNotes(string $notes): static
     {
         return $this->state(['dm_notes' => $notes]);
+    }
+
+    /**
+     * A quest, available unless another status is asked for. Wraps type() rather than
+     * replacing it, because quest_status is meaningless on the other five types.
+     */
+    public function quest(?QuestStatus $status = null): static
+    {
+        return $this->state([
+            'type' => EntityType::Quest,
+            'quest_status' => $status ?? QuestStatus::Available,
+        ]);
+    }
+
+    public function givenBy(Entity $giver): static
+    {
+        return $this->state(['giver_entity_id' => $giver->id, 'campaign_id' => $giver->campaign_id]);
+    }
+
+    public function withRewards(string $rewards): static
+    {
+        return $this->state(['rewards' => $rewards]);
+    }
+
+    /**
+     * Objectives in order, the first $completed of them already ticked.
+     */
+    public function withObjectives(int $count, int $completed = 0): static
+    {
+        return $this->afterCreating(function (Entity $entity) use ($count, $completed): void {
+            for ($position = 0; $position < $count; $position++) {
+                QuestObjective::factory()->for($entity, 'quest')->create([
+                    'campaign_id' => $entity->campaign_id,
+                    'position' => $position,
+                    'completed_at' => $position < $completed ? now() : null,
+                ]);
+            }
+        });
     }
 }

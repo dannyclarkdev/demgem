@@ -60,7 +60,7 @@ class Show extends Component
             ->where('target_entity_id', $this->entity->id)
             ->where('source_type', $this->entity->getMorphClass())
             ->where('source_id', '!=', $this->entity->id)
-            ->when(! $role->isDm(), fn ($query) => $query->where('source_field', 'body'))
+            ->when(! $role->isDm(), fn ($query) => $query->whereIn('source_field', Entity::playerVisibleFields()))
             ->pluck('source_id')
             ->unique();
 

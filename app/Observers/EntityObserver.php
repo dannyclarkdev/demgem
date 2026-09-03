@@ -31,7 +31,7 @@ class EntityObserver
 
     public function saved(Entity $entity): void
     {
-        if ($entity->wasRecentlyCreated || $entity->wasChanged(['body', 'dm_notes'])) {
+        if ($entity->wasRecentlyCreated || $entity->wasChanged($entity->mentionableFields())) {
             $this->sync($entity);
         }
     }
@@ -52,11 +52,18 @@ class EntityObserver
         $this->sync($entity);
     }
 
+    /**
+     * The field map comes from mentionableFields() so adding a field there is the whole
+     * integration. Hardcoding it twice is how "rewards" was indexed nowhere at first.
+     */
     private function sync(Entity $entity): void
     {
-        $this->syncMentions->handle($entity, $entity->campaign_id, [
-            'body' => $entity->body,
-            'dm_notes' => $entity->dm_notes,
-        ]);
+        $fields = [];
+
+        foreach ($entity->mentionableFields() as $field) {
+            $fields[$field] = $entity->getAttribute($field);
+        }
+
+        $this->syncMentions->handle($entity, $entity->campaign_id, $fields);
     }
 }
