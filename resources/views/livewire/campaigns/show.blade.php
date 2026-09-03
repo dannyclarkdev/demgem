@@ -109,7 +109,7 @@
         @endif
     </x-ui.card>
 
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <a href="{{ route('campaigns.members', $campaign) }}" class="rounded-lg border border-line bg-panel p-5 transition hover:border-line-strong">
             <p class="eyebrow">Members</p>
             <p class="mt-2 font-display text-3xl font-semibold">{{ $membersCount }}</p>

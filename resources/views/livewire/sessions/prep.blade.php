@@ -66,7 +66,7 @@
                                     </form>
                                 @else
                                     <div class="flex flex-wrap items-start gap-3">
-                                        <button type="button" wire:sort:handle class="mt-0.5 cursor-grab text-ink-faint hover:text-ink-muted" aria-label="Drag to reorder">
+                                        <button type="button" wire:sort:handle class="-mt-1 -ml-1.5 inline-flex size-8 shrink-0 cursor-grab items-center justify-center text-ink-faint hover:text-ink-muted" aria-label="Drag to reorder">
                                             <x-ui.icon name="grip" class="size-4" />
                                         </button>
                                         <div class="min-w-0 flex-1">

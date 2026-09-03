@@ -519,7 +519,7 @@ Success: the party reads Thursday's recap on the entity page of the NPC they met
 - [x] A member removed or demoted mid-session stops writing on the next Livewire request, including from the nested live-notes component.
 - [x] `Model::shouldBeStrict()` is on, so Prep, Run, and both lists eager-load and no test throws a lazy-load exception.
 - [x] Autosave with unchanged wiki links performs no mention writes.
-- [ ] Prep and Run are usable at 1024px and 768px in dark and light themes, with 16px body text and no hover-only controls.
+- [x] Prep and Run are usable at 1024px and 768px in dark and light themes, with 16px body text and no hover-only controls.
 - [x] Markdown in session fields is rendered by the slice 1 renderer, so raw HTML is stripped and `javascript:` links are blocked.
 
 ### Quality gates

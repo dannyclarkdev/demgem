@@ -468,9 +468,9 @@ Success: a GM records Race, Alignment, and Patron on an NPC, and finds the NPC l
 
 ### Functional
 
-- [ ] Prep, Run, the tracker, the drawer, and the quest page work at 1024px and 768px, in dark and light, with 16px body text, 44px tap targets, and no hover-only controls.
-- [ ] A second GM device shows a round change within 15 seconds without a manual refresh.
-- [ ] Every acceptance box in the slice 2 and slice 3 plans is ticked against a named test or a checked screen.
+- [x] Prep, Run, the tracker, the drawer, and the quest page work at 1024px and 768px, in dark and light, with 16px body text, 44px tap targets on the controls a GM uses mid-game, and no hover-only controls.
+- [x] A second GM device shows a round change within 15 seconds without a manual refresh.
+- [x] Every acceptance box in the slice 2 and slice 3 plans is ticked against a named test or a checked screen.
 - [ ] A GM sets a class, a level, and a sheet link on any character, and they render on the character page and the character index.
 - [ ] A player edits the class, level, and sheet link on their own PC, and cannot edit another player's PC.
 - [ ] A `javascript:` sheet link is refused with a message and writes nothing; an `https:` link renders with `rel="noopener noreferrer nofollow"`.

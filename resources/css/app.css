@@ -71,7 +71,10 @@
     --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
     --font-mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
 
-    --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    /* backwards, not both: a filled "transform: none" still computes to a matrix,
+       which makes the wrapper a containing block and pins every position:fixed
+       child (the tools drawer and its button) to the page instead of the viewport. */
+    --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
     --animate-fade: fade 0.3s ease-out both;
 
     @keyframes rise {
@@ -263,7 +266,7 @@
 /* Wiki links and the editor. */
 @layer components {
     .ui-editor-btn {
-        @apply inline-flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs text-ink-faint hover:bg-raised hover:text-ink;
+        @apply inline-flex h-8 min-w-8 items-center justify-center rounded px-2 font-mono text-sm text-ink-faint hover:bg-raised hover:text-ink;
     }
     .ui-editor-btn--active {
         @apply bg-raised text-ink;
