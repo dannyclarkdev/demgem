@@ -192,7 +192,7 @@
 /* Rendered entity Markdown. Keep it calm: this is reference text read at the table. */
 @layer components {
     .prose-entity {
-        @apply max-w-none text-[15px] leading-relaxed text-ink;
+        @apply max-w-none text-base leading-relaxed text-ink;
     }
     .prose-entity > * + * {
         @apply mt-4;
@@ -234,10 +234,10 @@
         @apply border-l-2 border-ember/50 pl-4 text-ink-muted italic;
     }
     .prose-entity code {
-        @apply rounded bg-raised px-1 py-0.5 font-mono text-[13px] text-ink;
+        @apply rounded bg-raised px-1 py-0.5 font-mono text-sm text-ink;
     }
     .prose-entity pre {
-        @apply overflow-x-auto rounded-md border border-line bg-raised p-4 font-mono text-[13px];
+        @apply overflow-x-auto rounded-md border border-line bg-raised p-4 font-mono text-sm;
     }
     .prose-entity pre code {
         @apply bg-transparent p-0;

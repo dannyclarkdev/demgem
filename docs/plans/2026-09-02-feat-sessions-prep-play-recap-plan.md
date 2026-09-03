@@ -493,40 +493,40 @@ Success: the party reads Thursday's recap on the entity page of the NPC they met
 
 ### Functional
 
-- [ ] A GM creates a session; it takes the next number automatically and the GM can override it.
-- [ ] Number, title, date, status, and visibility are editable, and duplicate numbers are rejected.
-- [ ] `scheduled_at` shows in the campaign timezone, with the zone shown next to it, on every surface.
-- [ ] The sessions index groups by status: Upcoming, Needs recap, and Past for a GM, and Upcoming and Past for a player.
-- [ ] A cancelled session stays on a player's index with a cancelled badge until its date passes.
-- [ ] An overdue `planned` session stays in Upcoming and shows an overdue badge to GM roles.
-- [ ] A session with `visibility = dm` is absent from a player's index, dashboard, sidebar count, and entity panels, and its URL 404s.
-- [ ] The Prep screen holds a strong start, ordered scenes, secrets, and four entity buckets, and reports which steps are done.
-- [ ] Scenes reorder by drag and by button, and positions stay contiguous after a delete.
-- [ ] An entity attaches to any bucket, appears there with its image and type, and disappears when it is deleted.
-- [ ] Unrevealed secrets from earlier sessions appear on the next session's prep as "Carried over" and can be pulled in.
-- [ ] Revealing a secret records the session it came out in; unrevealing clears it.
-- [ ] Live notes autosave while typing, show a saving and a saved state, and survive a refresh.
-- [ ] The recap publishes and unpublishes explicitly, and players see it only when it is published.
-- [ ] "Start from live notes" fills an empty recap and is unavailable once the recap has content.
-- [ ] Wiki links work in strong start, scene notes, live notes, recap, GM notes, and secret bodies.
-- [ ] Renaming an entity rewrites its links inside session and scene prose.
-- [ ] Every entity page lists the sessions that mention it, filtered by what the viewer may see.
-- [ ] A member of campaign A gets 404 on a session URL in campaign B.
+- [x] A GM creates a session; it takes the next number automatically and the GM can override it.
+- [x] Number, title, date, status, and visibility are editable, and duplicate numbers are rejected.
+- [x] `scheduled_at` shows in the campaign timezone, with the zone shown next to it, on every surface.
+- [x] The sessions index groups by status: Upcoming, Needs recap, and Past for a GM, and Upcoming and Past for a player.
+- [x] A cancelled session stays on a player's index with a cancelled badge until its date passes.
+- [x] An overdue `planned` session stays in Upcoming and shows an overdue badge to GM roles.
+- [x] A session with `visibility = dm` is absent from a player's index, dashboard, sidebar count, and entity panels, and its URL 404s.
+- [x] The Prep screen holds a strong start, ordered scenes, secrets, and four entity buckets, and reports which steps are done.
+- [x] Scenes reorder by drag and by button, and positions stay contiguous after a delete.
+- [x] An entity attaches to any bucket, appears there with its image and type, and disappears when it is deleted.
+- [x] Unrevealed secrets from earlier sessions appear on the next session's prep as "Carried over" and can be pulled in.
+- [x] Revealing a secret records the session it came out in; unrevealing clears it.
+- [x] Live notes autosave while typing, show a saving and a saved state, and survive a refresh.
+- [x] The recap publishes and unpublishes explicitly, and players see it only when it is published.
+- [x] "Start from live notes" fills an empty recap and is unavailable once the recap has content.
+- [x] Wiki links work in strong start, scene notes, live notes, recap, GM notes, and secret bodies.
+- [x] Renaming an entity rewrites its links inside session and scene prose.
+- [x] Every entity page lists the sessions that mention it, filtered by what the viewer may see.
+- [x] A member of campaign A gets 404 on a session URL in campaign B.
 
 ### Non-functional
 
-- [ ] No GM-only field of any session reaches a player's HTML, Livewire snapshot, or JSON. The recap editor state exists only for GM roles, checked by reading the snapshot in a test.
-- [ ] A member removed or demoted mid-session stops writing on the next Livewire request, including from the nested live-notes component.
-- [ ] `Model::shouldBeStrict()` is on, so Prep, Run, and both lists eager-load and no test throws a lazy-load exception.
-- [ ] Autosave with unchanged wiki links performs no mention writes.
+- [x] No GM-only field of any session reaches a player's HTML, Livewire snapshot, or JSON. The recap editor state exists only for GM roles, checked by reading the snapshot in a test.
+- [x] A member removed or demoted mid-session stops writing on the next Livewire request, including from the nested live-notes component.
+- [x] `Model::shouldBeStrict()` is on, so Prep, Run, and both lists eager-load and no test throws a lazy-load exception.
+- [x] Autosave with unchanged wiki links performs no mention writes.
 - [ ] Prep and Run are usable at 1024px and 768px in dark and light themes, with 16px body text and no hover-only controls.
-- [ ] Markdown in session fields is rendered by the slice 1 renderer, so raw HTML is stripped and `javascript:` links are blocked.
+- [x] Markdown in session fields is rendered by the slice 1 renderer, so raw HTML is stripped and `javascript:` links are blocked.
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on Postgres in CI.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] Every new query on `game_sessions` calls `visibleTo()`, and the policy docblock lists the surfaces, as `EntityPolicy` does.
+- [x] Pest suite green on SQLite locally and on Postgres in CI.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] Every new query on `game_sessions` calls `visibleTo()`, and the policy docblock lists the surfaces, as `EntityPolicy` does.
 
 ## Dependencies & Risks
 

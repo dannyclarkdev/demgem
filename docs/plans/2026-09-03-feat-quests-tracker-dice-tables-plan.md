@@ -575,7 +575,7 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on Postgres in CI.
+- [x] Pest suite green on SQLite locally and on Postgres in CI.
 - [x] Larastan level 6 clean. Pint clean.
 - [x] `ReorderScenesTest` passes with no edits after the Phase 0 refactor.
 - [x] Every new query on `encounters` and `random_tables` goes through its policy, and each policy docblock lists its surfaces, as `EntityPolicy` and `GameSessionPolicy` do.
