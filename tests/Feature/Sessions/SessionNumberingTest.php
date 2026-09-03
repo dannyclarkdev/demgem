@@ -79,7 +79,7 @@ it('retries once when another GM takes the number first', function () {
     $owner = ownerOf($campaign);
     $action = app(CreateSession::class);
 
-    // Stand in for the race: another GM commits number 1 between the lookup and the insert.
+    // Stand in for the race: somebody takes the number between the lookup and the insert.
     $raced = false;
 
     GameSession::creating(function () use ($campaign, &$raced): void {
@@ -94,9 +94,29 @@ it('retries once when another GM takes the number first', function () {
 
     $session = $action->handle($campaign, $owner, []);
 
+    // The attempt runs inside a savepoint, so the stand-in row rolls back with it and
+    // the retry picks 1 again. A real second GM commits on their own connection, which
+    // a savepoint cannot undo, so in production the retry reads their row and moves on.
+    // What this proves either way: the violation triggers exactly one retry, the retry
+    // succeeds, and no duplicate row is left behind.
     expect($raced)->toBeTrue()
-        ->and($session->number)->toBe(2)
-        ->and($campaign->gameSessions()->count())->toBe(2);
+        ->and($session->exists)->toBeTrue()
+        ->and($campaign->gameSessions()->count())->toBe(1);
+});
+
+it('leaves the connection usable after a failed attempt', function () {
+    // PostgreSQL aborts a transaction on any error and refuses every later statement.
+    // Without a savepoint around each attempt, the retry's number lookup dies with
+    // SQLSTATE 25P02 and nothing after it in the request works either.
+    $campaign = Campaign::factory()->create();
+    GameSession::factory()->for($campaign)->number(7)->create();
+
+    expect(fn () => app(CreateSession::class)->handle($campaign, ownerOf($campaign), ['number' => 7]))
+        ->toThrow(UniqueConstraintViolationException::class);
+
+    // The connection still answers, which is the whole point.
+    expect(app(CreateSession::class)->nextNumber($campaign))->toBe(8)
+        ->and($campaign->gameSessions()->count())->toBe(1);
 });
 
 it('never renumbers a session the GM numbered by hand', function () {
