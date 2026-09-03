@@ -192,7 +192,8 @@ Each phase ends with a green suite. Phases 0 to 3 are a release; Phases 4 and 5 
 Deliverables:
 - `EntityType::Map`, with its six `match` arms and a wiki-link priority below Note.
 - The `map` icon in `x-ui.icon`, and `maps` in the route pattern by way of `EntityType::slugs()`.
-- The entity index, form, and page accept the new type with no branch beyond the image being required and the upload limit being 10MB rather than 5MB.
+- The entity index, form, and page accept the new type. The only branch is the image: it renders full width instead of in the aside, and its cap is 10MB rather than 5MB.
+- The image stays **optional**. A GM should be able to make the row tonight and find the file tomorrow, and the page says so rather than refusing to exist. Phase 6's "a map with no image" empty state is built here instead.
 - The sidebar's World group counts maps like every other type.
 
 Tests: `tests/Feature/Maps/MapEntityTest.php` — a GM creates a map with an image; a player sees a shared one and not a DM-only one; the wiki link `[[World map]]` resolves; the map appears in search and in the export.

@@ -196,6 +196,15 @@ class Entity extends Model implements HasMedia
         return $this->type === EntityType::Quest;
     }
 
+    /**
+     * A map is an entity whose image is the point of it, rather than a portrait
+     * beside the prose. The page renders it full width and puts pins on it.
+     */
+    public function isMap(): bool
+    {
+        return $this->type === EntityType::Map;
+    }
+
     public function isCharacter(): bool
     {
         return $this->type === EntityType::Character;

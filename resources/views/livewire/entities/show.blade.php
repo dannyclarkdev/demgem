@@ -24,6 +24,26 @@
         @endcan
     </x-ui.page-header>
 
+    {{-- A map is the image, so it gets the whole width and the aside keeps out of
+         its way. Every other type wears its picture in the sidebar. --}}
+    @if ($entity->isMap())
+        <div class="mb-6">
+            @if ($entity->imageUrl())
+                <img src="{{ $entity->imageUrl() }}" alt="{{ $entity->name }}" class="w-full rounded-lg border border-line" loading="eager">
+            @else
+                <x-ui.empty-state
+                    icon="map"
+                    title="No image yet"
+                    description="A map needs a picture. Upload one and it fills this space."
+                >
+                    @can('update', $entity)
+                        <x-ui.button :href="$entity->editUrl()" size="sm" icon="edit">Upload the map</x-ui.button>
+                    @endcan
+                </x-ui.empty-state>
+            @endif
+        </div>
+    @endif
+
     @if ($entity->hasCharacterRecord())
         <div class="mb-6 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-lg border border-line bg-panel px-5 py-4">
             @if (filled($entity->character_class))
@@ -117,7 +137,7 @@
         </div>
 
         <aside class="space-y-5">
-            @if ($entity->imageUrl())
+            @if ($entity->imageUrl() && ! $entity->isMap())
                 <a href="{{ $entity->imageUrl() }}" target="_blank" rel="noopener"><img src="{{ $entity->imageUrl() }}" alt="{{ $entity->name }}" class="w-full rounded-lg border border-line object-cover"></a>
             @endif
 
