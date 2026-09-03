@@ -116,6 +116,8 @@ class EncounterChanged implements ShouldBroadcast, ShouldRescue
 
 - **`ShouldRescue` is not optional.** A GM clicking "next turn" must not see an error because a websocket server is down. The rescue helper reports the failure and lets the request finish; the fifteen-second-turned-sixty-second poll picks the change up anyway.
 - **`ShouldBroadcast`, not `ShouldBroadcastNow`.** Queued, so the request does not wait on an HTTP call to Reverb. This makes a running queue worker a requirement for live updates: `php artisan dev` runs one locally, the slice 4 compose file already runs one, and the README says so.
+
+  **Measured, two browsers on one encounter, 2026-09-03:** 3.1 seconds with the database queue and a default worker, 1.1 seconds with the same worker at `--sleep=0`. The wait is the worker's poll, not the socket, and Redis, which compose already uses, does not pay it. A sluggish table is a queue question first.
 - **The listener re-renders; it does not read the payload.** In Livewire:
 
 ```php
@@ -321,8 +323,8 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 ### Functional
 
 - [x] A member subscribes to their campaign's channel; a non-member and a guest are refused.
-- [ ] A GM advances the turn and every other open tracker changes without a refresh and without a poll.
-- [ ] The tracker still recovers within sixty seconds when the socket is down.
+- [x] A GM advances the turn and every other open tracker changes without a refresh and without a poll.
+- [x] The tracker still recovers within sixty seconds when the socket is down.
 - [ ] A GM toggles a combatant between hidden and shown, and the party's screens follow.
 - [ ] `/table` shows the turn order, the round, whose turn it is, and each shown combatant's health as a word.
 - [ ] A player sees their own character marked on `/table`.
