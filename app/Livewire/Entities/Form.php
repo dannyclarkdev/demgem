@@ -137,6 +137,17 @@ class Form extends Component
         return $this->entityType === EntityType::Character;
     }
 
+    private function isMap(): bool
+    {
+        return $this->entityType === EntityType::Map;
+    }
+
+    /**
+     * The upload cap for a map image, in kilobytes. Ten megabytes, which is what
+     * config/media-library.php allows, and roughly a 6000px PNG export.
+     */
+    public const MAP_IMAGE_KB = 10240;
+
     public function save(CreateEntity $createEntity, UpdateEntity $updateEntity): void
     {
         $isEdit = $this->entity !== null;
@@ -153,7 +164,14 @@ class Form extends Component
             'name' => ['required', 'string', 'max:120', new UniqueEntityName($this->campaign->id, $this->entityType, $this->entity?->id)],
             'body' => ['nullable', 'string', 'max:100000'],
             'tags' => ['nullable', 'string', 'max:500'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            // A map is the image rather than a portrait beside the prose, so it gets
+            // twice the room: a hand-drawn scan at a readable resolution does not fit
+            // in five megabytes.
+            //
+            // Still optional. A GM writing the world down at midnight should be able
+            // to make the row now and find the file tomorrow, and the map page says
+            // so rather than refusing to exist.
+            'image' => ['nullable', 'image', 'max:'.($this->isMap() ? self::MAP_IMAGE_KB : 5120)],
             'custom_fields' => ['array', 'max:20'],
             'custom_fields.*.key' => ['nullable', 'string', 'max:40'],
             'custom_fields.*.value' => ['nullable', 'string', 'max:200'],
@@ -335,6 +353,7 @@ class Form extends Component
             'visibilities' => Visibility::cases(),
             'isCharacter' => $this->entityType === EntityType::Character,
             'isQuest' => $this->isQuest(),
+            'isMap' => $this->isMap(),
             'questStatuses' => QuestStatus::cases(),
             'giverOptions' => $giverOptions,
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),

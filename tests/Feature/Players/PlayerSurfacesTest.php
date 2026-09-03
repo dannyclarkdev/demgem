@@ -10,6 +10,7 @@ use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
+use App\Models\MapMarker;
 use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
 use App\Models\Secret;
@@ -72,6 +73,18 @@ function playerWorld(): array
     DiceRoll::factory()->for($campaign)->by(ownerOf($campaign))->behindTheScreen()
         ->create(['label' => 'The roll nobody may read.']);
 
+    // A map with a pin the party has not found, and one revealed onto a GM-only
+    // place. Both must be absent from every page a player can open.
+    $map = Entity::factory()->for($campaign)->type(EntityType::Map)->forPlayers()
+        ->create(['name' => 'The Duchy of Vell', 'slug' => 'vell']);
+
+    MapMarker::factory()->onMap($map)->at(40, 50)
+        ->create(['label' => 'The pin nobody may read.']);
+
+    MapMarker::factory()->onMap($map)->shownToPlayers()->at(60, 70)
+        ->pointingAt(Entity::factory()->for($campaign)->dmOnly()->create(['name' => 'The Drowned Court']))
+        ->create();
+
     $table = RandomTable::factory()->for($campaign)->create(['name' => 'Harbour rumours']);
     RandomTableEntry::factory()->inTable($table)->create(['body' => 'The rumour nobody may read.']);
 
@@ -95,6 +108,8 @@ it('shows a player no GM prose on any page they can open', function (string $rou
         'The draft session nobody may read.',
         'The rumour nobody may read.',
         'The roll nobody may read.',
+        'The pin nobody may read.',
+        'The Drowned Court',
         'The Informant',
         'The Hidden Patron',
         'Cultist Bravo',
@@ -104,6 +119,8 @@ it('shows a player no GM prose on any page they can open', function (string $rou
 })->with([
     'dashboard' => ['campaigns.show', []],
     'table' => ['table', []],
+    'maps' => ['entities.index', ['maps']],
+    'map' => ['entities.show', ['maps', 'vell']],
     'sessions' => ['sessions.index', []],
     'session' => ['sessions.show', [1]],
     'story' => ['story', []],

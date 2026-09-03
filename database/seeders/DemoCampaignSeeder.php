@@ -13,6 +13,8 @@ use App\Actions\Encounters\SetConditions;
 use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
 use App\Actions\Entities\CreateEntity;
+use App\Actions\Maps\PlaceMarker;
+use App\Actions\Maps\SetMarkerVisibility;
 use App\Actions\RandomTables\CreateRandomTable;
 use App\Actions\Sessions\CreateSession;
 use App\Enums\CampaignRole;
@@ -25,6 +27,7 @@ use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 /**
  * A small linked world for development. Run: php artisan db:seed --class=DemoCampaignSeeder
@@ -155,6 +158,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
+        $this->seedMaps($campaign, $dm);
 
         $this->command->info("Seeded The Drowned Duchy for {$dm->email} (password: password).");
     }
@@ -338,6 +342,104 @@ class DemoCampaignSeeder extends Seeder
             app(ApplyDamage::class)->handle($thralls->first(), 18);
             app(SetConditions::class)->handle($thralls->first(), ['Prone']);
         }
+    }
+
+    /**
+     * Two maps, one nested inside the other, with half the pins revealed.
+     *
+     * The pictures are drawn here rather than shipped as files: a placeholder that
+     * says "placeholder" is more honest than a stock coastline, and the repository
+     * stays free of binaries.
+     */
+    private function seedMaps(Campaign $campaign, User $dm): void
+    {
+        $create = app(CreateEntity::class);
+        $place = app(PlaceMarker::class);
+        $reveal = app(SetMarkerVisibility::class);
+
+        $duchy = $create->handle($campaign, $dm, [
+            'type' => EntityType::Map,
+            'name' => 'The Duchy of Vell',
+            'visibility' => Visibility::Players,
+            'body' => 'Salt, sea walls, and the drowned court beneath [[Harrowgate]].',
+            'tags' => ['map'],
+        ]);
+
+        $harrowgate = $create->handle($campaign, $dm, [
+            'type' => EntityType::Map,
+            'name' => 'Harrowgate streets',
+            'visibility' => Visibility::Players,
+            'body' => 'The town at high tide. Half of it floods; the court pretends otherwise.',
+            'tags' => ['map'],
+        ]);
+
+        $this->attachPlaceholderMap($duchy, 'The Duchy of Vell', 2000, 1400);
+        $this->attachPlaceholderMap($harrowgate, 'Harrowgate', 1600, 1200);
+
+        $named = fn (string $name): ?Entity => $campaign->entities()->where('name', $name)->first();
+
+        // A pin whose target is a map drills into it. That is the whole of nesting.
+        $pins = [
+            [$duchy, 26.5, 41.0, null, $named('Harrowgate'), true],
+            [$duchy, 24.0, 39.0, null, $harrowgate, true],
+            [$duchy, 58.5, 30.0, 'The Salt Cathedral', $named('Salt Cathedral'), true],
+            [$duchy, 78.0, 63.5, 'The smugglers stair', null, false],
+            [$duchy, 88.0, 21.0, 'Here be dragons', null, true],
+            [$duchy, 44.0, 74.0, 'The drowned court', $named('The Drowned Duke'), false],
+            [$harrowgate, 33.0, 52.0, 'The Tidewarden barracks', $named('Tidewardens'), true],
+            [$harrowgate, 67.5, 38.0, 'Where the sister was seen', null, false],
+        ];
+
+        foreach ($pins as [$map, $x, $y, $label, $target, $shown]) {
+            $pin = $place->handle($map, $x, $y, $label, $target);
+
+            if ($shown) {
+                $reveal->handle($pin, true);
+            }
+        }
+    }
+
+    /**
+     * A drawn stand-in: a coast, a grid, and its own name across the top. It exists so
+     * the viewer has something to zoom on the first run, and it does not pretend to be
+     * anybody's art.
+     */
+    private function attachPlaceholderMap(Entity $map, string $title, int $width, int $height): void
+    {
+        $image = imagecreatetruecolor($width, $height);
+
+        $sea = imagecolorallocate($image, 34, 62, 84);
+        $land = imagecolorallocate($image, 118, 132, 84);
+        $coast = imagecolorallocate($image, 196, 184, 140);
+        $grid = imagecolorallocatealpha($image, 255, 255, 255, 108);
+        $ink = imagecolorallocate($image, 250, 246, 236);
+
+        imagefilledrectangle($image, 0, 0, $width, $height, $sea);
+
+        for ($blob = 0; $blob < 22; $blob++) {
+            $cx = (int) ($width * 0.2 + ($blob * $width * 0.03) % ($width * 0.62));
+            $cy = (int) ($height * 0.5 + sin($blob) * $height * 0.2);
+
+            imagefilledellipse($image, $cx, $cy, (int) ($width * 0.22), (int) ($height * 0.26), $land);
+            imageellipse($image, $cx, $cy, (int) ($width * 0.22), (int) ($height * 0.26), $coast);
+        }
+
+        for ($x = 0; $x < $width; $x += (int) ($width / 16)) {
+            imageline($image, $x, 0, $x, $height, $grid);
+        }
+
+        for ($y = 0; $y < $height; $y += (int) ($height / 12)) {
+            imageline($image, 0, $y, $width, $y, $grid);
+        }
+
+        imagestring($image, 5, 40, 30, strtoupper($title).' (placeholder)', $ink);
+
+        $path = tempnam(sys_get_temp_dir(), 'demgem-map').'.png';
+
+        imagepng($image, $path);
+        imagedestroy($image);
+
+        $map->addMedia($path)->usingFileName(Str::slug($title).'.png')->toMediaCollection('image');
     }
 
     /**

@@ -86,7 +86,7 @@
         </div>
 
         <aside class="space-y-5">
-            <x-ui.card title="Image">
+            <x-ui.card :title="$isMap ? 'The map' : 'Image'">
                 <div class="space-y-3" x-data="{ removing: @entangle('removeImage') }">
                     @if ($isEdit && $entity->imageUrl())
                         <img src="{{ $entity->imageUrl('thumb') }}" alt="" class="aspect-square w-full rounded-md border border-line object-cover" :class="removing ? 'opacity-30' : ''">
@@ -95,7 +95,7 @@
                     @if ($image && $image->isPreviewable())
                         <img src="{{ $image->temporaryUrl() }}" alt="" class="aspect-square w-full rounded-md border border-ember/40 object-cover">
                     @endif
-                    <x-ui.field label="{{ $isEdit && $entity->imageUrl() ? 'Replace image' : 'Upload image' }}" for="image" :error="$errors->first('image')" hint="PNG, JPG, or WebP up to 5 MB.">
+                    <x-ui.field label="{{ $isEdit && $entity->imageUrl() ? 'Replace image' : 'Upload image' }}" for="image" :error="$errors->first('image')" hint="{{ $isMap ? 'PNG, JPG, or WebP up to 10 MB. This is the map.' : 'PNG, JPG, or WebP up to 5 MB.' }}">
                         <input type="file" id="image" wire:model="image" accept="image/*" class="block w-full text-sm text-ink-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-raised file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:border-ink-faint">
                     </x-ui.field>
                     <p wire:loading wire:target="image" class="text-xs text-ink-faint">Uploading&hellip;</p>

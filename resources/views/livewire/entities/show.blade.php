@@ -24,6 +24,14 @@
         @endcan
     </x-ui.page-header>
 
+    {{-- A map is the image, so it gets the whole width and the aside keeps out of
+         its way. Every other type wears its picture in the sidebar. --}}
+    @if ($entity->isMap())
+        <div class="mb-6">
+            <livewire:maps.viewer :campaign="$campaign" :map-id="$entity->id" :wire:key="'map-'.$entity->id" />
+        </div>
+    @endif
+
     @if ($entity->hasCharacterRecord())
         <div class="mb-6 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-lg border border-line bg-panel px-5 py-4">
             @if (filled($entity->character_class))
@@ -117,7 +125,7 @@
         </div>
 
         <aside class="space-y-5">
-            @if ($entity->imageUrl())
+            @if ($entity->imageUrl() && ! $entity->isMap())
                 <a href="{{ $entity->imageUrl() }}" target="_blank" rel="noopener"><img src="{{ $entity->imageUrl() }}" alt="{{ $entity->name }}" class="w-full rounded-lg border border-line object-cover"></a>
             @endif
 
@@ -186,6 +194,25 @@
                     <ul class="space-y-1">
                         @foreach ($backlinks as $backlink)
                             <li><a href="{{ $backlink->url() }}" class="flex items-center gap-2 text-sm text-ink-muted hover:text-ink"><x-ui.icon :name="$backlink->type->icon()" class="size-3.5 text-ink-faint" /> {{ $backlink->name }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            {{-- The backlinks question, asked of pictures. Both of a pin's gates
+                 applied in the query: a pin the party has not found does not tell
+                 them the thing is on that map. --}}
+            @if ($pinnedOn->isNotEmpty())
+                <div>
+                    <p class="eyebrow mb-2">Appears on</p>
+                    <ul class="space-y-1">
+                        @foreach ($pinnedOn as $pinMap)
+                            <li>
+                                <a href="{{ $pinMap->url() }}" class="flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
+                                    <x-ui.icon name="map" class="size-3.5 shrink-0 text-ink-faint" />
+                                    <span class="truncate">{{ $pinMap->name }}</span>
+                                </a>
+                            </li>
                         @endforeach
                     </ul>
                 </div>

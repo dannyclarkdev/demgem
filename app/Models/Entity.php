@@ -196,6 +196,36 @@ class Entity extends Model implements HasMedia
         return $this->type === EntityType::Quest;
     }
 
+    /**
+     * A map is an entity whose image is the point of it, rather than a portrait
+     * beside the prose. The page renders it full width and puts pins on it.
+     */
+    public function isMap(): bool
+    {
+        return $this->type === EntityType::Map;
+    }
+
+    /**
+     * The pins on this map.
+     *
+     * @return HasMany<MapMarker, $this>
+     */
+    public function markers(): HasMany
+    {
+        return $this->hasMany(MapMarker::class, 'entity_id');
+    }
+
+    /**
+     * The pins on other maps that point at this one. "Appears on" is the backlinks
+     * question the app already answers for prose, asked of pictures.
+     *
+     * @return HasMany<MapMarker, $this>
+     */
+    public function pinnedBy(): HasMany
+    {
+        return $this->hasMany(MapMarker::class, 'target_entity_id');
+    }
+
     public function isCharacter(): bool
     {
         return $this->type === EntityType::Character;

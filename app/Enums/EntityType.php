@@ -10,6 +10,7 @@ enum EntityType: string
     case Item = 'item';
     case Quest = 'quest';
     case Note = 'note';
+    case Map = 'map';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum EntityType: string
             self::Item => 'Item',
             self::Quest => 'Quest',
             self::Note => 'Note',
+            self::Map => 'Map',
         };
     }
 
@@ -32,6 +34,7 @@ enum EntityType: string
             self::Item => 'Items',
             self::Quest => 'Quests',
             self::Note => 'Notes',
+            self::Map => 'Maps',
         };
     }
 
@@ -47,6 +50,7 @@ enum EntityType: string
             self::Item => 'items',
             self::Quest => 'quests',
             self::Note => 'notes',
+            self::Map => 'maps',
         };
     }
 
@@ -59,6 +63,7 @@ enum EntityType: string
             self::Item => 'box',
             self::Quest => 'compass',
             self::Note => 'file-text',
+            self::Map => 'map',
         };
     }
 
@@ -71,11 +76,15 @@ enum EntityType: string
             self::Item => 'Relics, letters, keys, and loot worth remembering.',
             self::Quest => 'Hooks, jobs, and promises the party made.',
             self::Note => 'Lore, house rules, timelines, and anything else.',
+            self::Map => 'The picture of the world, with a pin on everything the party has found.',
         };
     }
 
     /**
      * Resolution order for a bare [[Name]] that matches more than one type. Lower wins.
+     *
+     * A map sits last on purpose. "The Salt Cathedral" in prose means the place, and
+     * a map of the same name is the picture of it; the reader wants the place.
      */
     public function priority(): int
     {
@@ -86,6 +95,7 @@ enum EntityType: string
             self::Item => 3,
             self::Quest => 4,
             self::Note => 5,
+            self::Map => 6,
         };
     }
 
