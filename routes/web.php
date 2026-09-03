@@ -23,6 +23,7 @@ use App\Livewire\Sessions\Index as SessionsIndex;
 use App\Livewire\Sessions\Prep as SessionsPrep;
 use App\Livewire\Sessions\Run as SessionsRun;
 use App\Livewire\Sessions\Show as SessionsShow;
+use App\Livewire\Sessions\Story as SessionsStory;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('type', implode('|', EntityType::slugs()));
@@ -55,6 +56,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/sessions/{number}/edit', SessionsForm::class)->whereNumber('number')->name('sessions.edit');
             Route::get('/sessions/{number}/prep', SessionsPrep::class)->whereNumber('number')->name('sessions.prep');
             Route::get('/sessions/{number}/run', SessionsRun::class)->whereNumber('number')->name('sessions.run');
+
+            // The recap archive, read oldest first. A page of prose, not a schedule,
+            // which is why it is not a tab on the sessions index.
+            Route::get('/story', SessionsStory::class)->name('story');
 
             // Keyed by ULID on purpose. An encounter is a GM tool, not lore: nothing links
             // to it and no player opens it, so it is not worth a slug or the rename trade.

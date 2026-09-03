@@ -493,7 +493,7 @@ Success: a GM records Race, Alignment, and Patron on an NPC, and finds the NPC l
 - [ ] Soft-deleted entities and sessions are absent from the export.
 - [ ] A hidden PC is absent from a player's party card and party filter; a player's own hidden PC is present in both.
 - [ ] `Model::shouldBeStrict()` is on, so the story page, the party card, and every export section eager-load, and no test throws a lazy-load exception.
-- [ ] One database query for a page of the story.
+- [ ] The story page costs a constant number of queries, whatever the page holds.
 - [ ] The export streams: the response is a streamed response, and a test reads it with `streamedContent()` and decodes it whole.
 - [ ] `ExportCoverageTest` fails when a campaign-scoped table is neither exported nor documented as excluded.
 - [ ] The Docker image builds in CI and answers `/up` within 60 seconds of `docker compose up -d`.
