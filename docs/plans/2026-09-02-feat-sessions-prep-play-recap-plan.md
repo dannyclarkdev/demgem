@@ -274,7 +274,7 @@ Setting the status to `played` does **not** publish anything. Publishing is alwa
 The payoff is a panel on the entity page:
 
 ```php
-// app/Queries/SessionsMentioning.php — sessions that mention this entity
+// app/Actions/Sessions/SessionsMentioning.php — sessions that mention this entity
 $direct = Mention::query()
     ->where('target_entity_id', $entity->id)
     ->where('source_type', 'game_session')
@@ -465,7 +465,7 @@ Success: a GM runs a whole session from one screen, and the notes survive a brow
 
 Deliverables:
 - Recap editor, **Publish recap**, **Unpublish**, and **Start from live notes** on `Sessions\Show`.
-- `app/Queries/SessionsMentioning.php` and the "Appears in sessions" panel on `Entities\Show`.
+- `app/Actions/Sessions/SessionsMentioning.php` and the "Appears in sessions" panel on `Entities\Show`. It lives beside the other session actions rather than in a new `app/Queries` folder, because CLAUDE.md asks for approval before a new base directory.
 - Player recap view and the recap archive on the sessions index.
 
 Tests: `RecapTest` (unpublished recap invisible to players, published visible, status change does not publish, seeding from live notes only when empty, no recap editor state in a player's snapshot), `EntitySessionPanelTest` (GM sees sessions matched through scene notes and GM notes, a player sees only sessions matched through a published recap on a visible session).

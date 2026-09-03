@@ -28,21 +28,48 @@
     <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
         <div class="space-y-6">
             <x-ui.card title="Recap">
-                @if ($recapHtml === null)
-                    <p class="text-sm text-ink-faint">
-                        @if ($role->isDm())
-                            No recap yet. Write one after you play, then publish it for the party.
+                <x-slot:header>
+                    @if ($canEdit)
+                        @if ($session->hasPublishedRecap())
+                            <x-ui.badge variant="success" icon="eye">Published</x-ui.badge>
                         @else
-                            The GM has not published a recap for this session.
+                            <x-ui.badge variant="dm" icon="eye-off">Draft</x-ui.badge>
                         @endif
-                    </p>
-                @elseif ($recapHtml === '')
-                    <p class="text-sm text-ink-faint">The recap is empty.</p>
+                    @endif
+                </x-slot:header>
+
+                @if ($canEdit)
+                    <form wire:submit="saveRecap" class="space-y-4">
+                        <x-ui.markdown-editor
+                            name="recap"
+                            wire:model="recap"
+                            rows="10"
+                            :autocomplete-url="$autocompleteUrl"
+                            preview-action="previewRecap"
+                            :preview="$recapPreview"
+                            hint="What the party will remember. Link people and places with [[double brackets]]."
+                        />
+                        <div class="flex flex-wrap items-center gap-2">
+                            <x-ui.button type="submit" variant="secondary">Save draft</x-ui.button>
+                            @if ($session->hasPublishedRecap())
+                                <x-ui.button type="button" variant="ghost" icon="eye-off" wire:click="unpublishRecap">Unpublish</x-ui.button>
+                            @else
+                                <x-ui.button type="button" icon="eye" wire:click="publishRecap">Publish recap</x-ui.button>
+                            @endif
+                            @if (! filled($session->recap) && filled($session->live_notes))
+                                <x-ui.button type="button" variant="ghost" icon="zap" wire:click="startRecapFromLiveNotes">Start from live notes</x-ui.button>
+                            @endif
+                        </div>
+                        <p class="text-xs text-ink-faint">
+                            {{ $session->hasPublishedRecap()
+                                ? 'The party can read this now.'
+                                : 'Only GMs can read this. Publishing is a separate step from marking the session played.' }}
+                        </p>
+                    </form>
+                @elseif ($recapHtml === null || $recapHtml === '')
+                    <p class="text-sm text-ink-faint">The GM has not published a recap for this session.</p>
                 @else
                     <div class="prose-entity">{!! $recapHtml !!}</div>
-                    @if ($role->isDm() && ! $session->hasPublishedRecap())
-                        <p class="mt-4 flex items-center gap-1.5 text-xs text-dm"><x-ui.icon name="eye-off" class="size-3.5" /> Not published. Only GMs can read this.</p>
-                    @endif
                 @endif
             </x-ui.card>
         </div>
