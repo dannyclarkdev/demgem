@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sessions;
 
+use App\Actions\Encounters\CreateEncounter;
 use App\Actions\Sessions\RevealSecret;
 use App\Actions\Sessions\UpdateSession;
 use App\Enums\EntityType;
@@ -12,6 +13,7 @@ use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
 use App\Models\Campaign;
+use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\Scene;
@@ -51,6 +53,23 @@ class Run extends Component
         $updateSession->handle($this->session, $this->user(), [
             'status' => SessionStatus::from($status),
         ]);
+    }
+
+    /**
+     * Starts a fight from the table. The encounter carries this session, so the tracker
+     * can offer the Monsters bucket and the record says which night it happened.
+     */
+    public function startEncounter(CreateEncounter $createEncounter): void
+    {
+        $this->authorize('update', $this->session);
+        $this->authorize('create', [Encounter::class, $this->campaign]);
+
+        $createEncounter->handle(
+            $this->campaign,
+            $this->user(),
+            $this->session->label().' encounter',
+            $this->session,
+        );
     }
 
     public function revealSecret(string $secretId, RevealSecret $revealSecret): void
@@ -103,6 +122,7 @@ class Run extends Component
             'buckets' => $buckets,
             'party' => Entity::query()->where('is_pc', true)->with('player')->orderBy('name')->get(),
             'activeQuests' => $this->activeQuests(),
+            'encounters' => Encounter::query()->forSession($this->session)->latest()->get(),
         ])->title('Running '.$this->session->label());
     }
 

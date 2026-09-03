@@ -9,6 +9,8 @@ use App\Livewire\Campaigns\Index as CampaignsIndex;
 use App\Livewire\Campaigns\Members as CampaignsMembers;
 use App\Livewire\Campaigns\Settings as CampaignsSettings;
 use App\Livewire\Campaigns\Show as CampaignsShow;
+use App\Livewire\Encounters\Index as EncountersIndex;
+use App\Livewire\Encounters\Show as EncountersShow;
 use App\Livewire\Entities\Form as EntitiesForm;
 use App\Livewire\Entities\Index as EntitiesIndex;
 use App\Livewire\Entities\Show as EntitiesShow;
@@ -51,6 +53,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/sessions/{number}/edit', SessionsForm::class)->whereNumber('number')->name('sessions.edit');
             Route::get('/sessions/{number}/prep', SessionsPrep::class)->whereNumber('number')->name('sessions.prep');
             Route::get('/sessions/{number}/run', SessionsRun::class)->whereNumber('number')->name('sessions.run');
+
+            // Keyed by ULID on purpose. An encounter is a GM tool, not lore: nothing links
+            // to it and no player opens it, so it is not worth a slug or the rename trade.
+            //
+            // The parameter is {encounterId}, not {encounter}: a parameter named after a
+            // model is claimed by Livewire's implicit route binding, which resolves it
+            // before mount() and before enterCampaign(). Sessions and entities resolve in
+            // mount() for the same reason, and their keys just happen not to be model names.
+            Route::get('/encounters', EncountersIndex::class)->name('encounters.index');
+            Route::get('/encounters/{encounterId}', EncountersShow::class)->name('encounters.show');
 
             Route::get('/{type}/create', EntitiesForm::class)->name('entities.create');
             Route::get('/{type}', EntitiesIndex::class)->name('entities.index');

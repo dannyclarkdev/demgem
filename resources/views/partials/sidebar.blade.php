@@ -48,6 +48,14 @@
                 icon="calendar"
                 :count="$sessionCount"
             >Sessions</x-ui.nav-link>
+            @if ($currentRole?->isDm())
+                <x-ui.nav-link
+                    :href="route('encounters.index', $currentCampaign)"
+                    :active="request()->routeIs('encounters.*')"
+                    icon="swords"
+                    :count="$encounterCount"
+                >Encounters</x-ui.nav-link>
+            @endif
         </div>
         <div>
             <p class="eyebrow px-2 pb-2">World</p>

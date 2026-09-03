@@ -22,6 +22,32 @@
                 </x-ui.card>
             @endif
 
+            {{-- Combat is the main event when combat is happening, so the tracker takes the
+                 main column rather than the aside, which is already full. --}}
+            @if ($encounters->isEmpty())
+                <x-ui.card>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <x-ui.icon name="swords" class="size-5 text-ink-faint" />
+                        <p class="min-w-0 flex-1 text-sm text-ink-muted">No fight running. Start one and the turn order opens here.</p>
+                        <x-ui.button size="sm" icon="plus" wire:click="startEncounter">Start an encounter</x-ui.button>
+                    </div>
+                </x-ui.card>
+            @else
+                @foreach ($encounters as $encounter)
+                    <x-ui.card :padding="false" wire:key="run-encounter-{{ $encounter->id }}">
+                        <x-slot:header>
+                            <a href="{{ $encounter->url() }}" class="text-xs text-ink-faint hover:text-ink">Open on its own page</a>
+                        </x-slot:header>
+                        <h2 class="border-b border-line px-5 py-3 font-display text-base font-semibold">{{ $encounter->name }}</h2>
+                        <livewire:encounters.tracker :campaign="$campaign" :encounter="$encounter" :wire:key="'tracker-'.$encounter->id" />
+                    </x-ui.card>
+                @endforeach
+
+                <div class="text-right">
+                    <x-ui.button variant="ghost" size="sm" icon="plus" wire:click="startEncounter">Another encounter</x-ui.button>
+                </div>
+            @endif
+
             <x-ui.card>
                 <livewire:sessions.live-notes :campaign="$campaign" :session="$session" :wire:key="'live-notes-'.$session->id" />
             </x-ui.card>

@@ -544,10 +544,10 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 - [x] Ticking an objective from the Run screen records the session; ticking it from the quest page does not, and unticking clears both columns.
 - [x] `/quests` filters by status, the filter survives a page refresh through the URL, and each row shows progress like "3 of 7".
 - [x] The dashboard shows active quests with their objective progress.
-- [ ] A GM creates an encounter, adds the party in one click, adds four goblins in one action with shared HP and AC, and adds a bare name by hand.
-- [ ] Roll initiative fills every non-PC combatant; Sort by initiative orders them with blanks last.
-- [ ] Next turn advances by position, wraps into the next round, and the turn marker survives a refresh.
-- [ ] Damage and healing clamp at 0 and at max HP; conditions add and remove; removing the active combatant restarts the turn at the top.
+- [x] A GM creates an encounter, adds the party in one click, adds four goblins in one action with shared HP and AC, and adds a bare name by hand.
+- [x] Roll initiative fills every non-PC combatant; Sort by initiative orders them with blanks last.
+- [x] Next turn advances by position, wraps into the next round, and the turn marker survives a refresh.
+- [x] Damage and healing clamp at 0 and at max HP; conditions add and remove; removing the active combatant restarts the turn at the top.
 - [ ] A second GM device shows a round change within 15 seconds without a manual refresh.
 - [x] `2d6+3`, `d20`, `4d6kh3`, and `2d20kl1` all roll and show individual faces with dropped dice marked.
 - [x] The advantage toggle turns a `d20` roll into `2d20kh1`, and disadvantage into `2d20kl1`.
@@ -564,10 +564,10 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 - [x] **A visible quest with a GM-only giver names no giver in a player's HTML or Livewire snapshot.**
 - [x] **An objective completed in a hidden session shows no session reference to a player.**
 - [ ] No combatant, dice roll, or random table content reaches a player's HTML, snapshot, or JSON. All four routes 404 for a player.
-- [ ] A member removed or demoted mid-encounter stops writing on their next request, **including on the tracker's next poll**.
-- [ ] One database query per tracker poll, asserted in a test.
+- [x] A member removed or demoted mid-encounter stops writing on their next request, **including on the tracker's next poll**.
+- [x] One database query per tracker poll, asserted in a test.
 - [ ] `Model::shouldBeStrict()` is on, so the quest page, the tracker, and both new indexes eager-load and no test throws a lazy-load exception.
-- [ ] Initiative sorting puts blanks last on SQLite and on Postgres, proven by the CI job.
+- [x] Initiative sorting puts blanks last on SQLite and on Postgres, proven by the CI job.
 - [x] Dice limits are enforced by the parser, so the UI and any future API share one answer.
 - [ ] Nesting a table inside itself is rejected at write time; a longer cycle is caught at roll time.
 - [ ] The tracker, the drawer, and the quest page work at 1024px and 768px in dark and light, with 16px body text and no hover-only controls.
