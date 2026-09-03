@@ -15,6 +15,8 @@ use App\Livewire\Entities\Form as EntitiesForm;
 use App\Livewire\Entities\Index as EntitiesIndex;
 use App\Livewire\Entities\Show as EntitiesShow;
 use App\Livewire\Profile\Edit as ProfileEdit;
+use App\Livewire\RandomTables\Index as TablesIndex;
+use App\Livewire\RandomTables\Show as TablesShow;
 use App\Livewire\Search;
 use App\Livewire\Sessions\Form as SessionsForm;
 use App\Livewire\Sessions\Index as SessionsIndex;
@@ -63,6 +65,9 @@ Route::middleware('auth')->group(function () {
             // mount() for the same reason, and their keys just happen not to be model names.
             Route::get('/encounters', EncountersIndex::class)->name('encounters.index');
             Route::get('/encounters/{encounterId}', EncountersShow::class)->name('encounters.show');
+
+            Route::get('/tables', TablesIndex::class)->name('tables.index');
+            Route::get('/tables/{tableId}', TablesShow::class)->name('tables.show');
 
             Route::get('/{type}/create', EntitiesForm::class)->name('entities.create');
             Route::get('/{type}', EntitiesIndex::class)->name('entities.index');

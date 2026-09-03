@@ -55,6 +55,12 @@
                     icon="swords"
                     :count="$encounterCount"
                 >Encounters</x-ui.nav-link>
+                <x-ui.nav-link
+                    :href="route('tables.index', $currentCampaign)"
+                    :active="request()->routeIs('tables.*')"
+                    icon="list"
+                    :count="$tableCount"
+                >Tables</x-ui.nav-link>
             @endif
         </div>
         <div>

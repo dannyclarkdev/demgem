@@ -10,8 +10,19 @@
         <x-ui.button :href="$session->url()" variant="ghost" size="sm">Session</x-ui.button>
     </x-ui.page-header>
 
-    <x-ui.drawer name="tools" title="Dice" icon="dice">
-        <livewire:dice.tray :campaign="$campaign" :session="$session" :wire:key="'dice-'.$session->id" />
+    <x-ui.drawer name="tools" title="Tools" icon="dice">
+        <div x-data="{ tab: 'dice' }" class="flex h-full flex-col">
+            <x-ui.tabs class="shrink-0 px-2" :tabs="[
+                'dice' => ['label' => 'Dice', 'icon' => 'dice'],
+                'tables' => ['label' => 'Tables', 'icon' => 'list'],
+            ]" />
+            <div x-show="tab === 'dice'" class="min-h-0 flex-1">
+                <livewire:dice.tray :campaign="$campaign" :session="$session" :wire:key="'dice-'.$session->id" />
+            </div>
+            <div x-show="tab === 'tables'" x-cloak class="min-h-0 flex-1">
+                <livewire:random-tables.roller :campaign="$campaign" :wire:key="'roller-'.$session->id" />
+            </div>
+        </div>
     </x-ui.drawer>
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

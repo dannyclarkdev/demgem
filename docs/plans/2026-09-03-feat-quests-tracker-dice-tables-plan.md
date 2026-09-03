@@ -553,23 +553,23 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 - [x] The advantage toggle turns a `d20` roll into `2d20kh1`, and disadvantage into `2d20kl1`.
 - [x] `999d999` is refused with a readable message and writes nothing.
 - [x] The dice log persists across a refresh and records the session it was rolled in.
-- [ ] A GM builds a weighted table, sees the derived range beside every row, and rolls it.
-- [ ] An entry that nests another table returns both results; a cycle stops and says so; depth stops at 5.
-- [ ] Deleting a table removes its entries and degrades any entry that nested it to plain text.
-- [ ] The tracker, the dice tray, and the table roller are all reachable from the Run screen without leaving it.
-- [ ] A member of campaign A gets 404 on an encounter or table URL in campaign B.
+- [x] A GM builds a weighted table, sees the derived range beside every row, and rolls it.
+- [x] An entry that nests another table returns both results; a cycle stops and says so; depth stops at 5.
+- [x] Deleting a table removes its entries and degrades any entry that nested it to plain text.
+- [x] The tracker, the dice tray, and the table roller are all reachable from the Run screen without leaving it.
+- [x] A member of campaign A gets 404 on an encounter or table URL in campaign B.
 
 ### Non-functional
 
 - [x] **A visible quest with a GM-only giver names no giver in a player's HTML or Livewire snapshot.**
 - [x] **An objective completed in a hidden session shows no session reference to a player.**
-- [ ] No combatant, dice roll, or random table content reaches a player's HTML, snapshot, or JSON. All four routes 404 for a player.
+- [x] No combatant, dice roll, or random table content reaches a player's HTML, snapshot, or JSON. All four routes 404 for a player.
 - [x] A member removed or demoted mid-encounter stops writing on their next request, **including on the tracker's next poll**.
 - [x] One database query per tracker poll, asserted in a test.
 - [ ] `Model::shouldBeStrict()` is on, so the quest page, the tracker, and both new indexes eager-load and no test throws a lazy-load exception.
 - [x] Initiative sorting puts blanks last on SQLite and on Postgres, proven by the CI job.
 - [x] Dice limits are enforced by the parser, so the UI and any future API share one answer.
-- [ ] Nesting a table inside itself is rejected at write time; a longer cycle is caught at roll time.
+- [x] Nesting a table inside itself is rejected at write time; a longer cycle is caught at roll time.
 - [ ] The tracker, the drawer, and the quest page work at 1024px and 768px in dark and light, with 16px body text and no hover-only controls.
 - [ ] Markdown in rewards, objectives, and table entries goes through the slice 1 renderer, so raw HTML is stripped and `javascript:` links are blocked.
 
