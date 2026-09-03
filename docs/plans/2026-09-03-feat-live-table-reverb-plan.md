@@ -320,7 +320,7 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 
 ### Functional
 
-- [ ] A member subscribes to their campaign's channel; a non-member and a guest are refused.
+- [x] A member subscribes to their campaign's channel; a non-member and a guest are refused.
 - [ ] A GM advances the turn and every other open tracker changes without a refresh and without a poll.
 - [ ] The tracker still recovers within sixty seconds when the socket is down.
 - [ ] A GM toggles a combatant between hidden and shown, and the party's screens follow.
@@ -341,10 +341,10 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 - [ ] **A private roll is absent from every other viewer's HTML and snapshot.**
 - [ ] A member removed or demoted mid-fight stops receiving updates on their next round trip, and cannot re-subscribe.
 - [ ] Every broadcast implements `ShouldRescue`, so a GM's click never fails because Reverb is down.
-- [ ] The tracker's query count per render does not change from slice 3.
+- [x] The tracker's query count per render does not change from slice 3.
 - [ ] `/table` costs a constant number of queries, whatever the fight holds.
 - [ ] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
-- [ ] No `VITE_` value decides where the browser connects: the layout renders the settings at runtime.
+- [x] No `VITE_` value decides where the browser connects: the layout renders the settings at runtime.
 - [ ] `/table` and the Run screen with the log open work at 1024px and 768px, in dark and light, with 16px body text and 44px tap targets on the controls a GM uses mid-game.
 
 ### Quality gates
