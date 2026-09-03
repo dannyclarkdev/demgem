@@ -205,7 +205,7 @@ Combat tracker, dice, and generators. Add campaign memory later.
 | Markdown | league/commonmark with custom extensions | Wiki links, secret blocks, mentions. |
 | Testing and quality | Pest, Pint, Larastan | |
 | Packaging | Docker Compose, one image with FrankenPHP or Octane | |
-| License | AGPL-3.0 recommended | Keeps hosted forks open. Author hosts, so this protects the project. MIT is the alternative. |
+| License | MIT | Decided 2026-09-02. demgem is a side project with no plan to monetize, so AGPL was considered and rejected. |
 
 ## Architecture Notes
 
@@ -338,7 +338,6 @@ Reverb real-time for tracker and dice. 5e 2024 SRD compendium, stat blocks, enco
 - Can players create and edit entities in the MVP, or only read and edit their own PC?
 - Real-time in the MVP, or P2 as recommended?
 - Is "demgem" the final name?
-- AGPL-3.0 or MIT?
 
 ## Next Steps
 

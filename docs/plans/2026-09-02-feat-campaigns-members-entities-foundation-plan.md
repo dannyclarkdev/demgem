@@ -37,6 +37,7 @@ Build the campaign container, its membership model, and the entity wiki as a ful
 | Tests | Pest + pest-plugin-laravel | Pest 5.1, plugin 5.0.1 | Replace PHPUnit. SQLite in-memory for this slice. |
 | Quality | Pint, Larastan | | Level 6 to start. |
 | Database | PostgreSQL in dev and production | | Keep migrations portable so SQLite tests work. |
+| License | MIT | Decided 2026-09-02. Side project, no monetization, so AGPL was rejected. |
 
 ### Livewire component style
 
