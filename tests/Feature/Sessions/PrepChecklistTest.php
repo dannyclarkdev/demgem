@@ -28,7 +28,7 @@ it('counts what is prepped and what is still empty', function () {
         ->and($steps['Write a strong start']['done'])->toBeTrue()
         ->and($steps['Outline scenes']['count'])->toBe(2)
         ->and($steps['Pick locations']['done'])->toBeTrue()
-        ->and($steps['Pick npcs']['done'])->toBeFalse()
+        ->and($steps['Pick NPCs']['done'])->toBeFalse()
         ->and($steps['Pick treasure']['count'])->toBe(0);
 });
 

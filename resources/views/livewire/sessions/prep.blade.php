@@ -4,7 +4,7 @@
         <x-ui.button :href="$session->url()" variant="ghost" size="sm" icon="arrow-left">Session</x-ui.button>
     </x-ui.page-header>
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div class="space-y-6">
             <x-ui.card title="Strong start">
                 <form wire:submit="saveNotes" class="space-y-5">
@@ -65,7 +65,7 @@
                                         </div>
                                     </form>
                                 @else
-                                    <div class="flex items-start gap-3">
+                                    <div class="flex flex-wrap items-start gap-3">
                                         <button type="button" wire:sort:handle class="mt-0.5 cursor-grab text-ink-faint hover:text-ink-muted" aria-label="Drag to reorder">
                                             <x-ui.icon name="grip" class="size-4" />
                                         </button>
@@ -78,7 +78,7 @@
                                                 <div class="prose-entity mt-2 text-sm">{!! $sceneNotesHtml[$scene->id] !!}</div>
                                             @endif
                                         </div>
-                                        <div wire:sort:ignore class="flex shrink-0 items-center gap-0.5">
+                                        <div wire:sort:ignore class="ml-auto flex shrink-0 items-center gap-0.5">
                                             <x-ui.button variant="ghost" size="icon" wire:click="moveScene('{{ $scene->id }}', -1)" :disabled="$loop->first" aria-label="Move up">
                                                 <x-ui.icon name="arrow-up" class="size-4" />
                                             </x-ui.button>

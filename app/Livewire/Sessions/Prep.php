@@ -367,7 +367,7 @@ class Prep extends Component
             $count = $buckets[$prepRole->value]->count();
 
             $steps[] = [
-                'label' => 'Pick '.strtolower($prepRole->plural()),
+                'label' => 'Pick '.$prepRole->lowerPlural(),
                 'done' => $count > 0,
                 'count' => $count,
                 'hint' => $prepRole->description(),

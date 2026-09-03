@@ -41,7 +41,7 @@
                 <a href="{{ $latestRecap->url() }}" class="block">
                     <p class="eyebrow">{{ $latestRecap->label() }}</p>
                     <p class="mt-1 font-display text-xl font-semibold text-ink">{{ $latestRecap->displayTitle() }}</p>
-                    <p class="mt-2 line-clamp-3 text-sm text-ink-muted">{{ \Illuminate\Support\Str::limit(strip_tags((string) $latestRecap->recap), 200) }}</p>
+                    <p class="mt-2 line-clamp-3 text-sm text-ink-muted">{{ $latestRecap->recapExcerpt() }}</p>
                 </a>
             @endif
         </x-ui.card>

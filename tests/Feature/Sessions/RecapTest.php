@@ -140,3 +140,18 @@ it('shows the published recap on the dashboard and the index', function () {
         ->assertOk()
         ->assertSeeInOrder(['The Ashfall Road', 'Recap']);
 });
+
+it('shows a recap excerpt without raw wiki link brackets', function () {
+    $campaign = Campaign::factory()->create();
+    $session = GameSession::factory()->for($campaign)->number(1)->published(
+        '[[Mara Voss]] pulled two of you out, and [[location:Harrowgate|the city]] noticed.'
+    )->create();
+
+    expect($session->recapExcerpt())->toBe('Mara Voss pulled two of you out, and the city noticed.');
+
+    $this->actingAs(memberOf($campaign, CampaignRole::Player))
+        ->get(route('campaigns.show', $campaign))
+        ->assertOk()
+        ->assertSee('Mara Voss pulled two of you out')
+        ->assertDontSee('[[Mara Voss]]');
+});

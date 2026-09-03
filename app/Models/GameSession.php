@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * One game night: what the GM prepped, what happened, and what the party may read.
@@ -219,6 +220,21 @@ class GameSession extends Model
     public function displayTitle(): string
     {
         return filled($this->title) ? (string) $this->title : $this->label();
+    }
+
+    /**
+     * Plain text for a card. Wiki links show their label, or their name without the
+     * type prefix, instead of raw brackets.
+     */
+    public function recapExcerpt(int $limit = 200): string
+    {
+        $text = (string) preg_replace_callback(
+            '/\[\[(?:[a-z]+:)?([^\]|]+)(?:\|([^\]]+))?\]\]/iu',
+            fn (array $match) => trim($match[2] ?? $match[1]),
+            (string) $this->recap,
+        );
+
+        return Str::limit(trim(strip_tags($text)), $limit);
     }
 
     public function url(): string

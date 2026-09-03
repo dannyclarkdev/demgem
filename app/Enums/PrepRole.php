@@ -33,6 +33,14 @@ enum PrepRole: string
         };
     }
 
+    /**
+     * The plural as it reads mid-sentence. NPC keeps its capitals.
+     */
+    public function lowerPlural(): string
+    {
+        return $this === self::Npc ? 'NPCs' : strtolower($this->plural());
+    }
+
     public function description(): string
     {
         return match ($this) {

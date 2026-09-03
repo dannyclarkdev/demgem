@@ -130,7 +130,7 @@ class DemoCampaignSeeder extends Seeder
         $first = $create->handle($campaign, $dm, [
             'number' => 1,
             'title' => 'The Harbor Fire',
-            'scheduled_at' => now()->subWeeks(3),
+            'scheduled_at' => now()->subWeeks(3)->setTime(19, 0),
             'status' => SessionStatus::Played,
         ]);
         $first->update([
@@ -141,7 +141,7 @@ class DemoCampaignSeeder extends Seeder
         $second = $create->handle($campaign, $dm, [
             'number' => 2,
             'title' => 'Under the Pilings',
-            'scheduled_at' => now()->subWeek(),
+            'scheduled_at' => now()->subWeek()->setTime(19, 0),
             'status' => SessionStatus::Played,
         ]);
         $second->update([

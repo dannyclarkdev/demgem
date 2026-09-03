@@ -25,7 +25,7 @@
         @endcan
     </x-ui.page-header>
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div class="space-y-6">
             <x-ui.card title="Recap">
                 <x-slot:header>
