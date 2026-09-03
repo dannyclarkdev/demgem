@@ -1,0 +1,98 @@
+# demgem for self-hosters.
+#
+#   cp .env.docker.example .env.docker
+#   docker compose run --rm --no-deps app php artisan key:generate --show   # paste into APP_KEY
+#   docker compose up -d
+#
+# Then open http://localhost:8000 and register. The first account is an ordinary
+# account: demgem has no instance administrator and does not need one.
+#
+# The database credentials are written here rather than read from the environment on
+# purpose. Compose reads .env for interpolation, and a developer's .env points at
+# their own Postgres, which would quietly reconfigure this stack.
+
+name: demgem
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  # Nothing queues work today: media conversions run inline and no mail is sent. The
+  # worker ships anyway, because the first S3 disk or the first email turns queued
+  # work on, and a self-hoster who has to add a service a year later usually does not.
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600"]
+    # The image's healthcheck asks Caddy's admin API how it is, and a queue worker
+    # runs no Caddy. Ask whether the worker is still there instead, so that
+    # "compose up --wait" has something to wait for.
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan queue:work' > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      app:
+        condition: service_healthy
+
+  db:
+    image: postgres:17.11-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: demgem
+      POSTGRES_USER: demgem
+      POSTGRES_PASSWORD: demgem_change_me
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=demgem --dbname=demgem"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Cache and queue. Sessions stay on the database driver, so a Redis restart does
+  # not sign the whole table out mid-game.
+  redis:
+    image: redis:8.8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pgdata:
+  storage:
+  redis:

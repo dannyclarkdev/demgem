@@ -1,0 +1,27 @@
+.git
+.github
+.ai
+.agents
+.claude
+.codex
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+# Built with dev dependencies on the host. A copy of it lists Laravel Boost, which
+# --no-dev does not install, and the container dies on boot with "class not found".
+bootstrap/cache/*
+tests
+docs
+.env
+.env.*
+!.env.docker.example
+*.md
+!README.md
+.phpunit.result.cache
