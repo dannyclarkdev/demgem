@@ -199,6 +199,25 @@
                 </div>
             @endif
 
+            {{-- The backlinks question, asked of pictures. Both of a pin's gates
+                 applied in the query: a pin the party has not found does not tell
+                 them the thing is on that map. --}}
+            @if ($pinnedOn->isNotEmpty())
+                <div>
+                    <p class="eyebrow mb-2">Appears on</p>
+                    <ul class="space-y-1">
+                        @foreach ($pinnedOn as $pinMap)
+                            <li>
+                                <a href="{{ $pinMap->url() }}" class="flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
+                                    <x-ui.icon name="map" class="size-3.5 shrink-0 text-ink-faint" />
+                                    <span class="truncate">{{ $pinMap->name }}</span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             @if ($sessions->isNotEmpty())
                 <div>
                     <p class="eyebrow mb-2">Appears in sessions</p>

@@ -245,6 +245,7 @@ Deliverables:
 - A pin whose target is a map renders differently and navigates into it.
 - **Appears on**: the maps that pin this one, read as backlinks, respecting visibility.
 - A breadcrumb of one hop, because there is no chain to walk.
+- **Every entity, not only a map.** A location pinned on the duchy map says so on its own page. The query was the same either way, and restricting it to maps would have been the extra work.
 
 Tests: `tests/Feature/Maps/NestedMapsTest.php` (the world pins the duchy and the duchy's page says so; a player sees no "appears on" entry for a map they cannot open; a cycle renders and does not hang).
 
@@ -286,8 +287,8 @@ Success: the party is looking at the map when the GM reveals the door.
 - [x] A pin whose target entity is deleted keeps its label and loses its link.
 - [x] A GM reveals and hides a pin, and can reveal or hide every pin at once.
 - [x] A player opens a shared map and sees only the revealed pins.
-- [ ] A pin that targets a map opens that map.
-- [ ] A map page lists the maps it appears on.
+- [x] A pin that targets a map opens that map.
+- [x] A map page lists the maps it appears on, and so does every other entity a pin points at.
 - [x] A map joins search, wiki links, backlinks, tags, and the JSON export.
 - [ ] The GM reveals a pin mid-session and the party's open maps follow. *(Phase 5; drop this line if the phase is cut.)*
 

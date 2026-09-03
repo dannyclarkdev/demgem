@@ -11,9 +11,11 @@ use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\MapMarker;
 use App\Models\Mention;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class Show extends Component
@@ -81,7 +83,32 @@ class Show extends Component
             'rewardsHtml' => $this->entity->isQuest() ? $renderer->render($this->entity->rewards, $wikiLinks) : '',
             'questStatus' => $this->entity->questStatus(),
             'giver' => $this->visibleGiver($user, $role),
+            'pinnedOn' => $this->mapsPinningThis($user, $role),
         ])->title($this->entity->name);
+    }
+
+    /**
+     * The maps that pin this thing. "Appears on" is the backlinks question the app
+     * already answers for prose, asked of pictures.
+     *
+     * Both of a pin's gates apply. A pin the party has not found does not tell them
+     * that the thing is on that map, and neither does a pin on a map they cannot open.
+     *
+     * @return Collection<int, Entity>
+     */
+    private function mapsPinningThis(User $user, CampaignRole $role): Collection
+    {
+        $mapIds = MapMarker::query()
+            ->visibleTo($user, $role)
+            ->where('target_entity_id', $this->entity->id)
+            ->pluck('entity_id')
+            ->unique();
+
+        return Entity::query()
+            ->whereIn('id', $mapIds)
+            ->visibleTo($user, $role)
+            ->orderBy('name')
+            ->get();
     }
 
     /**
