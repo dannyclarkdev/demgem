@@ -366,6 +366,8 @@ Load the `frontend-design` and `ui-ux-pro-max` skills before building the Prep a
 | Concurrent GM edits | Last write wins, stated in the UI. Reverb is P2. |
 | Session search | Not in Scout this slice. The index gets a title and number filter. Full session search is a Future Consideration with the design written down. |
 | Scene "played" checkbox | Out. The Run screen tracks secrets, not scenes. P2. |
+| Ordering inside a prep bucket | Insertion order, no drag. Scene order is a running order; a bucket is a shopping list. |
+| `@disabled` inside a `<x-…>` tag | Never. It compiles to a stray `endif` and breaks the view. Pass `:disabled="$expr"` instead. |
 | Attendance and RSVP | Out. P2 in the brainstorm. |
 | In-game date range | Out. Needs the calendar, which is P2. |
 | Timezone | One `campaigns.timezone` column. Per-user timezones are P2. |
@@ -426,7 +428,7 @@ Success: a GM schedules session 1, a player sees the date on the dashboard, and 
 
 Deliverables:
 - `app/Livewire/Sessions/Prep.php` and its view: strong start editor, scenes, secrets, four entity buckets, party roster, prep checklist.
-- `app/Actions/Sessions/ReorderScenes.php` and `ReorderPrepEntities.php`.
+- `app/Actions/Sessions/ReorderScenes.php`. Buckets keep insertion order and are not sortable: a bucket holds a handful of rows and their order carries no meaning, unlike a scene list. Revisit if a GM asks.
 - Scene add, inline edit, and remove inside the component.
 - Entity picker per bucket: reuses the existing autocomplete route, filtered by `visibleTo()`, with the bucket's `suggestedTypes()` first.
 - `wire:sort` with a visible grip, plus up and down buttons.
