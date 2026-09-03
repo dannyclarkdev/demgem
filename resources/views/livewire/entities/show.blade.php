@@ -73,6 +73,20 @@
                 @endif
             </x-ui.card>
 
+            @php ($customFields = $entity->customFields())
+            @if ($customFields !== [])
+                <x-ui.card title="Details">
+                    <dl class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+                        @foreach ($customFields as $field)
+                            <div>
+                                <dt class="eyebrow">{{ $field['key'] }}</dt>
+                                <dd class="mt-0.5 text-ink">{{ $field['value'] }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </x-ui.card>
+            @endif
+
             @if ($entity->isQuest())
                 <x-ui.card title="Objectives">
                     <livewire:quests.objectives

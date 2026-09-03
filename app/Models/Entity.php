@@ -41,6 +41,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $body
  * @property string|null $dm_notes
  * @property string|null $rewards
+ * @property array<int, mixed>|null $custom_fields Raw decoded JSON. Read it through customFields().
  * @property Visibility $visibility
  * @property string|null $parent_id
  * @property bool $is_pc
@@ -67,7 +68,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 #[ObservedBy([EntityObserver::class])]
 #[Fillable([
-    'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'visibility',
+    'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility',
     'parent_id', 'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
     'quest_status', 'giver_entity_id',
     'created_by', 'updated_by',
@@ -90,6 +91,7 @@ class Entity extends Model implements HasMedia
             'quest_status' => QuestStatus::class,
             'is_pc' => 'boolean',
             'level' => 'integer',
+            'custom_fields' => 'array',
         ];
     }
 
@@ -260,6 +262,32 @@ class Entity extends Model implements HasMedia
     }
 
     /**
+     * The GM's own key-value pairs, in the order they typed them. Plain text on both
+     * sides: a pair is a label and a value, and a GM who wants prose has the body.
+     *
+     * @return list<array{key: string, value: string}>
+     */
+    public function customFields(): array
+    {
+        $fields = $this->custom_fields;
+
+        if (! is_array($fields)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(
+                fn (mixed $field): array => [
+                    'key' => is_array($field) ? trim((string) ($field['key'] ?? '')) : '',
+                    'value' => is_array($field) ? trim((string) ($field['value'] ?? '')) : '',
+                ],
+                $fields,
+            ),
+            fn (array $field): bool => $field['key'] !== '',
+        ));
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function player(): BelongsTo
@@ -351,6 +379,9 @@ class Entity extends Model implements HasMedia
             'body' => $this->body,
             'rewards' => $this->rewards,
             'character_class' => $this->character_class,
+            // The raw JSON text, on purpose: the database engine runs "ilike" against
+            // the column itself, so "tiefling" finds the entity whose Race says so.
+            'custom_fields' => $this->getRawOriginal('custom_fields'),
         ];
     }
 

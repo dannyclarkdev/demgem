@@ -100,5 +100,6 @@ it('puts rewards in the search index and keeps GM notes out', function () {
         'body' => 'Clear the barrow.',
         'rewards' => 'The Sunblade.',
         'character_class' => null,
+        'custom_fields' => null,
     ]);
 });

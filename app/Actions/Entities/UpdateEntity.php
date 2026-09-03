@@ -23,7 +23,7 @@ class UpdateEntity
         return DB::transaction(function () use ($entity, $actor, $data): Entity {
             $attributes = collect($data)
                 ->only([
-                    'name', 'body', 'dm_notes', 'rewards', 'visibility', 'parent_id',
+                    'name', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility', 'parent_id',
                     'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
                     'quest_status', 'giver_entity_id',
                 ])
