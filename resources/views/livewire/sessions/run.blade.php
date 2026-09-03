@@ -10,6 +10,12 @@
         <x-ui.button :href="$session->url()" variant="ghost" size="sm">Session</x-ui.button>
     </x-ui.page-header>
 
+    {{-- Who else has the campaign open. The GM asks it out loud every week, and the
+         presence channel already knows the answer. --}}
+    <div class="mb-6">
+        <livewire:table.presence :campaign="$campaign" :wire:key="'run-presence-'.$session->id" />
+    </div>
+
     <x-ui.drawer name="tools" title="Tools" icon="dice">
         <div x-data="{ tab: 'dice' }" class="flex h-full flex-col">
             <x-ui.tabs class="shrink-0 px-2" :tabs="[

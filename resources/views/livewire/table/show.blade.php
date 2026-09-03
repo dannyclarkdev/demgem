@@ -12,6 +12,10 @@
         description="What is happening right now. It changes on its own, so leave it open."
     />
 
+    <div class="mb-4">
+        <livewire:table.presence :campaign="$campaign" :wire:key="'table-presence'" />
+    </div>
+
     @if ($fight)
         <x-ui.card :padding="false" class="mb-4">
             {{-- The GM's own label for the fight, and a GM writes it like a note. The
