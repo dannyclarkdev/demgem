@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Sessions;
 
+use App\Actions\Sessions\CarrySecretForward;
 use App\Actions\Sessions\ReorderScenes;
+use App\Actions\Sessions\RevealSecret;
 use App\Actions\Sessions\UpdateSession;
 use App\Enums\PrepRole;
 use App\Livewire\Concerns\InteractsWithCampaign;
@@ -12,6 +14,7 @@ use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\Scene;
+use App\Models\Secret;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,6 +48,12 @@ class Prep extends Component
     public string $sceneNotes = '';
 
     public string $sceneNotesPreview = '';
+
+    public string $newSecretBody = '';
+
+    public ?string $editingSecretId = null;
+
+    public string $secretBody = '';
 
     /** Which bucket the entity picker is filling. Empty means the picker is closed. */
     public string $pickerRole = '';
@@ -182,6 +191,81 @@ class Prep extends Component
         $reorderScenes->move($this->session, $this->scene($sceneId), $offset);
     }
 
+    public function addSecret(): void
+    {
+        $this->authorize('update', $this->session);
+
+        $this->validate(['newSecretBody' => ['required', 'string', 'max:2000']]);
+
+        $this->session->secrets()->create([
+            'campaign_id' => $this->session->campaign_id,
+            'body' => trim($this->newSecretBody),
+            'position' => $this->nextPosition($this->session->secrets()->max('position')),
+            'created_by' => $this->user()->id,
+        ]);
+
+        $this->newSecretBody = '';
+    }
+
+    public function editSecret(string $secretId): void
+    {
+        $secret = $this->secret($secretId);
+
+        $this->editingSecretId = $secret->id;
+        $this->secretBody = $secret->body;
+    }
+
+    public function cancelSecretEdit(): void
+    {
+        $this->editingSecretId = null;
+        $this->secretBody = '';
+    }
+
+    public function saveSecret(): void
+    {
+        $this->authorize('update', $this->session);
+
+        $secret = $this->secret((string) $this->editingSecretId);
+
+        $validated = $this->validate(['secretBody' => ['required', 'string', 'max:2000']]);
+
+        $secret->update(['body' => trim($validated['secretBody'])]);
+
+        $this->cancelSecretEdit();
+    }
+
+    public function removeSecret(string $secretId): void
+    {
+        $this->authorize('update', $this->session);
+
+        $this->secret($secretId)->delete();
+
+        if ($this->editingSecretId === $secretId) {
+            $this->cancelSecretEdit();
+        }
+    }
+
+    public function revealSecret(string $secretId, RevealSecret $revealSecret): void
+    {
+        $this->authorize('update', $this->session);
+
+        $revealSecret->handle($this->secret($secretId), $this->session);
+    }
+
+    public function unrevealSecret(string $secretId, RevealSecret $revealSecret): void
+    {
+        $this->authorize('update', $this->session);
+
+        $revealSecret->undo($this->secret($secretId));
+    }
+
+    public function carrySecretForward(string $secretId, CarrySecretForward $carrySecretForward): void
+    {
+        $this->authorize('update', $this->session);
+
+        $carrySecretForward->handle($this->secret($secretId), $this->session);
+    }
+
     public function openPicker(string $role): void
     {
         $this->pickerRole = PrepRole::from($role)->value;
@@ -231,6 +315,7 @@ class Prep extends Component
         $wikiLinks = WikiLinkRenderer::for($this->campaign, $user, $role);
 
         $scenes = $this->session->scenes()->get();
+        $secrets = $this->session->secrets()->unrevealed()->get();
         $buckets = [];
 
         foreach (PrepRole::cases() as $prepRole) {
@@ -253,6 +338,10 @@ class Prep extends Component
             'buckets' => $buckets,
             'party' => $party,
             'checklist' => $this->checklist($scenes, $buckets, $party),
+            'secrets' => $secrets,
+            'carriedSecrets' => Secret::query()->carriedInto($this->session)->orderBy('created_at')->get(),
+            'revealedSecrets' => $this->session->revealedSecrets()->get(),
+            'secretHtml' => $this->renderSecrets($renderer, $wikiLinks),
             'pickerResults' => $this->pickerResults($user),
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),
         ])->title($this->session->label().' prep');
@@ -323,6 +412,34 @@ class Prep extends Component
     private function scene(string $sceneId): Scene
     {
         return $this->session->scenes()->whereKey($sceneId)->firstOrFail();
+    }
+
+    /**
+     * Secrets belong to the campaign, not to one session, so a carried-over secret is
+     * reachable here before it is pinned to this session.
+     */
+    private function secret(string $secretId): Secret
+    {
+        return Secret::query()->whereKey($secretId)->firstOrFail();
+    }
+
+    /**
+     * Secrets render their wiki links so a GM can jump to the NPC mid-sentence. They are
+     * not indexed as mention sources: they move between sessions, and every move would
+     * have to re-scope the rows.
+     *
+     * @return Collection<string, string>
+     */
+    private function renderSecrets(MarkdownRenderer $renderer, WikiLinkRenderer $wikiLinks): Collection
+    {
+        return Secret::query()
+            ->where(function (Builder $query): void {
+                $query->where('game_session_id', $this->session->id)
+                    ->orWhere('revealed_in_session_id', $this->session->id)
+                    ->orWhereIn('id', Secret::query()->carriedInto($this->session)->select('id'));
+            })
+            ->pluck('body', 'id')
+            ->map(fn (string $body) => $renderer->render($body, $wikiLinks));
     }
 
     private function wikiLinks(): WikiLinkRenderer

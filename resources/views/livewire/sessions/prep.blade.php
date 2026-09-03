@@ -108,6 +108,89 @@
                 </x-slot:footer>
             </x-ui.card>
 
+            <x-ui.card title="Secrets and clues" :padding="false">
+                <x-slot:header>
+                    <span class="text-xs text-ink-faint">{{ $secrets->count() }} ready · {{ $revealedSecrets->count() }} out</span>
+                </x-slot:header>
+
+                @if ($secrets->isEmpty())
+                    <p class="px-5 py-4 text-sm text-ink-faint">Nothing prepared yet. Ten short truths the party can learn tonight, in any order, from any direction.</p>
+                @else
+                    <ul class="divide-y divide-line">
+                        @foreach ($secrets as $secret)
+                            <li wire:key="secret-{{ $secret->id }}" class="px-5 py-3">
+                                @if ($editingSecretId === $secret->id)
+                                    <form wire:submit="saveSecret" class="space-y-3">
+                                        <x-ui.textarea label="Secret or clue" name="secretBody" wire:model="secretBody" rows="2" />
+                                        <div class="flex items-center gap-2">
+                                            <x-ui.button type="submit" size="sm">Save</x-ui.button>
+                                            <x-ui.button type="button" variant="ghost" size="sm" wire:click="cancelSecretEdit">Cancel</x-ui.button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <div class="flex items-start gap-3">
+                                        <x-ui.icon name="key" class="mt-1 size-4 shrink-0 text-ink-faint" />
+                                        <div class="prose-entity min-w-0 flex-1 text-sm">{!! $secretHtml[$secret->id] !!}</div>
+                                        <div class="flex shrink-0 items-center gap-0.5">
+                                            <x-ui.button variant="secondary" size="sm" wire:click="revealSecret('{{ $secret->id }}')">Reveal</x-ui.button>
+                                            <x-ui.button variant="ghost" size="icon" wire:click="editSecret('{{ $secret->id }}')" aria-label="Edit secret">
+                                                <x-ui.icon name="edit" class="size-4" />
+                                            </x-ui.button>
+                                            <x-ui.button variant="ghost" size="icon" wire:click="removeSecret('{{ $secret->id }}')" wire:confirm="Delete this secret?" aria-label="Delete secret">
+                                                <x-ui.icon name="trash" class="size-4" />
+                                            </x-ui.button>
+                                        </div>
+                                    </div>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+
+                @if ($carriedSecrets->isNotEmpty())
+                    <div class="border-t border-line bg-raised/30">
+                        <p class="px-5 pt-3 pb-1 text-xs font-medium tracking-wide text-ink-muted uppercase">Carried over</p>
+                        <p class="px-5 pb-2 text-xs text-ink-faint">Still unrevealed. Nothing is lost because the party missed it.</p>
+                        <ul class="divide-y divide-line">
+                            @foreach ($carriedSecrets as $secret)
+                                <li wire:key="carried-{{ $secret->id }}" class="flex items-start gap-3 px-5 py-2.5">
+                                    <x-ui.icon name="clock" class="mt-1 size-4 shrink-0 text-ink-faint" />
+                                    <div class="prose-entity min-w-0 flex-1 text-sm">{!! $secretHtml[$secret->id] !!}</div>
+                                    <div class="flex shrink-0 items-center gap-1">
+                                        <x-ui.button variant="ghost" size="sm" wire:click="carrySecretForward('{{ $secret->id }}')">Pull in</x-ui.button>
+                                        <x-ui.button variant="secondary" size="sm" wire:click="revealSecret('{{ $secret->id }}')">Reveal</x-ui.button>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if ($revealedSecrets->isNotEmpty())
+                    <div class="border-t border-line">
+                        <p class="px-5 pt-3 pb-1 text-xs font-medium tracking-wide text-ink-muted uppercase">Revealed here</p>
+                        <ul class="divide-y divide-line">
+                            @foreach ($revealedSecrets as $secret)
+                                <li wire:key="revealed-{{ $secret->id }}" class="flex items-start gap-3 px-5 py-2.5 opacity-70">
+                                    <x-ui.icon name="check" class="mt-1 size-4 shrink-0 text-success" />
+                                    <div class="prose-entity min-w-0 flex-1 text-sm">{!! $secretHtml[$secret->id] !!}</div>
+                                    <x-ui.button variant="ghost" size="sm" wire:click="unrevealSecret('{{ $secret->id }}')">Undo</x-ui.button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <x-slot:footer>
+                    <form wire:submit="addSecret" class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <x-ui.input label="Add a secret or clue" name="newSecretBody" wire:model="newSecretBody" placeholder="The duke's signet ring is a forgery" />
+                        </div>
+                        <x-ui.button type="submit" icon="plus">Add</x-ui.button>
+                    </form>
+                </x-slot:footer>
+            </x-ui.card>
+
             <div class="grid gap-4 md:grid-cols-2">
                 @foreach ($prepRoles as $prepRole)
                     <x-ui.card :title="$prepRole->plural()" :padding="false" wire:key="bucket-{{ $prepRole->value }}">
