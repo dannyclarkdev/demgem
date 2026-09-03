@@ -10,6 +10,10 @@
         <x-ui.button :href="$session->url()" variant="ghost" size="sm">Session</x-ui.button>
     </x-ui.page-header>
 
+    <x-ui.drawer name="tools" title="Dice" icon="dice">
+        <livewire:dice.tray :campaign="$campaign" :session="$session" :wire:key="'dice-'.$session->id" />
+    </x-ui.drawer>
+
     <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div class="space-y-6">
             @if ($strongStartHtml !== '')
