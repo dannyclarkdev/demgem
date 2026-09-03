@@ -496,14 +496,14 @@ Success: a GM records Race, Alignment, and Patron on an NPC, and finds the NPC l
 - [x] The story page costs a constant number of queries, whatever the page holds.
 - [x] The export streams: the response is a streamed response, and a test reads it with `streamedContent()` and decodes it whole.
 - [x] `ExportCoverageTest` fails when a campaign-scoped table is neither exported nor documented as excluded.
-- [ ] The Docker image builds in CI and answers `/up` within 60 seconds of `docker compose up -d`.
+- [x] The Docker image builds in CI and answers `/up` within 60 seconds of `docker compose up -d`.
 - [x] The container refuses to start with no `APP_KEY` and prints the command that makes one.
 - [x] A named volume over `storage` does not break the app: the framework directories are recreated on boot.
 - [x] Custom field values render escaped, and `<script>` in a value is inert. *(Phase 5.)*
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on Postgres in CI.
+- [x] Pest suite green on SQLite locally and on Postgres in CI.
 - [x] Larastan level 6 clean. Pint clean.
 - [x] Zero new `x-ui.*` components, or a written reason for each one added.
 - [x] Every new query on `entities` and `game_sessions` goes through `visibleTo()`, and `CampaignPolicy::export()` names its surfaces in a docblock as the other abilities do.
