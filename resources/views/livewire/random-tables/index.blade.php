@@ -1,10 +1,12 @@
-<div>
+<div
+    @keydown.window="if ($event.key === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $event.preventDefault(); $refs.newTable.focus() }"
+>
     <x-ui.page-header title="Tables" :eyebrow="$campaign->name" description="Weighted tables you roll at the table. Nest one inside another to build a result out of parts. GMs only." />
 
     <x-ui.card class="mb-4">
         <form wire:submit="create" class="flex flex-wrap items-end gap-2">
             <div class="min-w-56 flex-1">
-                <x-ui.input label="New table" name="newName" wire:model="newName" placeholder="Tavern rumours" />
+                <x-ui.input label="New table" name="newName" wire:model="newName" placeholder="Tavern rumours" x-ref="newTable" />
             </div>
             <x-ui.button type="submit" icon="plus">Create</x-ui.button>
         </form>

@@ -24,7 +24,7 @@
         @endcan
     </x-ui.page-header>
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
+    <div class="grid gap-6 xl:grid-cols-[1fr_18rem]">
         <div class="space-y-6">
             <x-ui.card>
                 @if ($bodyHtml !== '')

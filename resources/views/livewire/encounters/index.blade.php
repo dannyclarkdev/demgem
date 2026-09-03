@@ -1,10 +1,12 @@
-<div>
+<div
+    @keydown.window="if ($event.key === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $event.preventDefault(); $refs.newEncounter.focus() }"
+>
     <x-ui.page-header title="Encounters" :eyebrow="$campaign->name" description="Turn order, hit points, and conditions. GMs only." />
 
     <x-ui.card class="mb-4">
         <form wire:submit="create" class="flex flex-wrap items-end gap-2">
             <div class="min-w-56 flex-1">
-                <x-ui.input label="New encounter" name="newName" wire:model="newName" placeholder="Ambush at the toll bridge" />
+                <x-ui.input label="New encounter" name="newName" wire:model="newName" placeholder="Ambush at the toll bridge" x-ref="newEncounter" />
             </div>
             <x-ui.button type="submit" icon="plus">Create</x-ui.button>
         </form>

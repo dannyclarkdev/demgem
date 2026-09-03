@@ -566,19 +566,19 @@ Success: a GM builds a 20-row rumour table with one entry nesting a name table, 
 - [x] No combatant, dice roll, or random table content reaches a player's HTML, snapshot, or JSON. All four routes 404 for a player.
 - [x] A member removed or demoted mid-encounter stops writing on their next request, **including on the tracker's next poll**.
 - [x] One database query per tracker poll, asserted in a test.
-- [ ] `Model::shouldBeStrict()` is on, so the quest page, the tracker, and both new indexes eager-load and no test throws a lazy-load exception.
+- [x] `Model::shouldBeStrict()` is on, so the quest page, the tracker, and both new indexes eager-load and no test throws a lazy-load exception.
 - [x] Initiative sorting puts blanks last on SQLite and on Postgres, proven by the CI job.
 - [x] Dice limits are enforced by the parser, so the UI and any future API share one answer.
 - [x] Nesting a table inside itself is rejected at write time; a longer cycle is caught at roll time.
 - [ ] The tracker, the drawer, and the quest page work at 1024px and 768px in dark and light, with 16px body text and no hover-only controls.
-- [ ] Markdown in rewards, objectives, and table entries goes through the slice 1 renderer, so raw HTML is stripped and `javascript:` links are blocked.
+- [x] Markdown in rewards, objectives, and table entries goes through the slice 1 renderer, so raw HTML is stripped and `javascript:` links are blocked.
 
 ### Quality gates
 
 - [ ] Pest suite green on SQLite locally and on Postgres in CI.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] `ReorderScenesTest` passes with no edits after the Phase 0 refactor.
-- [ ] Every new query on `encounters` and `random_tables` goes through its policy, and each policy docblock lists its surfaces, as `EntityPolicy` and `GameSessionPolicy` do.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] `ReorderScenesTest` passes with no edits after the Phase 0 refactor.
+- [x] Every new query on `encounters` and `random_tables` goes through its policy, and each policy docblock lists its surfaces, as `EntityPolicy` and `GameSessionPolicy` do.
 
 ## Dependencies & Risks
 
