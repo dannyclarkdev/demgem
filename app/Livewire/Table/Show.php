@@ -17,9 +17,9 @@ use Livewire\Component;
 /**
  * The one page a player keeps open during a game.
  *
- * It is the player's half of the Run screen: the fight while there is one, and the
- * party and the latest recap while there is not, so the page is never empty between
- * fights. The shared dice log joins it in P3.
+ * It is the player's half of the Run screen: the fight while there is one, the dice
+ * the whole table shares, and the party and the latest recap, so the page is never
+ * empty between fights.
  *
  * This component finds the fight; Table\Fight renders it. The split is what lets a
  * fight start, end, or be replaced without a refresh: this one re-renders on the same
@@ -61,6 +61,9 @@ class Show extends Component
             'role' => $role,
             'fight' => $this->activeEncounter(),
             'pollSeconds' => self::POLL_SECONDS,
+            // A spectator reads the log and gets no tray. Watching is what they are
+            // here for, and rolling is not.
+            'mayRoll' => $user->can('rollDice', $this->campaign),
             'party' => Entity::query()
                 ->ofType(EntityType::Character)
                 ->visibleTo($user, $role)

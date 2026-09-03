@@ -319,6 +319,7 @@ class ExportCampaign
                 'label' => $roll->label,
                 'total' => $roll->total,
                 'detail' => $roll->detail,
+                'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
             ]);
     }

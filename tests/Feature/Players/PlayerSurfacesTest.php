@@ -6,6 +6,7 @@ use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
 use App\Models\Campaign;
 use App\Models\Combatant;
+use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
@@ -66,6 +67,11 @@ function playerWorld(): array
     $encounter = Encounter::factory()->for($campaign)->create(['name' => 'Cultists in the nave']);
     Combatant::factory()->inEncounter($encounter)->create(['name' => 'Cultist Bravo']);
 
+    // A roll behind the screen, and a shared one beside it. The GM's own screen is
+    // player-facing now: the log renders on /table for everyone in the campaign.
+    DiceRoll::factory()->for($campaign)->by(ownerOf($campaign))->behindTheScreen()
+        ->create(['label' => 'The roll nobody may read.']);
+
     $table = RandomTable::factory()->for($campaign)->create(['name' => 'Harbour rumours']);
     RandomTableEntry::factory()->inTable($table)->create(['body' => 'The rumour nobody may read.']);
 
@@ -88,6 +94,7 @@ it('shows a player no GM prose on any page they can open', function (string $rou
         'The secret nobody may read.',
         'The draft session nobody may read.',
         'The rumour nobody may read.',
+        'The roll nobody may read.',
         'The Informant',
         'The Hidden Patron',
         'Cultist Bravo',

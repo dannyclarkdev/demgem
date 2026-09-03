@@ -328,11 +328,11 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 - [x] A GM toggles a combatant between hidden and shown, and the party's screens follow.
 - [x] `/table` shows the turn order, the round, whose turn it is, and each shown combatant's health as a word.
 - [x] A player sees their own character marked on `/table`.
-- [x] `/table` is useful with no fight running: the party and the latest recap. *(The dice log joins it in P3.)*
-- [ ] A player rolls dice and the roll appears in the GM's log and every other player's log.
-- [ ] A GM rolls behind the screen and nobody else sees it.
-- [ ] A spectator can open `/table` and cannot roll.
-- [ ] The thirty-first roll in a minute is refused and writes nothing.
+- [x] `/table` is useful with no fight running: the party, the latest recap, and the dice log.
+- [x] A player rolls dice and the roll appears in the GM's log and every other player's log.
+- [x] A GM rolls behind the screen and nobody else sees it.
+- [x] A spectator can open `/table` and cannot roll.
+- [x] The thirty-first roll in a minute is refused and writes nothing.
 - [ ] The GM can see which members have the campaign open. *(Phase 4; drop this line if the phase is cut.)*
 - [ ] `docker compose up -d` gives a stack where two browsers see the same fight.
 
@@ -340,7 +340,7 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 
 - [x] **No broadcast payload carries a combatant's name, hit points, conditions, or a dice result.** Asserted on the serialised event.
 - [x] **A hidden combatant is absent from a player's HTML and Livewire snapshot**, and so are hit points, armour class, and initiative bonuses for every combatant.
-- [ ] **A private roll is absent from every other viewer's HTML and snapshot.**
+- [x] **A private roll is absent from every other viewer's HTML and snapshot.**
 - [x] A member removed or demoted mid-fight stops receiving updates on their next round trip, and cannot re-subscribe.
 - [x] Every broadcast implements `ShouldRescue`, so a GM's click never fails because Reverb is down.
 - [x] The tracker's query count per render does not change from slice 3.
@@ -355,7 +355,7 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 - [ ] Larastan level 6 clean. Pint clean.
 - [ ] The Docker job builds, boots, and reaches Reverb.
 - [ ] At most one new `x-ui.*` component, with the reason written down.
-- [ ] Every new query on `combatants` and `dice_rolls` goes through a policy, and each new ability names its surfaces in a docblock.
+- [x] Every new query on `combatants` and `dice_rolls` goes through a policy, and each new ability names its surfaces in a docblock.
 - [ ] `npm run build` clean.
 
 ## Dependencies & Risks

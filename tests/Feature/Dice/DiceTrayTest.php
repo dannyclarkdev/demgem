@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CampaignRole;
+use App\Livewire\Dice\Log;
 use App\Livewire\Dice\Tray;
 use App\Models\Campaign;
 use App\Models\DiceRoll;
@@ -112,9 +113,11 @@ it('shows the most recent rolls and no more', function () {
 
     DiceRoll::factory()->count(30)->for($campaign)->by($owner)->create();
 
+    // The log left the tray in slice 5: it is the campaign's now, not this
+    // component's, so both screens that show a tray show the same one under it.
     Livewire::actingAs($owner)
-        ->test(Tray::class, ['campaign' => $campaign])
-        ->assertViewHas('rolls', fn ($rolls) => $rolls->count() === Tray::LOG_LIMIT);
+        ->test(Log::class, ['campaign' => $campaign])
+        ->assertViewHas('rolls', fn ($rolls) => $rolls->count() === Log::LIMIT);
 });
 
 it('clears only this user\'s rolls', function () {
@@ -126,28 +129,39 @@ it('clears only this user\'s rolls', function () {
     DiceRoll::factory()->count(2)->for($campaign)->by($coGm)->create();
 
     Livewire::actingAs($owner)
-        ->test(Tray::class, ['campaign' => $campaign])
+        ->test(Log::class, ['campaign' => $campaign])
         ->call('clearLog');
 
     expect(DiceRoll::query()->count())->toBe(2);
 });
 
-it('is closed to players and spectators', function (CampaignRole $role) {
+it('is closed to a spectator, who is read-only by definition', function () {
     $campaign = Campaign::factory()->create();
-    $member = memberOf($campaign, $role);
 
-    Livewire::actingAs($member)
+    Livewire::actingAs(memberOf($campaign, CampaignRole::Spectator))
         ->test(Tray::class, ['campaign' => $campaign])
         ->assertForbidden();
-})->with([CampaignRole::Player, CampaignRole::Spectator]);
+});
 
-it('refuses a roll from a co-GM demoted mid-session', function () {
+it('opens to a player, because the log is shared now', function () {
+    $campaign = Campaign::factory()->create();
+    $player = memberOf($campaign, CampaignRole::Player);
+
+    Livewire::actingAs($player)
+        ->test(Tray::class, ['campaign' => $campaign])
+        ->call('roll')
+        ->assertHasNoErrors();
+
+    expect(DiceRoll::query()->sole()->user_id)->toBe($player->id);
+});
+
+it('refuses a roll from a co-GM demoted to spectator mid-session', function () {
     $campaign = Campaign::factory()->create();
     $coGm = memberOf($campaign, CampaignRole::CoGm);
 
     $component = Livewire::actingAs($coGm)->test(Tray::class, ['campaign' => $campaign]);
 
-    $campaign->members()->where('user_id', $coGm->id)->update(['role' => CampaignRole::Player]);
+    $campaign->members()->where('user_id', $coGm->id)->update(['role' => CampaignRole::Spectator]);
 
     $component->call('roll')->assertForbidden();
 
@@ -162,7 +176,7 @@ it('scopes the log to the campaign', function () {
     DiceRoll::factory()->for($other)->by(ownerOf($other))->create(['formula' => '1d12']);
 
     Livewire::actingAs(ownerOf($campaign))
-        ->test(Tray::class, ['campaign' => $campaign])
+        ->test(Log::class, ['campaign' => $campaign])
         ->assertSee('1d4')
         ->assertDontSee('1d12');
 });
