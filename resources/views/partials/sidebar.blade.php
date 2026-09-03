@@ -41,6 +41,15 @@
             @endif
         </div>
         <div>
+            <p class="eyebrow px-2 pb-2">Play</p>
+            <x-ui.nav-link
+                :href="route('sessions.index', $currentCampaign)"
+                :active="request()->routeIs('sessions.*')"
+                icon="calendar"
+                :count="$sessionCount"
+            >Sessions</x-ui.nav-link>
+        </div>
+        <div>
             <p class="eyebrow px-2 pb-2">World</p>
             @foreach ($entityTypes as $entityType)
                 <x-ui.nav-link

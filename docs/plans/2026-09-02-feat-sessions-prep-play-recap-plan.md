@@ -338,7 +338,7 @@ public function mount(Campaign $campaign, int $number): void
 
 - **Sidebar.** A new "Play" group above "World", holding one "Sessions" item with a count from `GameSession::visibleTo($role)`. `SidebarComposer` gains the query.
 - **Campaign dashboard.** Two cards at the top: **Next session** and **Latest recap** (most recent published recap, first 200 characters). The next-session card falls back in three steps, because a GM often preps before the group picks a date: the soonest `planned` session dated in the future; failing that, the lowest-numbered `planned` session with no date, labelled "not scheduled yet"; failing that, an empty state with a "Plan session {next number}" button.
-- **Sessions index.** **Status decides the group. The date only sorts inside it.** GM view: Upcoming (`planned`), Needs recap (`played` with no published recap), Past (`played` with a recap, and `cancelled`). Player view: Upcoming (`planned` and `cancelled`), Recaps (`played` with a published recap). A `planned` session whose date has passed stays in Upcoming and carries an "Overdue" badge for GM roles, which is the prompt to mark it played. A text filter over number and title. No Scout in this slice.
+- **Sessions index.** **Status decides the group. The date only sorts inside it.** GM view: Upcoming (`planned`), Needs recap (`played` with no published recap), Past (`played` with a recap, and `cancelled`). Player view: Upcoming (`planned` and `cancelled`), Past (every `played` session they can see, with a link when the recap is published and a quiet note when it is not; a session that happened should not vanish because the GM is slow to write). A `planned` session whose date has passed stays in Upcoming and carries an "Overdue" badge for GM roles, which is the prompt to mark it played. A text filter over number and title. No Scout in this slice.
 - **Cancelled sessions stay visible.** A cancelled session keeps its row and shows a cancelled badge until its date passes, and the dashboard skips it. A player who is not told the game is off will turn up for it.
 - **Session show.** Header with `Session {number}`, title, status badge, date in the campaign timezone, and GM buttons for Prep, Run, and Edit. Body is the recap or an empty state.
 - **Prep and Run** as described above. Both are wide, dense, and dark-first. Run must be readable at arm's length on a tablet: minimum 16px body text, generous tap targets, and no hover-only controls.
@@ -494,7 +494,7 @@ Success: the party reads Thursday's recap on the entity page of the NPC they met
 - [ ] A GM creates a session; it takes the next number automatically and the GM can override it.
 - [ ] Number, title, date, status, and visibility are editable, and duplicate numbers are rejected.
 - [ ] `scheduled_at` shows in the campaign timezone, with the zone shown next to it, on every surface.
-- [ ] The sessions index groups by status: Upcoming, Needs recap, and Past for a GM, and Upcoming and Recaps for a player.
+- [ ] The sessions index groups by status: Upcoming, Needs recap, and Past for a GM, and Upcoming and Past for a player.
 - [ ] A cancelled session stays on a player's index with a cancelled badge until its date passes.
 - [ ] An overdue `planned` session stays in Upcoming and shows an overdue badge to GM roles.
 - [ ] A session with `visibility = dm` is absent from a player's index, dashboard, sidebar count, and entity panels, and its URL 404s.

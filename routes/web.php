@@ -14,6 +14,9 @@ use App\Livewire\Entities\Index as EntitiesIndex;
 use App\Livewire\Entities\Show as EntitiesShow;
 use App\Livewire\Profile\Edit as ProfileEdit;
 use App\Livewire\Search;
+use App\Livewire\Sessions\Form as SessionsForm;
+use App\Livewire\Sessions\Index as SessionsIndex;
+use App\Livewire\Sessions\Show as SessionsShow;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('type', implode('|', EntityType::slugs()));
@@ -39,6 +42,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/members', CampaignsMembers::class)->name('campaigns.members');
             Route::get('/autocomplete', AutocompleteController::class)->name('entities.autocomplete');
             Route::get('/search', Search::class)->name('search');
+
+            Route::get('/sessions', SessionsIndex::class)->name('sessions.index');
+            Route::get('/sessions/create', SessionsForm::class)->name('sessions.create');
+            Route::get('/sessions/{number}', SessionsShow::class)->whereNumber('number')->name('sessions.show');
+            Route::get('/sessions/{number}/edit', SessionsForm::class)->whereNumber('number')->name('sessions.edit');
 
             Route::get('/{type}/create', EntitiesForm::class)->name('entities.create');
             Route::get('/{type}', EntitiesIndex::class)->name('entities.index');
