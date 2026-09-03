@@ -2,6 +2,7 @@
 
 namespace App\Actions\Maps;
 
+use App\Events\MapChanged;
 use App\Models\MapMarker;
 
 class MoveMarker
@@ -15,5 +16,7 @@ class MoveMarker
             'x' => Coordinate::clamp($x),
             'y' => Coordinate::clamp($y),
         ]);
+
+        MapChanged::dispatch($marker->campaign_id, $marker->entity_id);
     }
 }

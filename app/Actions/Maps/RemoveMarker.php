@@ -2,6 +2,7 @@
 
 namespace App\Actions\Maps;
 
+use App\Events\MapChanged;
 use App\Models\MapMarker;
 
 class RemoveMarker
@@ -13,5 +14,7 @@ class RemoveMarker
     public function handle(MapMarker $marker): void
     {
         $marker->delete();
+
+        MapChanged::dispatch($marker->campaign_id, $marker->entity_id);
     }
 }

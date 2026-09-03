@@ -290,7 +290,7 @@ Success: the party is looking at the map when the GM reveals the door.
 - [x] A pin that targets a map opens that map.
 - [x] A map page lists the maps it appears on, and so does every other entity a pin points at.
 - [x] A map joins search, wiki links, backlinks, tags, and the JSON export.
-- [ ] The GM reveals a pin mid-session and the party's open maps follow. *(Phase 5; drop this line if the phase is cut.)*
+- [x] The GM reveals a pin mid-session and the party's open maps follow.
 
 ### Non-functional
 

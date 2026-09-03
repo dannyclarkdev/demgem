@@ -2,6 +2,7 @@
 
 namespace App\Actions\Maps;
 
+use App\Events\MapChanged;
 use App\Models\Entity;
 use App\Models\MapMarker;
 use Illuminate\Support\Str;
@@ -24,5 +25,7 @@ class UpdateMarker
             'label' => Str::limit($label !== '' ? $label : 'Unnamed', MapMarker::MAX_LABEL_LENGTH, ''),
             'target_entity_id' => $clearTarget ? null : ($target->id ?? $marker->target_entity_id),
         ]);
+
+        MapChanged::dispatch($marker->campaign_id, $marker->entity_id);
     }
 }

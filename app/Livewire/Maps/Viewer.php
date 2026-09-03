@@ -14,6 +14,7 @@ use App\Models\MapMarker;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -57,6 +58,23 @@ class Viewer extends Component
         $this->authorize('view', $map);
 
         $this->mapId = $map->id;
+    }
+
+    /**
+     * Somebody changed this map. The re-render is the whole listener, and it runs
+     * under this viewer's own role, so a pin the party has not found stays unfound.
+     *
+     * There is no poll behind this. A map is not a turn order: a dropped socket costs
+     * a refresh, not a wrong answer about whose turn it is.
+     *
+     * @param  array{mapId?: string}  $event
+     */
+    #[On('echo-presence:campaign.{campaign.id},.map.changed')]
+    public function mapChanged(array $event): void
+    {
+        if (($event['mapId'] ?? null) !== $this->mapId) {
+            $this->skipRender();
+        }
     }
 
     /**

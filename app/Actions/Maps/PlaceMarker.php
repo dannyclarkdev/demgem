@@ -2,6 +2,7 @@
 
 namespace App\Actions\Maps;
 
+use App\Events\MapChanged;
 use App\Models\Entity;
 use App\Models\MapMarker;
 use Illuminate\Support\Str;
@@ -22,7 +23,7 @@ class PlaceMarker
     {
         $label = trim((string) ($label ?? $target->name ?? ''));
 
-        return MapMarker::create([
+        $marker = MapMarker::create([
             'campaign_id' => $map->campaign_id,
             'entity_id' => $map->id,
             'target_entity_id' => $target?->id,
@@ -32,5 +33,9 @@ class PlaceMarker
             // Everything the GM adds waits for the eye, exactly as a combatant does.
             'player_visible' => false,
         ]);
+
+        MapChanged::dispatch($map->campaign_id, $map->id);
+
+        return $marker;
     }
 }

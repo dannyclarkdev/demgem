@@ -2,6 +2,7 @@
 
 namespace App\Actions\Maps;
 
+use App\Events\MapChanged;
 use App\Models\Entity;
 use App\Models\MapMarker;
 
@@ -21,6 +22,8 @@ class SetMarkerVisibility
         }
 
         $marker->update(['player_visible' => $visible]);
+
+        MapChanged::dispatch($marker->campaign_id, $marker->entity_id);
     }
 
     public function toggle(MapMarker $marker): void
@@ -33,6 +36,12 @@ class SetMarkerVisibility
      */
     public function setAll(Entity $map, bool $visible): int
     {
-        return $map->markers()->where('player_visible', ! $visible)->update(['player_visible' => $visible]);
+        $changed = $map->markers()->where('player_visible', ! $visible)->update(['player_visible' => $visible]);
+
+        if ($changed > 0) {
+            MapChanged::dispatch($map->campaign_id, $map->id);
+        }
+
+        return $changed;
     }
 }
