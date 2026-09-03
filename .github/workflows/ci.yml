@@ -77,7 +77,7 @@ jobs:
         run: php artisan test --compact
 
   docker:
-    name: The image builds and boots
+    name: The image builds, boots, and reaches Reverb
     runs-on: ubuntu-latest
 
     steps:
@@ -87,6 +87,11 @@ jobs:
         run: |
           cp .env.docker.example .env.docker
           sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env.docker
+          # The live table's three strings. The app refuses to boot without them when
+          # BROADCAST_CONNECTION is reverb, which is what the example ships.
+          sed -i "s|^REVERB_APP_ID=.*|REVERB_APP_ID=$(openssl rand -hex 8)|" .env.docker
+          sed -i "s|^REVERB_APP_KEY=.*|REVERB_APP_KEY=$(openssl rand -hex 16)|" .env.docker
+          sed -i "s|^REVERB_APP_SECRET=.*|REVERB_APP_SECRET=$(openssl rand -hex 16)|" .env.docker
 
       # --wait holds until every healthcheck passes, so a container that comes up
       # broken fails here rather than on a self-hoster's box.
@@ -98,6 +103,11 @@ jobs:
 
       - name: Check the login page renders
         run: curl --fail --silent --show-error http://localhost:8000/login | grep -q "demgem"
+
+      # The live table needs a websocket server the browser can reach. --wait already
+      # held for its healthcheck; this proves the published port answers too.
+      - name: Check Reverb answers
+        run: curl --fail --silent --show-error http://localhost:8080/up | grep -q "OK"
 
       - name: Show the logs when something failed
         if: failure()

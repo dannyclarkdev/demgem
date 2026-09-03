@@ -334,7 +334,7 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 - [x] A spectator can open `/table` and cannot roll.
 - [x] The thirty-first roll in a minute is refused and writes nothing.
 - [x] The GM can see which members have the campaign open.
-- [ ] `docker compose up -d` gives a stack where two browsers see the same fight.
+- [x] `docker compose up -d` gives a stack where two browsers see the same fight.
 
 ### Non-functional
 
@@ -353,7 +353,7 @@ Success: `docker compose up -d` gives a stack where two browsers see the same fi
 
 - [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
 - [ ] Larastan level 6 clean. Pint clean.
-- [ ] The Docker job builds, boots, and reaches Reverb.
+- [x] The Docker job builds, boots, and reaches Reverb.
 - [x] At most one new `x-ui.*` component, with the reason written down: `x-ui.presence-dot`.
 - [x] Every new query on `combatants` and `dice_rolls` goes through a policy, and each new ability names its surfaces in a docblock.
 - [ ] `npm run build` clean.
