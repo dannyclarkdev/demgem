@@ -24,12 +24,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string $name
  * @property string|null $description
  * @property Ruleset $ruleset
+ * @property string $timezone
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read CampaignMember|null $owner
  */
-#[Fillable(['name', 'description', 'ruleset', 'created_by'])]
+#[Fillable(['name', 'description', 'ruleset', 'timezone', 'created_by'])]
 class Campaign extends Model implements HasMedia
 {
     /** @use HasFactory<CampaignFactory> */
@@ -97,6 +98,22 @@ class Campaign extends Model implements HasMedia
     public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);
+    }
+
+    /**
+     * @return HasMany<GameSession, $this>
+     */
+    public function gameSessions(): HasMany
+    {
+        return $this->hasMany(GameSession::class);
+    }
+
+    /**
+     * @return HasMany<Secret, $this>
+     */
+    public function secrets(): HasMany
+    {
+        return $this->hasMany(Secret::class);
     }
 
     public function registerMediaCollections(): void
