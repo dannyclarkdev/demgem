@@ -233,35 +233,35 @@ Success: the export and the importer agree, and a test says so in the same words
 
 ### Functional
 
-- [ ] A GM uploads a `demgem.campaign` version 1 file and sees a report before anything is written.
-- [ ] Confirming builds a campaign with every section the file holds, and redirects to it.
-- [ ] Every id in the new campaign is new, and every reference points inside it.
-- [ ] The importing user is the only member, as Owner, and the file's other members are listed for inviting.
-- [ ] A Selected entity arrives as GM-only, with no viewers, and is counted.
-- [ ] The dice log and the media are skipped and counted.
-- [ ] A wrong format, a wrong version, an unknown enum, a dangling reference, a cycle, and an over-size file are each refused with a message naming the problem.
-- [ ] Nothing is written when a file is refused.
-- [ ] `php artisan demgem:import` does the same from a terminal.
-- [ ] Export, import, export: the two documents match once ids, timestamps and the four losses are removed.
+- [x] A GM uploads a `demgem.campaign` version 1 file and sees a report before anything is written.
+- [x] Confirming builds a campaign with every section the file holds, and redirects to it.
+- [x] Every id in the new campaign is new, and every reference points inside it.
+- [x] The importing user is the only member, as Owner, and the file's other members are listed for inviting.
+- [x] A Selected entity arrives as GM-only, with no viewers, and is counted.
+- [x] The dice log and the media are skipped and counted.
+- [x] A wrong format, a wrong version, an unknown enum, a dangling reference, a cycle, and an over-size file are each refused with a message naming the problem. *(Plus three the plan did not list: a duplicate id, a duplicate slug, and a duplicate session number.)*
+- [x] Nothing is written when a file is refused.
+- [x] `php artisan demgem:import` does the same from a terminal.
+- [x] Export, import, export: the two documents match once ids, timestamps and the four losses are removed. *(And a second trip is lossless, because there is nothing left to lose.)*
 
 ### Non-functional
 
-- [ ] **An import never makes anything more visible than the file says.**
-- [ ] **The importer makes no outbound HTTP request, whatever the file contains.**
-- [ ] A failed write leaves no campaign, no entities, and no tags.
-- [ ] Wiki links resolve after the import, including a page written before the page it links to.
-- [ ] Imported entities are searchable.
-- [ ] `Model::shouldBeStrict()` is on.
-- [ ] A player cannot import into somebody else's campaign, because an import has no campaign to point at.
-- [ ] The import screen works at 1024px and 768px, dark and light, with no sideways scroll.
+- [x] **An import never makes anything more visible than the file says.**
+- [x] **The importer makes no outbound HTTP request, whatever the file contains.** *(There is no code path that reads a URL out of the document.)*
+- [x] A failed write leaves no campaign, no entities, and no tags.
+- [x] Wiki links resolve after the import, including a page written before the page it links to.
+- [x] Imported entities are searchable.
+- [x] `Model::shouldBeStrict()` is on.
+- [x] A player cannot import into somebody else's campaign, because an import has no campaign to point at.
+- [ ] The import screen works at 1024px and 768px, dark and light, with no sideways scroll. *(Not checked: the dev browser session expired and I do not type passwords.)*
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] No new PHP or JavaScript dependency.
-- [ ] `RoundTripTest` is driven by `ExportCampaign::SECTION_TABLES`, so a new section joins it without being remembered.
-- [ ] `npm run build` clean.
+- [x] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] No new PHP or JavaScript dependency.
+- [x] `RoundTripTest` is driven by `ExportCampaign::SECTION_TABLES`, so a new section joins it without being remembered.
+- [x] `npm run build` clean.
 
 ## Dependencies & Risks
 
