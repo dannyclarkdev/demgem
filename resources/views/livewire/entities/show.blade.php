@@ -169,6 +169,16 @@
                 @endif
             @endif
 
+            @if ($showClocks)
+                <x-ui.card title="What is coming">
+                    <livewire:clocks.panel
+                        :campaign="$campaign"
+                        :entity-id="$entity->id"
+                        :wire:key="'entity-clocks-'.$entity->id"
+                    />
+                </x-ui.card>
+            @endif
+
             @if ($dmNotesHtml !== null)
                 <x-ui.card class="border-dm/30">
                     <x-slot:header><x-ui.badge variant="dm" icon="eye-off">GM only</x-ui.badge></x-slot:header>

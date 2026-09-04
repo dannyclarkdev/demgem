@@ -11,6 +11,7 @@ use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
 use App\Models\Campaign;
+use App\Models\Clock;
 use App\Models\Entity;
 use App\Models\MapMarker;
 use App\Models\Mention;
@@ -111,6 +112,10 @@ class Show extends Component
             // A handout's attachments. Eager-loaded, because strict mode is on and the
             // gallery is the point of the page rather than an extra on it.
             'files' => $this->entity->isHandout() ? $this->entity->files() : collect(),
+            // A GM always gets the card, so they can start a clock from the page they
+            // are already reading. A player gets it only when there is a dial on it.
+            'showClocks' => $role->isDm()
+                || Clock::query()->about($this->entity)->visibleTo($role)->exists(),
         ])->title($this->entity->name);
     }
 

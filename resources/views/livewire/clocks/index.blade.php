@@ -23,6 +23,14 @@
                     @endforeach
                 </x-ui.select>
             </div>
+            <div class="min-w-44">
+                <x-ui.select label="About" name="newEntityId" wire:model="newEntityId">
+                    <option value="">Nothing in particular</option>
+                    @foreach ($entityOptions as $option)
+                        <option value="{{ $option->id }}">{{ $option->name }} &middot; {{ $option->type->label() }}</option>
+                    @endforeach
+                </x-ui.select>
+            </div>
             <x-ui.button type="submit" icon="plus" class="mb-1">Create</x-ui.button>
         </form>
     </x-ui.card>
@@ -50,10 +58,18 @@
                                         @endforeach
                                     </x-ui.select>
                                 </div>
+                                <div class="min-w-44">
+                                    <x-ui.select label="About" name="editingEntityId" wire:model="editingEntityId">
+                                        <option value="">Nothing in particular</option>
+                                        @foreach ($entityOptions as $option)
+                                            <option value="{{ $option->id }}">{{ $option->name }} &middot; {{ $option->type->label() }}</option>
+                                        @endforeach
+                                    </x-ui.select>
+                                </div>
                                 <x-ui.button type="submit" size="sm" class="mb-1">Save</x-ui.button>
                                 <x-ui.button type="button" variant="ghost" size="sm" wire:click="cancelEdit" class="mb-1">Cancel</x-ui.button>
                             </form>
-                            <p class="mt-2 text-xs text-ink-faint">A smaller dial brings the fill down with it. A bigger one leaves it where it is.</p>
+                            <p class="mt-2 text-xs text-ink-faint">A smaller dial brings the fill down with it. A bigger one leaves it where it is. What it is about shows on that page, and a player who may not open that page still sees the dial.</p>
                         @else
                             <div class="flex flex-wrap items-center gap-4">
                                 <button type="button" wire:sort:handle class="-ml-1.5 inline-flex size-8 shrink-0 cursor-grab items-center justify-center text-ink-faint hover:text-ink-muted" aria-label="Drag to reorder">

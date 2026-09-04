@@ -11,7 +11,9 @@ use App\Actions\Clocks\UpdateClock;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Models\Clock;
+use App\Models\Entity;
 use Illuminate\Contracts\View\View;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -30,7 +32,11 @@ class Index extends Component
 
     public int $newSegments = Clock::DEFAULT_SEGMENTS;
 
+    public string $newEntityId = '';
+
     public ?string $editingId = null;
+
+    public string $editingEntityId = '';
 
     public string $editingName = '';
 
@@ -55,11 +61,17 @@ class Index extends Component
         $validated = $this->validate([
             'newName' => ['required', 'string', 'max:'.Clock::MAX_NAME_LENGTH],
             'newSegments' => ['required', 'integer', 'in:'.implode(',', Clock::SIZES)],
+            'newEntityId' => $this->entityRule(),
         ]);
 
-        $createClock->handle($this->campaign, $validated['newName'], $validated['newSegments']);
+        $createClock->handle(
+            $this->campaign,
+            $validated['newName'],
+            $validated['newSegments'],
+            $this->entity($validated['newEntityId'] ?? ''),
+        );
 
-        $this->reset('newName');
+        $this->reset('newName', 'newEntityId');
     }
 
     public function edit(string $clockId): void
@@ -71,11 +83,12 @@ class Index extends Component
         $this->editingId = $clock->id;
         $this->editingName = $clock->name;
         $this->editingSegments = $clock->segments;
+        $this->editingEntityId = $clock->entity_id ?? '';
     }
 
     public function cancelEdit(): void
     {
-        $this->reset('editingId', 'editingName', 'editingSegments');
+        $this->reset('editingId', 'editingName', 'editingSegments', 'editingEntityId');
     }
 
     public function save(UpdateClock $updateClock): void
@@ -87,11 +100,17 @@ class Index extends Component
         $validated = $this->validate([
             'editingName' => ['required', 'string', 'max:'.Clock::MAX_NAME_LENGTH],
             'editingSegments' => ['required', 'integer', 'in:'.implode(',', Clock::SIZES)],
+            'editingEntityId' => $this->entityRule(),
         ]);
 
         // A dial that shrinks below its fill would read "8 of 6", so UpdateClock brings
         // the fill down with it. Growing one leaves the fill where it is.
-        $updateClock->handle($clock, $validated['editingName'], $validated['editingSegments'], $clock->entity);
+        $updateClock->handle(
+            $clock,
+            $validated['editingName'],
+            $validated['editingSegments'],
+            $this->entity($validated['editingEntityId'] ?? ''),
+        );
 
         $this->cancelEdit();
     }
@@ -165,7 +184,30 @@ class Index extends Component
         return view('livewire.clocks.index', [
             'clocks' => Clock::query()->with('entity')->orderBy('position')->get(),
             'sizes' => Clock::SIZES,
+            // A select, not the autocomplete, for the reason the map's pin picker is
+            // one: it costs a query on a GM-only page and needs no new endpoint. A
+            // campaign with hundreds of entities will outgrow it, and that is the
+            // moment to reach for the autocomplete, not before.
+            'entityOptions' => Entity::query()->orderBy('name')->get(['id', 'name', 'type']),
         ])->title('Clocks');
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private function entityRule(): array
+    {
+        return [
+            'nullable',
+            Rule::exists('entities', 'id')
+                ->where('campaign_id', $this->campaign->id)
+                ->whereNull('deleted_at'),
+        ];
+    }
+
+    private function entity(string $entityId): ?Entity
+    {
+        return $entityId !== '' ? Entity::query()->whereKey($entityId)->first() : null;
     }
 
     private function clock(string $clockId): Clock
