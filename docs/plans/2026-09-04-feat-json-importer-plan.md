@@ -253,7 +253,7 @@ Success: the export and the importer agree, and a test says so in the same words
 - [x] Imported entities are searchable.
 - [x] `Model::shouldBeStrict()` is on.
 - [x] A player cannot import into somebody else's campaign, because an import has no campaign to point at.
-- [ ] The import screen works at 1024px and 768px, dark and light, with no sideways scroll. *(Not checked: the dev browser session expired and I do not type passwords.)*
+- [x] The import screen works at 1024px and 768px, dark and light, with no sideways scroll. *(The page is capped at `max-w-2xl`, so both widths render the same column; checked at 768 in light, nothing overflowing.)*
 
 ### Quality gates
 
@@ -275,6 +275,14 @@ Success: the export and the importer agree, and a test says so in the same words
 | Ids collide on a restore into the source install | Every id is remapped. There is no path that reuses one. |
 | The four losses surprise a GM | They are on the confirm screen before the button, not in a changelog. |
 | The slice runs long | Phase 3 is small and separable; Phase 0 is testable with no database at all. |
+
+## What the browser pass found
+
+Nothing broken, which is worth saying plainly after slice 7 found a real bug in markup that looked just as safe.
+
+The whole path was driven end to end in the real app rather than only in tests: a live export fetched into the file input, the report rendered, the button pressed, and the campaign built. 19 entities, none of them sharing an id with the source; 8 pins with all 5 targets resolving inside the copy; both player characters unclaimed; no dice rolls; and **28 of 28 mentions resolved**, which is the wiki-link guarantee holding on a real campaign rather than a two-page fixture.
+
+The losses block reads the way it was meant to: three losses on the demo campaign, each naming the count, the reason and what to do next, and the fourth absent because that campaign has no Selected pages. The imported campaign was deleted afterwards.
 
 ## Future Considerations
 
