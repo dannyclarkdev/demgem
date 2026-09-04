@@ -121,7 +121,7 @@ DB::transaction(function () {
 
 - **Campaign first**, through `CreateCampaign`, so the importer gets the owner membership for free and the one path that makes a campaign stays one path.
 - **Entities in two passes.** Write every entity with its self-references null, then fill `parent_id` and `giver_entity_id` once every id exists. A single pass would need a topological sort of a graph that may be a forest, and two passes is the same work written plainly.
-- **Observers quiet, then one rebuild.** `Entity::withoutEvents()` around the writes, and `SyncMentions` run once per entity at the end. Otherwise importing 400 entities resolves wiki links 400 times against a campaign that is half built, and the early ones resolve against entities that do not exist yet — which is not slow, it is wrong.
+- **Observers stay on.** The plan first said to silence them and rebuild the mention index once at the end, on the reasoning that an entity written before the page it links to would resolve against a campaign that does not hold it yet. Reading `EntityObserver` says otherwise: that entity leaves an unresolved mention row, and `ResolveMentionsFor` points the row at its target the moment the target is created. The index converges on its own, so silencing the observers would buy a little speed and cost the guarantee. It also cannot be done cheaply: `withoutEvents` swaps the global dispatcher, which would take `HasUlids` with it.
 - **Scout quiet, then one index.** `Entity::withoutSyncingToSearch()` around the writes, and `Entity::query()->...->searchable()` at the end.
 - **`created_by` and `updated_by` are the importing user.** These are this install's audit columns, and the row genuinely entered this install by that user's hand. The file's own authorship is gone with the people.
 
@@ -181,7 +181,7 @@ Success: a GM's file is understood, and a bad one is refused in a sentence they 
 ### Phase 1: The writer
 
 Deliverables:
-- `ImportCampaign`, one transaction, the two-pass entity write, observers and Scout quiet, mentions and the index rebuilt at the end.
+- `ImportCampaign`, one transaction, the two-pass entity write, Scout deferred to one chunked index at the end, and `forceFill` rather than `create` because `id` is in no model's fillable list.
 - The four losses applied and counted.
 
 Tests: `tests/Feature/Campaigns/ImportCampaignTest.php` — a campaign is built with every section; ids are new, and every cross-reference points inside the new campaign; the importer is the only member and is Owner; Selected became Dm with no viewers; no dice rolls; no media; a database failure mid-write leaves no campaign.
@@ -249,7 +249,7 @@ Success: the export and the importer agree, and a test says so in the same words
 - [ ] **An import never makes anything more visible than the file says.**
 - [ ] **The importer makes no outbound HTTP request, whatever the file contains.**
 - [ ] A failed write leaves no campaign, no entities, and no tags.
-- [ ] Wiki links resolve after the import, because mentions are rebuilt once at the end rather than per row.
+- [ ] Wiki links resolve after the import, including a page written before the page it links to.
 - [ ] Imported entities are searchable.
 - [ ] `Model::shouldBeStrict()` is on.
 - [ ] A player cannot import into somebody else's campaign, because an import has no campaign to point at.
