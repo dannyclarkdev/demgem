@@ -50,6 +50,16 @@
          hasGeneratedConversion() rather than a mime check: whether there is a tile to
          show is a fact about the file, and it stays true on a machine with no
          Ghostscript, where a PDF simply never got one. --}}
+    @if ($entity->isHandout() && $files->isEmpty() && $role->isDm())
+        <div class="mb-6">
+            <x-ui.empty-state
+                icon="paperclip"
+                title="No files yet"
+                description="A handout works as prose alone, and it works better with the scan. Edit it and attach the image or the PDF."
+            />
+        </div>
+    @endif
+
     @if ($entity->isHandout() && $files->isNotEmpty())
         <div class="mb-6" x-data="{ src: '', caption: '' }">
             <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

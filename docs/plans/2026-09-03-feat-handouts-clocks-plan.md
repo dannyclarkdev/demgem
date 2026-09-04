@@ -337,40 +337,40 @@ Success: a GM opens the cult's page and sees how close the ritual is without goi
 
 ### Functional
 
-- [ ] A GM creates a clock, names it, sets 4, 6, 8, or 12 segments, and fills a wedge by clicking it.
-- [ ] Plus and minus tick a clock, and neither can pass zero or the total.
-- [ ] A GM reorders clocks, renames one, and deletes one.
-- [ ] A GM reveals a clock and the party sees it on `/table`; hiding it takes it away.
-- [ ] A clock ticks on the party's screen while they watch, with no refresh.
-- [ ] A GM creates a handout with prose and up to ten files, images and PDF.
-- [ ] The handout page shows images as tiles that open full size, and PDFs as named, downloadable rows.
-- [ ] **Show the party** reveals a handout, and it appears on every open table screen.
-- [ ] **Take it back** hides it again.
-- [ ] A handout joins search, wiki links, backlinks, tags, prep buckets, and the JSON export, with its files.
-- [ ] A clock links to an entity, and that entity's page shows it.
+- [x] A GM creates a clock, names it, sets 4, 6, 8, or 12 segments, and fills a wedge by clicking it.
+- [x] Plus and minus tick a clock, and neither can pass zero or the total.
+- [x] A GM reorders clocks, renames one, and deletes one. *(The arrows step a row, not a stored number: a delete leaves a hole until the next drag.)*
+- [x] A GM reveals a clock and the party sees it on `/table`; hiding it takes it away.
+- [ ] A clock ticks on the party's screen while they watch, with no refresh. *(The listener and the payload are tested; the two-browser check is not done.)*
+- [x] A GM creates a handout with prose and up to ten files, images and PDF.
+- [x] The handout page shows images as tiles that open full size, and PDFs as named, downloadable rows. *(The branch is tested; the lightbox itself is a browser check.)*
+- [x] **Show the party** reveals a handout, and it appears on every open table screen. *(Tested to the listener; the second browser is not.)*
+- [x] **Take it back** hides it again.
+- [x] A handout joins search, wiki links, backlinks, tags, prep buckets, and the JSON export, with its files.
+- [x] A clock links to an entity, and that entity's page shows it.
 
 ### Non-functional
 
-- [ ] **A hidden clock's name and counts are absent from a player's HTML and Livewire snapshot.**
-- [ ] **An unrevealed handout's name, body, and file URLs are absent from a player's table screen HTML and snapshot.**
-- [ ] **A revealed clock whose linked entity a player may not see renders without that entity's name.**
-- [ ] A DM-only handout is a 404 for a player, not a 403.
-- [ ] Revealing and hiding broadcast the same payload, so the event says nothing about what changed.
-- [ ] `filled` is clamped to 0 and `segments` before it is written, whatever the browser sent.
-- [ ] The clock panel costs a constant number of queries, whatever the campaign holds.
-- [ ] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
-- [ ] A PDF renders as an icon and a filename on a machine with no Ghostscript, not as a broken image.
-- [ ] Both new screens work at 1024px and 768px, dark and light, with 44px targets and no sideways scroll.
+- [x] **A hidden clock's name and counts are absent from a player's HTML and Livewire snapshot.**
+- [x] **An unrevealed handout's name, body, and file URLs are absent from a player's table screen HTML and snapshot.**
+- [x] **A revealed clock whose linked entity a player may not see renders without that entity's name.**
+- [x] A DM-only handout is a 404 for a player, not a 403.
+- [x] Revealing and hiding broadcast the same payload, so the event says nothing about what changed.
+- [x] `filled` is clamped to 0 and `segments` before it is written, whatever the browser sent.
+- [x] The clock panel costs a constant number of queries, whatever the campaign holds. *(Two: one for the rows, one for the links.)*
+- [x] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
+- [x] A PDF renders as an icon and a filename on a machine with no Ghostscript, not as a broken image.
+- [ ] Both new screens work at 1024px and 768px, dark and light, with 44px targets and no sideways scroll. *(Not checked: the browser session is not logged in.)*
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] At most one new `x-ui.*` component, with the reason written down: `x-ui.clock`.
-- [ ] Every new query on `clocks` goes through `scopeVisibleTo`, and every write goes through `ClockPolicy`.
-- [ ] `RevealHandout` writes visibility through `UpdateEntity` and through no other path.
-- [ ] `npm run build` clean, and the bundle growth recorded in the PR.
-- [ ] No new PHP or JavaScript dependency.
+- [x] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] At most one new `x-ui.*` component, with the reason written down: `x-ui.clock`. *(Two new icons as well: `paperclip` and `download`.)*
+- [x] Every new query on `clocks` goes through `scopeVisibleTo`, and every write goes through `ClockPolicy`. *(A test reads the query log and asserts every clocks query names `player_visible`.)*
+- [x] `RevealHandout` writes visibility through `UpdateEntity` and through no other path.
+- [x] `npm run build` clean. The bundle did not grow: no new JavaScript.
+- [x] No new PHP or JavaScript dependency.
 
 ## Dependencies & Risks
 

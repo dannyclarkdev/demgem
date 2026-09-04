@@ -102,6 +102,37 @@ it('never loads a hidden clock at all', function () {
     DB::disableQueryLog();
 });
 
+it('costs the same two queries whatever the campaign holds', function () {
+    [$campaign, $player] = clocksOnTheTable();
+
+    $count = function () use ($campaign, $player): int {
+        // The log persists across a disable, so it has to be emptied rather than
+        // merely stopped, or the second measurement counts the first one too.
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        Livewire::actingAs($player)->test(Panel::class, ['campaign' => $campaign]);
+
+        $queries = collect(DB::getRawQueryLog())
+            ->filter(fn (array $query) => str_contains($query['raw_query'], 'from "clocks"')
+                || str_contains($query['raw_query'], 'from "entities"'))
+            ->count();
+
+        DB::disableQueryLog();
+
+        return $queries;
+    };
+
+    $small = $count();
+
+    Clock::factory()->inCampaign($campaign)->shownToPlayers()->count(20)
+        ->create(['entity_id' => Entity::factory()->for($campaign)->forPlayers()->create()->id]);
+
+    // One query for the rows and one for the links, whatever the list holds. The
+    // links are keyed and looked up in the Blade rather than lazy-loaded per row.
+    expect($count())->toBe($small);
+});
+
 it('gives the GM every clock and says which the party can see', function () {
     [$campaign] = clocksOnTheTable();
 

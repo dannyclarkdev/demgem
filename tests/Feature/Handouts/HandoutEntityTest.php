@@ -231,6 +231,26 @@ it('carries a handout and its files into the export', function () {
         ->and($row['files'][1]['url'])->toBeString();
 });
 
+it('finds a handout in search like every other type', function () {
+    $campaign = Campaign::factory()->create();
+    $player = memberOf($campaign, CampaignRole::Player);
+
+    Entity::factory()->for($campaign)->type(EntityType::Handout)->forPlayers()
+        ->create(['name' => 'The tide table', 'slug' => 'tide-table', 'body' => 'High water at the ninth bell.']);
+
+    aHandout($campaign, 'The informants note');
+
+    $this->actingAs($player)
+        ->get(route('search', [$campaign, 'q' => 'tide']))
+        ->assertOk()
+        ->assertSee('The tide table');
+
+    $this->actingAs($player)
+        ->get(route('search', [$campaign, 'q' => 'informant']))
+        ->assertOk()
+        ->assertDontSee('The informants note');
+});
+
 it('counts handouts in the sidebar like every other type', function () {
     $campaign = Campaign::factory()->create();
     Entity::factory()->for($campaign)->type(EntityType::Handout)->forPlayers()->count(2)->create();
