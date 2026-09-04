@@ -2,6 +2,7 @@
 
 use App\Actions\Campaigns\ExportCampaign;
 use App\Actions\Campaigns\ReadCampaignFile;
+use App\Actions\Campaigns\ReadResult;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
@@ -40,7 +41,7 @@ function anEntity(string $id, array $overrides = []): array
     ];
 }
 
-function read(array $document): App\Actions\Campaigns\ReadResult
+function read(array $document): ReadResult
 {
     return app(ReadCampaignFile::class)->handle(json_encode($document, JSON_THROW_ON_ERROR));
 }
@@ -152,6 +153,25 @@ it('refuses two sessions that claim the same number', function () {
 
     expect($result->succeeded())->toBeFalse()
         ->and($result->errors[0])->toContain('both numbered 1');
+});
+
+it('refuses two pages that share an address', function () {
+    $result = read(aDocument(['entities' => [
+        anEntity('e1', ['slug' => 'the-duke']),
+        anEntity('e2', ['slug' => 'the-duke']),
+    ]]));
+
+    // A slug is unique per campaign, so the database would refuse this half way
+    // through. Saying it here turns a foreign key violation into a sentence.
+    expect($result->succeeded())->toBeFalse()
+        ->and($result->errors[0])->toContain('share the address "the-duke"');
+});
+
+it('refuses two pages that share an id', function () {
+    $result = read(aDocument(['entities' => [anEntity('e1'), anEntity('e1', ['slug' => 'other'])]]));
+
+    expect($result->succeeded())->toBeFalse()
+        ->and($result->errors[0])->toContain('share the id e1');
 });
 
 it('refuses a row with no id', function () {

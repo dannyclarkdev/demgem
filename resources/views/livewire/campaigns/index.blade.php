@@ -1,5 +1,6 @@
 <div>
     <x-ui.page-header title="Campaigns" eyebrow="Library" description="Every table you run or play at.">
+        <x-ui.button :href="route('campaigns.import')" variant="secondary" icon="download">Import</x-ui.button>
         <x-ui.button :href="route('campaigns.create')" icon="plus">New campaign</x-ui.button>
     </x-ui.page-header>
 

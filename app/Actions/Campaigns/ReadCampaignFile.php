@@ -58,11 +58,14 @@ class ReadCampaignFile
     /** @var array<string, true> */
     private array $combatantIds = [];
 
+    /** @var array<string, true> */
+    private array $slugs = [];
+
     public function handle(string $json): ReadResult
     {
         $this->errors = [];
         $this->report = new ImportReport;
-        $this->entityIds = $this->sessionIds = $this->tableIds = $this->combatantIds = [];
+        $this->entityIds = $this->sessionIds = $this->tableIds = $this->combatantIds = $this->slugs = [];
 
         if (strlen($json) > self::MAX_BYTES) {
             return ReadResult::failed([
@@ -139,6 +142,10 @@ class ReadCampaignFile
                 continue;
             }
 
+            if (isset($this->entityIds[$id])) {
+                $this->errors[] = "Two pages in that file share the id {$id}.";
+            }
+
             $this->entityIds[$id] = true;
 
             $visibility = $this->enum(Visibility::class, $row, 'visibility', "entity {$id}") ?? Visibility::Dm;
@@ -157,7 +164,7 @@ class ReadCampaignFile
                 'id' => $id,
                 'type' => $this->enum(EntityType::class, $row, 'type', "entity {$id}") ?? EntityType::Note,
                 'name' => $this->text($row, 'name', 120, "entity {$id}") ?? 'Untitled',
-                'slug' => $this->text($row, 'slug', 140),
+                'slug' => $this->slug($row, $id),
                 'body' => $this->text($row, 'body', 100_000),
                 'dm_notes' => $this->text($row, 'dm_notes', 100_000),
                 'rewards' => $this->text($row, 'rewards', 100_000),
@@ -178,6 +185,30 @@ class ReadCampaignFile
         $this->report->count('entities', count($entities));
 
         return $entities;
+    }
+
+    /**
+     * A slug is unique per campaign, so two pages claiming one is a file the database
+     * would refuse half way through. Refusing it here turns a foreign key violation
+     * a GM cannot act on into a sentence they can.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function slug(array $row, string $id): ?string
+    {
+        $slug = $this->text($row, 'slug', 140);
+
+        if ($slug === null) {
+            return null;
+        }
+
+        if (isset($this->slugs[$slug])) {
+            $this->errors[] = "Two pages in that file share the address \"{$slug}\".";
+        }
+
+        $this->slugs[$slug] = true;
+
+        return $slug;
     }
 
     /**
