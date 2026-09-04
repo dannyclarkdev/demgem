@@ -19,6 +19,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Form extends Component
 {
@@ -27,6 +28,20 @@ class Form extends Component
     public ?TemporaryUploadedFile $image = null;
 
     public bool $removeImage = false;
+
+    /**
+     * New attachments for a handout, this save only.
+     *
+     * @var array<int, TemporaryUploadedFile>
+     */
+    public array $files = [];
+
+    /**
+     * Ids of attachments the GM ticked to remove.
+     *
+     * @var array<int, int>
+     */
+    public array $removeFileIds = [];
 
     public ?Entity $entity = null;
 
@@ -142,6 +157,17 @@ class Form extends Component
         return $this->entityType === EntityType::Map;
     }
 
+    private function isHandout(): bool
+    {
+        return $this->entityType === EntityType::Handout;
+    }
+
+    /**
+     * The upload cap for one handout attachment, in kilobytes. The same ten megabytes
+     * a map image gets, and the same ceiling config/media-library.php sets.
+     */
+    public const FILE_KB = 10240;
+
     /**
      * The upload cap for a map image, in kilobytes. Ten megabytes, which is what
      * config/media-library.php allows, and roughly a 6000px PNG export.
@@ -176,6 +202,20 @@ class Form extends Component
             'custom_fields.*.key' => ['nullable', 'string', 'max:40'],
             'custom_fields.*.value' => ['nullable', 'string', 'max:200'],
         ];
+
+        // Attachments are a handout's whole point, and they are prohibited elsewhere
+        // rather than quietly ignored, the way the quest fields are.
+        $rules += $this->isHandout()
+            ? [
+                'files' => ['array', 'max:'.Entity::MAX_FILES],
+                'files.*' => ['file', 'max:'.self::FILE_KB, 'mimes:jpg,jpeg,png,webp,gif,pdf'],
+                'removeFileIds' => ['array'],
+                'removeFileIds.*' => ['integer'],
+            ]
+            : [
+                'files' => ['prohibited'],
+                'removeFileIds' => ['prohibited'],
+            ];
 
         // The character record is not a DM field, so these rules sit outside the block
         // below: whoever passed the update check may set them, which includes a player
@@ -232,6 +272,12 @@ class Form extends Component
         }
 
         $validated = $this->validate($rules);
+
+        if ($this->isHandout() && $this->fileCountAfterSave() > Entity::MAX_FILES) {
+            $this->addError('files', 'A handout carries at most '.Entity::MAX_FILES.' files. Remove one first.');
+
+            return;
+        }
 
         if ($canEditDmFields && $isEdit && ($validated['parent_id'] ?? '') === $this->entity->id) {
             $this->addError('parent_id', 'An entity cannot be its own parent.');
@@ -296,9 +342,44 @@ class Form extends Component
                 ->toMediaCollection('image');
         }
 
+        if ($this->isHandout()) {
+            $this->syncFiles($entity);
+        }
+
         session()->flash('status', $isEdit ? "{$entity->name} saved." : "{$entity->name} created.");
 
         $this->redirect($entity->url());
+    }
+
+    /**
+     * Removals first, then additions, so a GM who swaps the tenth file for another
+     * one in a single save is not stopped by their own ceiling.
+     */
+    private function syncFiles(Entity $entity): void
+    {
+        if ($this->removeFileIds !== []) {
+            $entity->media()
+                ->where('collection_name', 'files')
+                ->whereIn('id', $this->removeFileIds)
+                ->get()
+                ->each(fn (Media $file) => $file->delete());
+        }
+
+        foreach ($this->files as $file) {
+            $entity->addMedia($file->getRealPath())
+                ->usingFileName($file->getClientOriginalName())
+                ->toMediaCollection('files');
+        }
+
+        $this->files = [];
+        $this->removeFileIds = [];
+    }
+
+    private function fileCountAfterSave(): int
+    {
+        $existing = $this->entity?->files()->count() ?? 0;
+
+        return $existing - count($this->removeFileIds) + count($this->files);
     }
 
     public function previewBody(MarkdownRenderer $renderer): void
@@ -354,6 +435,9 @@ class Form extends Component
             'isCharacter' => $this->entityType === EntityType::Character,
             'isQuest' => $this->isQuest(),
             'isMap' => $this->isMap(),
+            'isHandout' => $this->isHandout(),
+            'existingFiles' => $this->isHandout() ? ($this->entity?->files() ?? collect()) : collect(),
+            'maxFiles' => Entity::MAX_FILES,
             'questStatuses' => QuestStatus::cases(),
             'giverOptions' => $giverOptions,
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),

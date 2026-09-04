@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Actions\Campaigns\CreateCampaign;
+use App\Actions\Clocks\CreateClock;
+use App\Actions\Clocks\SetClockVisibility;
+use App\Actions\Clocks\TickClock;
 use App\Actions\Dice\RollDice;
 use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
@@ -159,6 +162,8 @@ class DemoCampaignSeeder extends Seeder
         $this->seedTables($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
         $this->seedMaps($campaign, $dm);
+        $this->seedClocks($campaign);
+        $this->seedHandouts($campaign, $dm);
 
         $this->command->info("Seeded The Drowned Duchy for {$dm->email} (password: password).");
     }
@@ -397,6 +402,94 @@ class DemoCampaignSeeder extends Seeder
                 $reveal->handle($pin, true);
             }
         }
+    }
+
+    /**
+     * Three clocks: one the party watches, one the GM keeps to themselves, and one
+     * that is about a faction, so the link shows up on that faction's page.
+     */
+    private function seedClocks(Campaign $campaign): void
+    {
+        $create = app(CreateClock::class);
+        $reveal = app(SetClockVisibility::class);
+        $tick = app(TickClock::class);
+
+        $named = fn (string $name): ?Entity => $campaign->entities()->where('name', $name)->first();
+
+        $clocks = [
+            ['The tide takes the lower town', 8, 3, null, true],
+            ['The Drowned Court finds the sister', 6, 4, $named('The Drowned Duke'), false],
+            ['The Tidewardens run out of patience', 4, 1, $named('Tidewardens'), true],
+        ];
+
+        foreach ($clocks as [$name, $segments, $filled, $about, $shown]) {
+            $clock = $create->handle($campaign, $name, $segments, $about);
+
+            $tick->to($clock, $filled);
+
+            if ($shown) {
+                $reveal->handle($clock, true);
+            }
+        }
+    }
+
+    /**
+     * Two handouts: one already on the table with a picture, and one still behind the
+     * screen. The second is the interesting one, because it is what a player must not
+     * find anywhere.
+     */
+    private function seedHandouts(Campaign $campaign, User $dm): void
+    {
+        $create = app(CreateEntity::class);
+
+        $letter = $create->handle($campaign, $dm, [
+            'type' => EntityType::Handout,
+            'name' => "The duke's letter",
+            'visibility' => Visibility::Players,
+            'body' => "Transcribed below, because the hand is difficult.\n\n> Sister — the water has not stopped rising and neither have they. Burn this.",
+            'tags' => ['handout'],
+        ]);
+
+        $orders = $create->handle($campaign, $dm, [
+            'type' => EntityType::Handout,
+            'name' => 'The sealed orders',
+            'visibility' => Visibility::Dm,
+            'body' => 'The party has not opened this. If they do, [[Tidewardens]] will want it back.',
+            'tags' => ['handout'],
+        ]);
+
+        $this->attachPlaceholderScan($letter, "The duke's letter", 900, 1200);
+        $this->attachPlaceholderScan($orders, 'The sealed orders', 900, 1200);
+    }
+
+    /**
+     * A drawn stand-in for a scan: paper, a rule, and its own name across the top. It
+     * exists so the gallery has something in it on the first run, and it does not
+     * pretend to be anybody's handwriting.
+     */
+    private function attachPlaceholderScan(Entity $handout, string $title, int $width, int $height): void
+    {
+        $image = imagecreatetruecolor($width, $height);
+
+        $paper = imagecolorallocate($image, 232, 223, 201);
+        $rule = imagecolorallocatealpha($image, 90, 74, 52, 96);
+        $ink = imagecolorallocate($image, 52, 42, 30);
+
+        imagefilledrectangle($image, 0, 0, $width, $height, $paper);
+
+        for ($y = (int) ($height * 0.18); $y < $height - 60; $y += 46) {
+            imageline($image, 70, $y, $width - 70, $y, $rule);
+        }
+
+        imagerectangle($image, 40, 40, $width - 40, $height - 40, $rule);
+        imagestring($image, 5, 70, 70, strtoupper($title).' (placeholder)', $ink);
+
+        $path = tempnam(sys_get_temp_dir(), 'demgem-handout').'.png';
+
+        imagepng($image, $path);
+        imagedestroy($image);
+
+        $handout->addMedia($path)->usingFileName(Str::slug($title).'.png')->toMediaCollection('files');
     }
 
     /**

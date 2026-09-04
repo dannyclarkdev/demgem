@@ -16,6 +16,17 @@
         @if ($role->isDm())
             <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
         @endif
+        @if ($entity->isHandout())
+            @can('update', $entity)
+                {{-- One press, and it writes the same visibility column the form writes.
+                     Selected stays a form decision: this button means the party. --}}
+                @if ($entity->visibility === \App\Enums\Visibility::Dm)
+                    <x-ui.button size="sm" icon="eye" wire:click="reveal(true)">Show the party</x-ui.button>
+                @else
+                    <x-ui.button variant="secondary" size="sm" icon="eye-off" wire:click="reveal(false)">Take it back</x-ui.button>
+                @endif
+            @endcan
+        @endif
         @can('update', $entity)
             <x-ui.button :href="$entity->editUrl()" variant="secondary" size="sm" icon="edit">Edit</x-ui.button>
         @endcan
@@ -29,6 +40,63 @@
     @if ($entity->isMap())
         <div class="mb-6">
             <livewire:maps.viewer :campaign="$campaign" :map-id="$entity->id" :wire:key="'map-'.$entity->id" />
+        </div>
+    @endif
+
+    {{-- A handout is the files, so they come before the prose rather than after it.
+         An image opens full size in the kit modal; a PDF is a named row with a
+         download, because a browser is better at PDFs than we are.
+
+         hasGeneratedConversion() rather than a mime check: whether there is a tile to
+         show is a fact about the file, and it stays true on a machine with no
+         Ghostscript, where a PDF simply never got one. --}}
+    @if ($entity->isHandout() && $files->isEmpty() && $role->isDm())
+        <div class="mb-6">
+            <x-ui.empty-state
+                icon="paperclip"
+                title="No files yet"
+                description="A handout works as prose alone, and it works better with the scan. Edit it and attach the image or the PDF."
+            />
+        </div>
+    @endif
+
+    @if ($entity->isHandout() && $files->isNotEmpty())
+        <div class="mb-6" x-data="{ src: '', caption: '' }">
+            <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($files as $file)
+                    <li wire:key="handout-file-{{ $file->id }}">
+                        @if ($file->hasGeneratedConversion('tile'))
+                            <button
+                                type="button"
+                                class="group block w-full overflow-hidden rounded-lg border border-line bg-panel"
+                                @click="src = @js($file->getUrl()); caption = @js($file->file_name); $dispatch('open-modal', { name: 'handout-file' })"
+                            >
+                                <img src="{{ $file->getUrl('tile') }}" alt="{{ $file->file_name }}" class="aspect-4/3 w-full object-cover transition group-hover:opacity-90">
+                                <span class="block truncate px-3 py-2 text-left text-xs text-ink-faint">{{ $file->file_name }}</span>
+                            </button>
+                        @else
+                            <a
+                                href="{{ $file->getUrl() }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="flex min-h-11 items-center gap-3 rounded-lg border border-line bg-panel px-4 py-3 hover:border-ink-faint"
+                            >
+                                <x-ui.icon name="file-text" class="size-5 shrink-0 text-ink-faint" />
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-sm text-ink">{{ $file->file_name }}</span>
+                                    <span class="block text-xs text-ink-faint">{{ number_format($file->size / 1024, 0) }} KB</span>
+                                </span>
+                                <x-ui.icon name="download" class="size-4 shrink-0 text-ink-faint" />
+                            </a>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+
+            <x-ui.modal name="handout-file" max-width="max-w-5xl">
+                <img :src="src" :alt="caption" class="max-h-[75vh] w-full rounded-md object-contain">
+                <p class="mt-3 text-center text-xs text-ink-faint" x-text="caption"></p>
+            </x-ui.modal>
         </div>
     @endif
 
@@ -109,6 +177,16 @@
                         <div class="prose-entity">{!! $rewardsHtml !!}</div>
                     </x-ui.card>
                 @endif
+            @endif
+
+            @if ($showClocks)
+                <x-ui.card title="What is coming">
+                    <livewire:clocks.panel
+                        :campaign="$campaign"
+                        :entity-id="$entity->id"
+                        :wire:key="'entity-clocks-'.$entity->id"
+                    />
+                </x-ui.card>
             @endif
 
             @if ($dmNotesHtml !== null)

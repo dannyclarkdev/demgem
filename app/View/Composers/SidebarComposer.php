@@ -3,6 +3,7 @@
 namespace App\View\Composers;
 
 use App\Enums\EntityType;
+use App\Models\Clock;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
@@ -29,6 +30,7 @@ class SidebarComposer
         $sessionCount = 0;
         $encounterCount = 0;
         $tableCount = 0;
+        $clockCount = 0;
 
         if ($user !== null && $campaign !== null && $role !== null) {
             $counts = Entity::query()
@@ -45,6 +47,7 @@ class SidebarComposer
             if ($role->isDm()) {
                 $encounterCount = Encounter::query()->count();
                 $tableCount = RandomTable::query()->count();
+                $clockCount = Clock::query()->count();
             }
         }
 
@@ -56,6 +59,7 @@ class SidebarComposer
             'sessionCount' => $sessionCount,
             'encounterCount' => $encounterCount,
             'tableCount' => $tableCount,
+            'clockCount' => $clockCount,
             'userCampaigns' => $user?->campaigns()->orderBy('name')->get() ?? collect(),
         ]);
     }
