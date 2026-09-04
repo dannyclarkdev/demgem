@@ -84,6 +84,9 @@ class Show extends Component
             'questStatus' => $this->entity->questStatus(),
             'giver' => $this->visibleGiver($user, $role),
             'pinnedOn' => $this->mapsPinningThis($user, $role),
+            // A handout's attachments. Eager-loaded, because strict mode is on and the
+            // gallery is the point of the page rather than an extra on it.
+            'files' => $this->entity->isHandout() ? $this->entity->files() : collect(),
         ])->title($this->entity->name);
     }
 

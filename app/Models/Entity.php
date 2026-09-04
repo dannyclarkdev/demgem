@@ -207,6 +207,17 @@ class Entity extends Model implements HasMedia
     }
 
     /**
+     * A handout is an entity the party is given rather than one they look up. The
+     * reveal is the visibility column every entity already carries: there is no
+     * revealed_at and no player_visible, because a second column that also means
+     * "revealed" is a second source of truth for one fact.
+     */
+    public function isHandout(): bool
+    {
+        return $this->type === EntityType::Handout;
+    }
+
+    /**
      * The pins on this map.
      *
      * @return HasMany<MapMarker, $this>
@@ -427,14 +438,64 @@ class Entity extends Model implements HasMedia
         ];
     }
 
+    /**
+     * The number of files a handout may carry. Ten is the letter, its envelope, and
+     * every page of the ledger; past that it is an album, and an album is a slice.
+     */
+    public const MAX_FILES = 10;
+
+    /**
+     * @var list<string>
+     */
+    public const FILE_MIME_TYPES = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf',
+    ];
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image')->singleFile()->useDisk(config('media-library.disk_name'));
+
+        // A handout's attachments. Not singleFile: the letter has a front and a back,
+        // and the ledger has four pages.
+        $this->addMediaCollection('files')
+            ->acceptsMimeTypes(self::FILE_MIME_TYPES)
+            ->useDisk(config('media-library.disk_name'));
     }
 
+    /**
+     * Every conversion names the collection it belongs to.
+     *
+     * It has to. An unscoped conversion runs on every collection, so the day `files`
+     * started accepting PDFs an unscoped crop would have started rasterising them,
+     * which needs Imagick with Ghostscript behind it. Where that exists it is slow;
+     * where it does not, Media Library writes nothing and the page asks for a URL
+     * that was never generated. The Blade asks hasGeneratedConversion() rather than
+     * guessing from a mime type, so a PDF is an icon and a filename either way.
+     */
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('thumb')->nonQueued()->fit(Fit::Crop, 320, 320);
+        // fit() forwards to the image driver and returns it, so the collection has to
+        // be named before it. Chained the other way the call lands on the driver and
+        // the conversion stays global, which is the bug this comment prevents.
+        $this->addMediaConversion('thumb')
+            ->performOnCollections('image')
+            ->nonQueued()
+            ->fit(Fit::Crop, 320, 320);
+
+        $this->addMediaConversion('tile')
+            ->performOnCollections('files')
+            ->nonQueued()
+            ->fit(Fit::Contain, 640, 640);
+    }
+
+    /**
+     * The attachments, in the order they were added.
+     *
+     * @return Collection<int, Media>
+     */
+    public function files(): Collection
+    {
+        return $this->getMedia('files');
     }
 
     public function imageUrl(string $conversion = ''): ?string

@@ -197,6 +197,12 @@ class ExportCampaign
                         'player_visible' => $marker->player_visible,
                     ])->values()->all(),
                 'image' => $this->media($entity->getFirstMedia('image')),
+                // A handout's attachments, in the same shape as the single image: the
+                // facts about each file and a URL, never the bytes. The zip with the
+                // binaries in it is still the Markdown export.
+                'files' => $entity->getMedia('files')
+                    ->map(fn (Media $file) => $this->media($file))
+                    ->values()->all(),
                 'created_at' => $entity->created_at?->toIso8601String(),
                 'updated_at' => $entity->updated_at?->toIso8601String(),
             ]);

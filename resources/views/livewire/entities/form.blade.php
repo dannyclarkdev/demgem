@@ -23,6 +23,47 @@
                 </x-ui.card>
             @endif
 
+            @if ($isHandout)
+                <x-ui.card title="Files">
+                    <div class="space-y-3">
+                        @if ($existingFiles->isNotEmpty())
+                            <ul class="space-y-2">
+                                @foreach ($existingFiles as $file)
+                                    <li wire:key="file-{{ $file->id }}" class="flex items-center gap-2.5">
+                                        @if ($file->hasGeneratedConversion('tile'))
+                                            <img src="{{ $file->getUrl('tile') }}" alt="" class="size-10 shrink-0 rounded border border-line object-cover">
+                                        @else
+                                            <span class="inline-flex size-10 shrink-0 items-center justify-center rounded border border-line bg-raised text-ink-faint">
+                                                <x-ui.icon name="file-text" class="size-4" />
+                                            </span>
+                                        @endif
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-sm text-ink">{{ $file->file_name }}</span>
+                                            <span class="block text-xs text-ink-faint">{{ number_format($file->size / 1024, 0) }} KB</span>
+                                        </span>
+                                        <x-ui.checkbox label="Remove" name="removeFileIds.{{ $file->id }}" value="{{ $file->id }}" wire:model="removeFileIds" />
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        <x-ui.field
+                            label="Add files"
+                            for="files"
+                            :error="$errors->first('files') ?: $errors->first('files.*')"
+                            hint="Images or PDF, up to 10 MB each, {{ $maxFiles }} files in all."
+                        >
+                            <input type="file" id="files" wire:model="files" multiple accept="image/*,application/pdf" class="block w-full text-sm text-ink-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-raised file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:border-ink-faint">
+                        </x-ui.field>
+                        <p wire:loading wire:target="files" class="text-xs text-ink-faint">Uploading&hellip;</p>
+
+                        @if ($files)
+                            <p class="text-xs text-ink-faint">{{ count($files) }} {{ Str::plural('file', count($files)) }} ready to attach.</p>
+                        @endif
+                    </div>
+                </x-ui.card>
+            @endif
+
             @if ($canEditDmFields && $isQuest)
                 <x-ui.card title="Rewards">
                     <x-ui.markdown-editor
