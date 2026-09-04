@@ -62,6 +62,16 @@ class Show extends Component
         // Deliberately empty. The re-render is the point.
     }
 
+    /**
+     * A handout changed hands. The re-render decides whether the card belongs on the
+     * page; the panel inside it re-renders itself.
+     */
+    #[On('echo-presence:campaign.{campaign.id},.handout.revealed')]
+    public function handoutRevealed(): void
+    {
+        // Deliberately empty. The re-render is the point.
+    }
+
     public function render(): View
     {
         /** @var User $user */
@@ -76,6 +86,9 @@ class Show extends Component
             // life of a campaign that never uses clocks. The fight has an empty state
             // because a table expects a fight; clocks are something a GM opts into.
             'hasClocks' => Clock::query()->visibleTo($role)->exists(),
+            // Same reasoning as the clocks card: a campaign that hands nothing over
+            // should not carry a card that says so.
+            'hasHandouts' => Entity::query()->ofType(EntityType::Handout)->visibleTo($user, $role)->exists(),
             // A spectator reads the log and gets no tray. Watching is what they are
             // here for, and rolling is not.
             'mayRoll' => $user->can('rollDice', $this->campaign),

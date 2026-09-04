@@ -95,6 +95,11 @@ function playerWorld(): array
     Clock::factory()->about($court)->shownToPlayers()->sized(4)->filled(1)
         ->create(['name' => 'The tally of debts']);
 
+    // A handout still behind the screen. Its name and its prose must be absent from
+    // every page a player can open.
+    Entity::factory()->for($campaign)->type(EntityType::Handout)->dmOnly()
+        ->create(['name' => 'The sealed orders', 'slug' => 'sealed-orders', 'body' => 'The handout nobody may read.']);
+
     $table = RandomTable::factory()->for($campaign)->create(['name' => 'Harbour rumours']);
     RandomTableEntry::factory()->inTable($table)->create(['body' => 'The rumour nobody may read.']);
 
@@ -120,6 +125,8 @@ it('shows a player no GM prose on any page they can open', function (string $rou
         'The roll nobody may read.',
         'The pin nobody may read.',
         'The clock nobody may read.',
+        'The handout nobody may read.',
+        'The sealed orders',
         'The Drowned Court',
         'The Informant',
         'The Hidden Patron',

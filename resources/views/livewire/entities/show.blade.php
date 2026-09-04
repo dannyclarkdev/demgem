@@ -16,6 +16,17 @@
         @if ($role->isDm())
             <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
         @endif
+        @if ($entity->isHandout())
+            @can('update', $entity)
+                {{-- One press, and it writes the same visibility column the form writes.
+                     Selected stays a form decision: this button means the party. --}}
+                @if ($entity->visibility === \App\Enums\Visibility::Dm)
+                    <x-ui.button size="sm" icon="eye" wire:click="reveal(true)">Show the party</x-ui.button>
+                @else
+                    <x-ui.button variant="secondary" size="sm" icon="eye-off" wire:click="reveal(false)">Take it back</x-ui.button>
+                @endif
+            @endcan
+        @endif
         @can('update', $entity)
             <x-ui.button :href="$entity->editUrl()" variant="secondary" size="sm" icon="edit">Edit</x-ui.button>
         @endcan

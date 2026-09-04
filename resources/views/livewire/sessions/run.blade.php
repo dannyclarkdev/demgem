@@ -107,6 +107,11 @@
                 <livewire:clocks.panel :campaign="$campaign" :wire:key="'run-clocks-'.$session->id" />
             </x-ui.card>
 
+            {{-- What the party can be handed tonight, and one press to hand it over. --}}
+            <x-ui.card title="Handouts">
+                <livewire:handouts.panel :campaign="$campaign" :wire:key="'run-handouts-'.$session->id" />
+            </x-ui.card>
+
             <x-ui.card title="Scenes" :padding="false">
                 @if ($scenes->isEmpty())
                     <p class="px-5 py-4 text-ink-faint">No scenes prepped. Improvise; the party will anyway.</p>

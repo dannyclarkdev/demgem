@@ -3,6 +3,7 @@
 namespace App\Livewire\Entities;
 
 use App\Actions\Entities\DeleteEntity;
+use App\Actions\Handouts\RevealHandout;
 use App\Actions\Sessions\SessionsMentioning;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
@@ -45,6 +46,29 @@ class Show extends Component
         session()->flash('status', "{$this->entity->name} was deleted.");
 
         $this->redirectRoute('entities.index', [$this->campaign, $this->entity->type->slug()]);
+    }
+
+    /**
+     * Show the party, or take it back.
+     *
+     * One press for the case the GM wants mid-scene. It goes through RevealHandout,
+     * which goes through UpdateEntity, so this writes the same visibility column the
+     * form writes and by the same path. Selected stays a form decision: "show the
+     * party" means the party.
+     */
+    public function reveal(bool $visible, RevealHandout $revealHandout): void
+    {
+        abort_unless($this->entity->isHandout(), 404);
+
+        $this->authorize('update', $this->entity);
+
+        $this->entity = $visible
+            ? $revealHandout->show($this->entity, $this->user())
+            : $revealHandout->takeBack($this->entity, $this->user());
+
+        session()->flash('status', $visible
+            ? "{$this->entity->name} is on the table."
+            : "{$this->entity->name} is back behind the screen.");
     }
 
     public function render(MarkdownRenderer $renderer): View
