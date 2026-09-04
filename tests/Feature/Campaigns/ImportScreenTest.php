@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Campaigns\ExportCampaign;
 use App\Livewire\Campaigns\Import;
 use App\Models\Campaign;
 use App\Models\Entity;
@@ -23,14 +22,6 @@ function aCampaignFile(array $document, string $name = 'campaign.json'): File
     fwrite($handle, json_encode($document, JSON_THROW_ON_ERROR));
 
     return new File($name, $handle);
-}
-
-function exportedArray(Campaign $campaign): array
-{
-    return json_decode(json_encode(array_map(
-        fn ($section) => is_iterable($section) && ! is_array($section) ? iterator_to_array($section) : $section,
-        app(ExportCampaign::class)->handle($campaign),
-    ), JSON_THROW_ON_ERROR), true);
 }
 
 it('reports on a file without writing anything', function () {

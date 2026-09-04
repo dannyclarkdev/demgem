@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Campaigns\ExportCampaign;
 use App\Actions\Campaigns\ImportCampaign;
 use App\Actions\Campaigns\ReadCampaignFile;
 use App\Actions\Entities\SyncTags;
@@ -30,14 +29,7 @@ use Illuminate\Support\Facades\DB;
  */
 function exportedDocument(Campaign $campaign): array
 {
-    $export = app(ExportCampaign::class)->handle($campaign);
-
-    $json = json_encode(array_map(
-        fn ($section) => is_iterable($section) && ! is_array($section) ? iterator_to_array($section) : $section,
-        $export,
-    ), JSON_THROW_ON_ERROR);
-
-    $result = app(ReadCampaignFile::class)->handle($json);
+    $result = app(ReadCampaignFile::class)->handle(json_encode(exportedArray($campaign), JSON_THROW_ON_ERROR));
 
     expect($result->errors)->toBe([]);
 

@@ -50,13 +50,7 @@ it('reads a whole exported campaign', function () {
     $campaign = Campaign::factory()->create(['name' => 'The Drowned Duchy']);
     Entity::factory()->for($campaign)->count(3)->create();
 
-    $export = app(ExportCampaign::class)->handle($campaign);
-
-    // The export streams, so the sections are lazy collections until they are read.
-    $result = read(json_decode(json_encode(array_map(
-        fn ($section) => is_iterable($section) && ! is_array($section) ? iterator_to_array($section) : $section,
-        $export,
-    ), JSON_THROW_ON_ERROR), true));
+    $result = read(exportedArray($campaign));
 
     expect($result->succeeded())->toBeTrue()
         ->and($result->document['campaign']['name'])->toBe('The Drowned Duchy')

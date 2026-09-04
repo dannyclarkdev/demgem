@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Campaigns\ExportCampaign;
 use App\Enums\CampaignRole;
 use App\Models\Campaign;
 use App\Models\User;
@@ -21,6 +22,27 @@ function memberOf(Campaign $campaign, CampaignRole $role, ?User $user = null): U
     $campaign->members()->create(['user_id' => $user->id, 'role' => $role]);
 
     return $user;
+}
+
+/**
+ * A campaign's export as a plain array.
+ *
+ * ExportCampaign streams: every section is a LazyCollection so the download starts at
+ * once, which means a test has to walk them before json_encode can. Several import
+ * tests need this, so it lives here rather than in whichever file wrote it first.
+ *
+ * @return array<string, mixed>
+ */
+function exportedArray(Campaign $campaign): array
+{
+    $export = app(ExportCampaign::class)->handle($campaign);
+
+    $walked = array_map(
+        fn ($section) => is_iterable($section) && ! is_array($section) ? iterator_to_array($section) : $section,
+        $export,
+    );
+
+    return json_decode(json_encode($walked, JSON_THROW_ON_ERROR), true);
 }
 
 /**
