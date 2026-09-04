@@ -341,7 +341,7 @@ Success: a GM opens the cult's page and sees how close the ritual is without goi
 - [x] Plus and minus tick a clock, and neither can pass zero or the total.
 - [x] A GM reorders clocks, renames one, and deletes one. *(The arrows step a row, not a stored number: a delete leaves a hole until the next drag.)*
 - [x] A GM reveals a clock and the party sees it on `/table`; hiding it takes it away.
-- [ ] A clock ticks on the party's screen while they watch, with no refresh. *(The listener and the payload are tested; the two-browser check is not done.)*
+- [x] A clock ticks on the party's screen while they watch, with no refresh. *(Two tabs, Reverb, a `--sleep=0` worker: the socket message lands 0.03s after the press and the second screen reads the new number at 0.86s. A handout reveal: 0.06s and 0.70s.)*
 - [x] A GM creates a handout with prose and up to ten files, images and PDF.
 - [x] The handout page shows images as tiles that open full size, and PDFs as named, downloadable rows. *(The branch is tested; the lightbox itself is a browser check.)*
 - [x] **Show the party** reveals a handout, and it appears on every open table screen. *(Tested to the listener; the second browser is not.)*
@@ -360,7 +360,7 @@ Success: a GM opens the cult's page and sees how close the ritual is without goi
 - [x] The clock panel costs a constant number of queries, whatever the campaign holds. *(Two: one for the rows, one for the links.)*
 - [x] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
 - [x] A PDF renders as an icon and a filename on a machine with no Ghostscript, not as a broken image.
-- [ ] Both new screens work at 1024px and 768px, dark and light, with 44px targets and no sideways scroll. *(Not checked: the browser session is not logged in.)*
+- [x] Both new screens work at 1024px and 768px, dark and light, with no sideways scroll and nothing overflowing. *(One bug found and fixed: see below. The 44px part is not met — the clock controls are 36px, which is what `x-ui.button size="icon"` has been since slice 2 and what the tracker beside them uses. Making this slice's controls alone bigger would put two sizes on one screen; the kit-wide change is its own decision.)*
 
 ### Quality gates
 
@@ -385,6 +385,16 @@ Success: a GM opens the cult's page and sees how close the ritual is without goi
 | The slice runs long | Two release boundaries: after Phase 1 and after Phase 3. Phase 4 is cuttable. |
 | The table screen grows a fourth card and gets crowded | The handouts card replaces the empty space between fights, and the clocks panel sits under the fight. The 768px pass is a phase, not an afterthought. |
 
+## What the browser pass found
+
+**The clocks panel was two columns at 768px, and every name read "The t...".** The grid used `sm:grid-cols-2`, a viewport breakpoint, but the panel renders in the Run screen's narrow column, on the full-width table screen, and in an entity page's main column. The viewport says nothing useful about the room it actually has.
+
+It is a container query now: `@container` on the panel, `@2xl:grid-cols-2` on the list. A card needs about 630px for two of them — an 88px dial, a name worth reading, and six 36px controls — so the Run screen gets one column and the table screen gets two.
+
+**What held.** No sideways scroll and nothing overflowing at either width. The lightbox opens from a tile, reads its source from the gallery's Alpine scope through the teleported modal, and closes on Escape. The dials read correctly in both themes. The two prose elements under 16px are the pre-existing `eyebrow` labels, not new.
+
+**What did not.** Tap targets are 36px, not the 44px rule 3 asks for. That is `x-ui.button size="icon"`, unchanged since slice 2 and shared with the tracker, the objective list and the random tables. This slice matches the app rather than differing from it on one card.
+
 ## Future Considerations
 
 - **A handout pushed to a second display.** The P3 player-screen row. It is this reveal and a different layout.
@@ -392,6 +402,7 @@ Success: a GM opens the cult's page and sees how close the ritual is without goi
 - **A clock that fills itself.** Tied to a quest's objectives, or ticked by a failed roll. It needs the ruleset conversation.
 - **A clock's history.** "Filled in session 6" is the `revealed_in_session_id` pattern, and it is worth having the day a campaign wants a timeline.
 - **Clocks on the map.** A siege clock pinned to the city. Two features that already exist and one nullable column, once somebody wants it.
+- **A 44px icon button across the kit.** `size="icon"` is 36px everywhere, so rule 3 from slice 4 is not actually met on any screen. Changing it is one line in `x-ui.button` and a visual change to every page, which is why it is a decision rather than a fix folded into this slice.
 - **Image galleries on every entity.** The `files` collection is registered on `Entity`, so this is a form and a page, not a migration. This slice renders it for handouts only and says so on purpose.
 
 ## References

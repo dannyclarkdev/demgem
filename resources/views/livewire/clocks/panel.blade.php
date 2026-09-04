@@ -4,7 +4,7 @@
     Its own poll, because a nested component does not re-render when its parent does
     and a dropped socket must not leave a table watching a clock that stopped.
 --}}
-<div wire:poll.visible.{{ $pollSeconds }}s class="space-y-3">
+<div wire:poll.visible.{{ $pollSeconds }}s class="@container space-y-3">
     @if ($canManage)
         <form wire:submit="create" class="flex flex-wrap items-end gap-2">
             <div class="min-w-48 flex-1">
@@ -30,7 +30,13 @@
                 : 'When the GM starts one, it turns up here and ticks on its own.'"
         />
     @else
-        <ul class="grid gap-3 sm:grid-cols-2">
+        {{-- A container query, not a viewport one. This panel renders in the Run
+             screen's narrow column, on the full-width table screen, and in an entity
+             page's main column, so the viewport says nothing useful about the room it
+             actually has. A card needs about 630px for two of them: an 88px dial, a
+             name worth reading, and six 36px controls. Below that it is one column,
+             which is what stopped every clock here being called "The t...". --}}
+        <ul class="grid gap-3 @2xl:grid-cols-2">
             @foreach ($clocks as $clock)
                 <li wire:key="clock-{{ $clock->id }}" class="flex items-center gap-4 rounded-lg border border-line bg-panel p-4">
                     <x-ui.clock :clock="$clock" :interactive="$canManage" :size="$canManage ? 88 : 72" />
