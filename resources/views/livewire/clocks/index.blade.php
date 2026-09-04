@@ -91,6 +91,15 @@
                                     <x-ui.button variant="ghost" size="icon" wire:click="move('{{ $clock->id }}', 1)" :disabled="$loop->last" aria-label="Move down">
                                         <x-ui.icon name="arrow-down" class="size-4" />
                                     </x-ui.button>
+                                    <x-ui.button
+                                        variant="ghost"
+                                        size="icon"
+                                        wire:click="toggleVisibility('{{ $clock->id }}')"
+                                        :title="$clock->player_visible ? 'The party sees this clock' : 'Hidden from the party'"
+                                        :aria-label="($clock->player_visible ? 'Hide ' : 'Show ').$clock->name.' on the player table'"
+                                    >
+                                        <x-ui.icon :name="$clock->player_visible ? 'eye' : 'eye-off'" class="size-4 {{ $clock->player_visible ? 'text-ember' : '' }}" />
+                                    </x-ui.button>
                                     <x-ui.button variant="ghost" size="icon" wire:click="edit('{{ $clock->id }}')" aria-label="Rename {{ $clock->name }}">
                                         <x-ui.icon name="edit" class="size-4" />
                                     </x-ui.button>

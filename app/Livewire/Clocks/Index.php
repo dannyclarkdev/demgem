@@ -5,6 +5,7 @@ namespace App\Livewire\Clocks;
 use App\Actions\Clocks\CreateClock;
 use App\Actions\Clocks\DeleteClock;
 use App\Actions\Clocks\ReorderClocks;
+use App\Actions\Clocks\SetClockVisibility;
 use App\Actions\Clocks\TickClock;
 use App\Actions\Clocks\UpdateClock;
 use App\Livewire\Concerns\InteractsWithCampaign;
@@ -133,6 +134,15 @@ class Index extends Component
         $this->authorize('update', $clock);
 
         $reorderClocks->move($this->campaign, $clock, $offset);
+    }
+
+    public function toggleVisibility(string $clockId, SetClockVisibility $setClockVisibility): void
+    {
+        $clock = $this->clock($clockId);
+
+        $this->authorize('update', $clock);
+
+        $setClockVisibility->toggle($clock);
     }
 
     public function delete(string $clockId, DeleteClock $deleteClock): void

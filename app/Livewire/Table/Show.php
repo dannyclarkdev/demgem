@@ -6,6 +6,7 @@ use App\Enums\EncounterStatus;
 use App\Enums\EntityType;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
+use App\Models\Clock;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
@@ -51,6 +52,16 @@ class Show extends Component
         // viewer's own role, so every visibility rule applies as it always does.
     }
 
+    /**
+     * A clock moved, or the GM revealed the first one. The re-render decides whether
+     * the card belongs on the page at all; the panel inside it re-renders itself.
+     */
+    #[On('echo-presence:campaign.{campaign.id},.clock.changed')]
+    public function clockChanged(): void
+    {
+        // Deliberately empty. The re-render is the point.
+    }
+
     public function render(): View
     {
         /** @var User $user */
@@ -61,6 +72,10 @@ class Show extends Component
             'role' => $role,
             'fight' => $this->activeEncounter(),
             'pollSeconds' => self::POLL_SECONDS,
+            // One exists() rather than a card that says "nothing counting" for the
+            // life of a campaign that never uses clocks. The fight has an empty state
+            // because a table expects a fight; clocks are something a GM opts into.
+            'hasClocks' => Clock::query()->visibleTo($role)->exists(),
             // A spectator reads the log and gets no tray. Watching is what they are
             // here for, and rolling is not.
             'mayRoll' => $user->can('rollDice', $this->campaign),

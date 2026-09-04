@@ -36,6 +36,12 @@
         />
     @endif
 
+    @if ($hasClocks)
+        <x-ui.card title="What is coming" class="mb-4">
+            <livewire:clocks.panel :campaign="$campaign" :wire:key="'table-clocks'" />
+        </x-ui.card>
+    @endif
+
     <div class="grid gap-4 lg:grid-cols-2 lg:items-start">
         <x-ui.card title="Dice" :padding="false">
             @if ($mayRoll)

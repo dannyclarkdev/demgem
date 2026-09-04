@@ -4,6 +4,7 @@ namespace App\Livewire\Clocks;
 
 use App\Actions\Clocks\CreateClock;
 use App\Actions\Clocks\DeleteClock;
+use App\Actions\Clocks\SetClockVisibility;
 use App\Actions\Clocks\TickClock;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
@@ -103,6 +104,19 @@ class Panel extends Component
         $this->authorize('update', $clock);
 
         $tickClock->by($clock, $delta);
+    }
+
+    /**
+     * The eye. Off for everything a GM makes, so a countdown the party has not been
+     * told about is a countdown they cannot see.
+     */
+    public function toggleVisibility(string $clockId, SetClockVisibility $setClockVisibility): void
+    {
+        $clock = $this->clock($clockId);
+
+        $this->authorize('update', $clock);
+
+        $setClockVisibility->toggle($clock);
     }
 
     public function delete(string $clockId, DeleteClock $deleteClock): void

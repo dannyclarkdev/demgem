@@ -76,6 +76,21 @@
                                 >
                                     <x-ui.icon name="plus" class="size-4" />
                                 </x-ui.button>
+                                {{-- The eye is what the party sees. Off by default for
+                                     everything the GM makes, so a countdown they have
+                                     not been told about is one they cannot see. --}}
+                                <x-ui.button
+                                    variant="ghost"
+                                    size="icon"
+                                    wire:click="toggleVisibility('{{ $clock->id }}')"
+                                    :title="$clock->player_visible ? 'The party sees this clock' : 'Hidden from the party'"
+                                    :aria-label="($clock->player_visible ? 'Hide ' : 'Show ').$clock->name.' on the player table'"
+                                >
+                                    <x-ui.icon
+                                        :name="$clock->player_visible ? 'eye' : 'eye-off'"
+                                        class="size-4 {{ $clock->player_visible ? 'text-ember' : '' }}"
+                                    />
+                                </x-ui.button>
                                 <x-ui.button
                                     variant="ghost"
                                     size="icon"

@@ -5,6 +5,7 @@ use App\Enums\EntityType;
 use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
 use App\Models\Campaign;
+use App\Models\Clock;
 use App\Models\Combatant;
 use App\Models\DiceRoll;
 use App\Models\Encounter;
@@ -81,9 +82,18 @@ function playerWorld(): array
     MapMarker::factory()->onMap($map)->at(40, 50)
         ->create(['label' => 'The pin nobody may read.']);
 
-    MapMarker::factory()->onMap($map)->shownToPlayers()->at(60, 70)
-        ->pointingAt(Entity::factory()->for($campaign)->dmOnly()->create(['name' => 'The Drowned Court']))
-        ->create();
+    $court = Entity::factory()->for($campaign)->dmOnly()->create(['name' => 'The Drowned Court']);
+
+    MapMarker::factory()->onMap($map)->shownToPlayers()->at(60, 70)->pointingAt($court)->create();
+
+    // A clock the party has not been told about, and one revealed about a GM-only
+    // faction. The first must be absent everywhere; the second shows its dial and
+    // never the faction's name.
+    Clock::factory()->inCampaign($campaign)->sized(8)->filled(5)
+        ->create(['name' => 'The clock nobody may read.']);
+
+    Clock::factory()->about($court)->shownToPlayers()->sized(4)->filled(1)
+        ->create(['name' => 'The tally of debts']);
 
     $table = RandomTable::factory()->for($campaign)->create(['name' => 'Harbour rumours']);
     RandomTableEntry::factory()->inTable($table)->create(['body' => 'The rumour nobody may read.']);
@@ -109,6 +119,7 @@ it('shows a player no GM prose on any page they can open', function (string $rou
         'The rumour nobody may read.',
         'The roll nobody may read.',
         'The pin nobody may read.',
+        'The clock nobody may read.',
         'The Drowned Court',
         'The Informant',
         'The Hidden Patron',
@@ -140,6 +151,7 @@ it('offers a player no link into the GM half of the app', function () {
         route('sessions.run', [$campaign, 1]),
         route('encounters.index', $campaign),
         route('tables.index', $campaign),
+        route('clocks.index', $campaign),
         route('campaigns.settings', $campaign),
     ];
 
@@ -168,6 +180,7 @@ it('closes every GM-only route to a player', function (string $routeName, array 
     'encounters' => ['encounters.index', [], 403],
     'encounter' => ['encounters.show', [], 404],
     'tables' => ['tables.index', [], 403],
+    'clocks' => ['clocks.index', [], 403],
     'table' => ['tables.show', [], 404],
     'settings' => ['campaigns.settings', [], 403],
     'hidden session' => ['sessions.show', [3], 404],
