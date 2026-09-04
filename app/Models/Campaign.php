@@ -116,6 +116,14 @@ class Campaign extends Model implements HasMedia
         return $this->hasMany(Secret::class);
     }
 
+    /**
+     * @return HasMany<Clock, $this>
+     */
+    public function clocks(): HasMany
+    {
+        return $this->hasMany(Clock::class)->orderBy('position');
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('cover')->singleFile()->useDisk(config('media-library.disk_name'));

@@ -4,6 +4,7 @@ namespace App\Actions\Campaigns;
 
 use App\Models\Campaign;
 use App\Models\CampaignMember;
+use App\Models\Clock;
 use App\Models\Combatant;
 use App\Models\DiceRoll;
 use App\Models\Encounter;
@@ -73,6 +74,7 @@ class ExportCampaign
      */
     public const SECTION_TABLES = [
         'campaign_members' => 'members',
+        'clocks' => 'clocks',
         'entities' => 'entities',
         'game_sessions' => 'sessions',
         'encounters' => 'encounters',
@@ -96,6 +98,7 @@ class ExportCampaign
             'encounters' => $this->encounters($campaign),
             'random_tables' => $this->randomTables($campaign),
             'dice_rolls' => $this->diceRolls($campaign),
+            'clocks' => $this->clocks($campaign),
         ];
     }
 
@@ -332,6 +335,29 @@ class ExportCampaign
                 'detail' => $roll->detail,
                 'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
+            ]);
+    }
+
+    /**
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function clocks(Campaign $campaign): iterable
+    {
+        return Clock::query()
+            ->withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('position')
+            ->cursor()
+            ->map(fn (Clock $clock) => [
+                'id' => $clock->id,
+                'entity_id' => $clock->entity_id,
+                'name' => $clock->name,
+                'segments' => $clock->segments,
+                'filled' => $clock->filled,
+                'player_visible' => $clock->player_visible,
+                'position' => $clock->position,
+                'created_at' => $clock->created_at?->toIso8601String(),
+                'updated_at' => $clock->updated_at?->toIso8601String(),
             ]);
     }
 

@@ -64,6 +64,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read User|null $player
  * @property-read Entity|null $giver
  * @property-read Collection<int, QuestObjective> $objectives
+ * @property-read Collection<int, Clock> $clocks
  * @property-read Pivot|null $pivot Set when the row was loaded through GameSession::entities()
  */
 #[ObservedBy([EntityObserver::class])]
@@ -224,6 +225,17 @@ class Entity extends Model implements HasMedia
     public function pinnedBy(): HasMany
     {
         return $this->hasMany(MapMarker::class, 'target_entity_id');
+    }
+
+    /**
+     * The clocks that are about this entity. How close the cult is to the ritual sits
+     * on the cult's own page, and a player who may not see the entity never gets here.
+     *
+     * @return HasMany<Clock, $this>
+     */
+    public function clocks(): HasMany
+    {
+        return $this->hasMany(Clock::class)->orderBy('position');
     }
 
     public function isCharacter(): bool

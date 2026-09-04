@@ -101,6 +101,12 @@
                 </x-ui.card>
             @endif
 
+            {{-- The processes, beside the notes. A clock is turned more often than a
+                 scene is read, so it sits above them. --}}
+            <x-ui.card title="Clocks">
+                <livewire:clocks.panel :campaign="$campaign" :wire:key="'run-clocks-'.$session->id" />
+            </x-ui.card>
+
             <x-ui.card title="Scenes" :padding="false">
                 @if ($scenes->isEmpty())
                     <p class="px-5 py-4 text-ink-faint">No scenes prepped. Improvise; the party will anyway.</p>

@@ -10,6 +10,7 @@ use App\Livewire\Campaigns\Index as CampaignsIndex;
 use App\Livewire\Campaigns\Members as CampaignsMembers;
 use App\Livewire\Campaigns\Settings as CampaignsSettings;
 use App\Livewire\Campaigns\Show as CampaignsShow;
+use App\Livewire\Clocks\Index as ClocksIndex;
 use App\Livewire\Encounters\Index as EncountersIndex;
 use App\Livewire\Encounters\Show as EncountersShow;
 use App\Livewire\Entities\Form as EntitiesForm;
@@ -86,6 +87,10 @@ Route::middleware('auth')->group(function () {
             // mount() for the same reason, and their keys just happen not to be model names.
             Route::get('/encounters', EncountersIndex::class)->name('encounters.index');
             Route::get('/encounters/{encounterId}', EncountersShow::class)->name('encounters.show');
+
+            // Clocks a GM turns. The segment is not an entity slug, and this sits above
+            // the {type} routes, so nothing below can claim it.
+            Route::get('/clocks', ClocksIndex::class)->name('clocks.index');
 
             Route::get('/tables', TablesIndex::class)->name('tables.index');
             Route::get('/tables/{tableId}', TablesShow::class)->name('tables.show');

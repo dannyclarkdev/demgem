@@ -68,6 +68,12 @@
                     :count="$encounterCount"
                 >Encounters</x-ui.nav-link>
                 <x-ui.nav-link
+                    :href="route('clocks.index', $currentCampaign)"
+                    :active="request()->routeIs('clocks.*')"
+                    icon="clock"
+                    :count="$clockCount"
+                >Clocks</x-ui.nav-link>
+                <x-ui.nav-link
                     :href="route('tables.index', $currentCampaign)"
                     :active="request()->routeIs('tables.*')"
                     icon="list"
