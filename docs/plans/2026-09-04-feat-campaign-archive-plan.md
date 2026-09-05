@@ -222,33 +222,33 @@ Success: a GM never has to know which of the two they downloaded.
 
 ### Functional
 
-- [ ] A GM downloads one `.zip` holding the document, the media and the Markdown.
-- [ ] Importing that zip restores every image and attachment.
-- [ ] The import report says how many files came across rather than how many could not.
-- [ ] A `.json` still imports exactly as it did.
-- [ ] A file is judged by its first bytes, not its name.
-- [ ] The `markdown/` folder opens as an Obsidian vault with working links.
-- [ ] Front matter survives a name with a colon, a quote and a `#` in it.
-- [ ] The plain JSON export is unchanged for anyone already using it.
+- [x] A GM downloads one `.zip` holding the document, the media and the Markdown.
+- [x] Importing that zip restores every image and attachment.
+- [x] The import report says how many files came across rather than how many could not.
+- [x] A `.json` still imports exactly as it did.
+- [x] A file is judged by its first bytes, not its name.
+- [x] The `markdown/` folder opens as an Obsidian vault with working links. *(The links are asserted untouched; opening it in Obsidian itself is not something a test can do.)*
+- [x] Front matter survives a name with a colon, a quote and a `#` in it.
+- [x] The plain JSON export is unchanged for anyone already using it. *(Two tests, one of them running an archive export first to prove the flag does not leak.)*
 
 ### Non-functional
 
-- [ ] **No string from an archive is ever used as a path, and a `../` entry is inert.**
-- [ ] **An archive is refused on declared uncompressed size before any entry is read.**
-- [ ] **Every extracted file is sniffed, and one that is not what it claims is dropped and counted.**
-- [ ] A media file that fails its checks does not fail the import.
-- [ ] The importer still makes no outbound HTTP request.
-- [ ] Building an archive holds no media in memory.
-- [ ] An archive import is one transaction, as a JSON import is.
-- [ ] Both download buttons work at 1024px and 768px, dark and light.
+- [x] **No string from an archive is ever used as a path, and a `../` entry is inert.**
+- [x] **An archive is refused on declared uncompressed size before any entry is read.** *(And on entry count, which is the cheaper of the two checks.)*
+- [x] **Every extracted file is sniffed, and one that is not what it claims is dropped and counted.**
+- [x] A media file that fails its checks does not fail the import.
+- [x] The importer still makes no outbound HTTP request.
+- [x] Building an archive holds no media in memory. *(`addFile()`, so the peak is the JSON document.)*
+- [x] The rows of an archive import are one transaction, as a JSON import is. **The media attaches after it commits**, which corrects the plan: files are not transactional in any database, so attaching inside would move bytes a rollback could not take back.
+- [ ] Both download buttons work at 1024px and 768px, dark and light. *(Not checked: a tab created by the browser extension does not inherit the dev login, and I do not type passwords.)*
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally and on PostgreSQL in CI.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] No new PHP or JavaScript dependency.
-- [ ] `Campaign::registerMediaConversions()` names its collection.
-- [ ] `npm run build` clean.
+- [x] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] No new PHP or JavaScript dependency.
+- [x] `Campaign::registerMediaConversions()` names its collection.
+- [x] `npm run build` clean.
 
 ## Dependencies & Risks
 

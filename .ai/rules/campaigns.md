@@ -1,6 +1,7 @@
 ---
 paths:
   - 'app/Actions/Campaigns/**'
+  - app/Actions/Campaigns/ExportCampaign.php
 ---
 
 # Campaigns
@@ -24,3 +25,21 @@ Three rules follow from that, and none of them are optional.
 3. Nothing is ever made more visible than the file says. Visibility::Selected imports as Dm because its viewer list names users this install does not have. Widening it to Players would undo three slices of visibility work in one line.
 
 The importer never fetches a URL out of an uploaded file. That is SSRF, and no scheme check makes it acceptable in a self-hosted app whose network we cannot see. Media is counted in the report and left behind.
+
+## No string from an archive is ever used as a path
+ReadCampaignArchive never calls extractTo(), never joins an entry name onto a directory, and names every file it writes with Str::ulid(). Only the entries campaign.json already named are read at all, so an entry called ../../../.env is not dangerous — it is one nothing asks for. The traversal test asserts the entry is inert rather than that it is caught, because the design is not a check.
+
+The same rule runs the other way. A file_name from the document goes through basename() and a slug before Media Library sees it, and BuildCampaignArchive generates every entry name from an ordinal and a slug rather than taking the uploaded filename.
+
+The three risks that survive it have numbers, not hopes: numFiles capped at 2,000; the uncompressed total summed from the central directory before a byte is read; every extracted file sniffed with finfo against Entity::FILE_MIME_TYPES, which is the allow-list the upload form uses. An archive can put nothing on this disk a GM could not have uploaded through the browser.
+
+A file that fails either check is dropped and counted, never fatal. The campaign is the point; the picture is not.
+
+Media attaches AFTER the import transaction commits. Files are not transactional in any database, so attaching inside would move bytes a rollback cannot take back.
+
+## An added key does not bump the export version
+The format policy, settled in slice 9: adding a key to `demgem.campaign` does not move `VERSION`; removing or changing the meaning of one does.
+
+`archive_path` landed on media objects under that rule, so slice 8's importer reads a slice 9 archive's document perfectly well and an older demgem ignores the key it has never heard of.
+
+`forArchive()` returns a CLONE rather than setting a flag. ExportCampaign is resolved from the container, and a flag left on a shared instance would leak archive_path into a plain JSON download, which must stay byte-for-byte what it has been since slice 4. Two tests hold that line, one of them by running an archive export first and then a plain one.

@@ -129,9 +129,20 @@ class Campaign extends Model implements HasMedia
         $this->addMediaCollection('cover')->singleFile()->useDisk(config('media-library.disk_name'));
     }
 
+    /**
+     * The collection is named even though there is only one of them.
+     *
+     * An unscoped conversion runs on every collection a model has, and this is exactly
+     * the shape that bit Entity in slice 7 the moment a second collection appeared.
+     * Naming it now costs one call and makes the rule in .ai/rules/models.md true
+     * everywhere rather than in one model.
+     */
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion('card')->nonQueued()->fit(Fit::Crop, 960, 400);
+        $this->addMediaConversion('card')
+            ->performOnCollections('cover')
+            ->nonQueued()
+            ->fit(Fit::Crop, 960, 400);
     }
 
     public function coverUrl(string $conversion = ''): ?string
