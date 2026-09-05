@@ -83,6 +83,42 @@ class ExportCampaign
     ];
 
     /**
+     * Whether this export is the JSON inside an archive.
+     *
+     * A clone rather than a setter: the action is resolved from the container, and a
+     * flag left on a shared instance would put archive_path into a plain download.
+     * The plain JSON export must stay byte-for-byte what it has been since slice 4.
+     */
+    private bool $forArchive = false;
+
+    /** @var array<string, string> Archive entry name => absolute path on disk. */
+    private array $archiveFiles = [];
+
+    private int $mediaOrdinal = 0;
+
+    public function forArchive(): self
+    {
+        $clone = clone $this;
+        $clone->forArchive = true;
+        $clone->archiveFiles = [];
+        $clone->mediaOrdinal = 0;
+
+        return $clone;
+    }
+
+    /**
+     * The media this document referred to, keyed by the archive entry that will hold
+     * the bytes. Only meaningful after the document has been walked, because the
+     * sections are lazy: encoding the JSON is what fills this in.
+     *
+     * @return array<string, string>
+     */
+    public function archiveFiles(): array
+    {
+        return $this->archiveFiles;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function handle(Campaign $campaign): array
@@ -368,8 +404,15 @@ class ExportCampaign
     }
 
     /**
-     * A URL and the facts about the file, not the file. The zip with the binaries in
-     * it is the Markdown export, which is P2.
+     * A URL and the facts about the file. In a plain JSON export that is all there is,
+     * which is why an importer reading one has no pictures to restore.
+     *
+     * Inside an archive it also gets archive_path, naming the entry that holds the
+     * bytes. That key is additive: a reader that has never heard of it ignores it, so
+     * the format version does not move.
+     *
+     * The entry name is generated here and never taken from the file. It is the first
+     * half of the rule the importer's whole safety rests on.
      *
      * @return array<string, mixed>|null
      */
@@ -379,11 +422,50 @@ class ExportCampaign
             return null;
         }
 
-        return [
+        $row = [
             'url' => $media->getUrl(),
             'file_name' => $media->file_name,
             'mime_type' => $media->mime_type,
             'size' => $media->size,
         ];
+
+        if (! $this->forArchive) {
+            return $row;
+        }
+
+        $path = $media->getPath();
+
+        // A media row whose bytes have gone walking still belongs in the document; it
+        // simply has nothing for the archive to carry.
+        if (! is_file($path)) {
+            return $row;
+        }
+
+        $entry = $this->entryName($media);
+
+        $this->archiveFiles[$entry] = $path;
+        $row['archive_path'] = $entry;
+
+        return $row;
+    }
+
+    /**
+     * media/0007-the-duchy-of-vell.png
+     *
+     * The ordinal keeps it unique without leaking a database id, and the slug keeps
+     * the folder readable when a person unzips it in three years.
+     */
+    private function entryName(Media $media): string
+    {
+        $name = pathinfo($media->file_name, PATHINFO_FILENAME);
+        $extension = strtolower((string) pathinfo($media->file_name, PATHINFO_EXTENSION));
+        $slug = str($name)->slug()->limit(60, '')->value();
+
+        return sprintf(
+            'media/%04d-%s%s',
+            ++$this->mediaOrdinal,
+            $slug !== '' ? $slug : 'file',
+            $extension !== '' ? '.'.preg_replace('/[^a-z0-9]/', '', $extension) : '',
+        );
     }
 }

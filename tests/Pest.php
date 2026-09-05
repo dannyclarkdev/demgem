@@ -46,6 +46,22 @@ function exportedArray(Campaign $campaign): array
 }
 
 /**
+ * The same, from an export instance a test already holds. Only the archive tests
+ * need this, and only because forArchive() returns a clone worth keeping hold of.
+ *
+ * @return array<string, mixed>
+ */
+function exportedArrayFrom(ExportCampaign $export, Campaign $campaign): array
+{
+    $walked = array_map(
+        fn ($section) => is_iterable($section) && ! is_array($section) ? iterator_to_array($section) : $section,
+        $export->handle($campaign),
+    );
+
+    return json_decode(json_encode($walked, JSON_THROW_ON_ERROR), true);
+}
+
+/**
  * The owner user created by the campaign factory.
  */
 function ownerOf(Campaign $campaign): User
