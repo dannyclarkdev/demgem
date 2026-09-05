@@ -65,6 +65,30 @@ function exportedArrayFrom(ExportCampaign $export, Campaign $campaign): array
 }
 
 /**
+ * Opens an archive and hands back its entries, so a test can say what is in one
+ * without any of them learning how a zip works.
+ *
+ * @return array<string, string>
+ */
+function archiveEntries(string $path): array
+{
+    $zip = new ZipArchive;
+
+    expect($zip->open($path))->toBeTrue();
+
+    $entries = [];
+
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $name = (string) $zip->getNameIndex($i);
+        $entries[$name] = (string) $zip->getFromIndex($i);
+    }
+
+    $zip->close();
+
+    return $entries;
+}
+
+/**
  * A campaign with a map image and a two-page handout, which is the smallest thing
  * that exercises both media collections. Shared, because the archive tests all need
  * a campaign with real bytes in it.

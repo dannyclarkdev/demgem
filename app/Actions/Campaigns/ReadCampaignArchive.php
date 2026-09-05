@@ -51,7 +51,13 @@ class ReadCampaignArchive
         return str_starts_with($head, self::MAGIC);
     }
 
-    public function handle(string $path): ArchiveResult
+    /**
+     * @param  bool  $extract  False to look without unpacking, which is what the
+     *                         confirm screen does: it needs the counts, not the bytes,
+     *                         and unpacking on a preview would leave temporary files
+     *                         behind for every file a GM ever looked at.
+     */
+    public function handle(string $path, bool $extract = true): ArchiveResult
     {
         $zip = new ZipArchive;
 
@@ -96,7 +102,9 @@ class ReadCampaignArchive
             ]);
         }
 
-        $restored = $this->extract($zip, $wanted, $read->report);
+        $restored = $extract
+            ? $this->extract($zip, $wanted, $read->report)
+            : $this->count($zip, $wanted, $read->report);
 
         $zip->close();
 
@@ -205,6 +213,30 @@ class ReadCampaignArchive
         $report->filesRestored = count($restored);
 
         return $restored;
+    }
+
+    /**
+     * The looking-without-unpacking pass. It can say an entry is there and within
+     * budget; it cannot say the bytes are what they claim, because that needs the
+     * bytes. So a preview may promise a file the import then drops, and the flash
+     * afterwards reports what actually came.
+     *
+     * @param  list<string>  $wanted
+     * @return array<string, string>
+     */
+    private function count(ZipArchive $zip, array $wanted, ImportReport $report): array
+    {
+        $present = 0;
+
+        foreach ($wanted as $entry) {
+            if ($zip->statName($entry) !== false) {
+                $present++;
+            }
+        }
+
+        $report->filesRestored = $present;
+
+        return [];
     }
 
     /**

@@ -20,7 +20,10 @@ use ZipArchive;
  */
 class BuildCampaignArchive
 {
-    public function __construct(private readonly ExportCampaign $exportCampaign) {}
+    public function __construct(
+        private readonly ExportCampaign $exportCampaign,
+        private readonly WriteCampaignMarkdown $writeCampaignMarkdown,
+    ) {}
 
     public const DOCUMENT = 'campaign.json';
 
@@ -48,6 +51,10 @@ class BuildCampaignArchive
 
         foreach ($export->archiveFiles() as $entry => $file) {
             $zip->addFile($file, $entry);
+        }
+
+        foreach ($this->writeCampaignMarkdown->handle($campaign) as $entry => $contents) {
+            $zip->addFromString($entry, $contents);
         }
 
         $zip->close();
