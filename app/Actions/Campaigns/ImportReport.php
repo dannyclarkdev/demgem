@@ -15,7 +15,14 @@ final class ImportReport
     /** @var array<string, int> */
     public array $counts = [];
 
+    /**
+     * How many files the document refers to, and how many of them this install
+     * actually has. A JSON import restores none of them; an archive normally
+     * restores all of them.
+     */
     public int $files = 0;
+
+    public int $filesRestored = 0;
 
     /** @var list<string> */
     public array $memberNames = [];
@@ -42,10 +49,16 @@ final class ImportReport
     {
         $losses = [];
 
-        if ($this->files > 0) {
+        $missing = max(0, $this->files - $this->filesRestored);
+
+        if ($missing > 0) {
             $losses[] = [
-                'label' => $this->files.' '.str('file')->plural($this->files).' cannot come across',
-                'detail' => 'An export names its images rather than carrying them. demgem will not fetch a link out of an uploaded file, so upload them again after the import.',
+                'label' => $this->filesRestored > 0
+                    ? $missing.' of '.$this->files.' files cannot come across'
+                    : $this->files.' '.str('file')->plural($this->files).' cannot come across',
+                'detail' => $this->filesRestored > 0
+                    ? 'Those entries are missing from the archive, or they are not the kind of file they say they are. Everything else came with it.'
+                    : 'A JSON export names its images rather than carrying them, and demgem will not fetch a link out of an uploaded file. Export the archive instead, or upload them again after the import.',
             ];
         }
 
@@ -71,6 +84,18 @@ final class ImportReport
         }
 
         return $losses;
+    }
+
+    /**
+     * The one line on the confirm screen that is good news.
+     */
+    public function gains(): ?string
+    {
+        if ($this->filesRestored === 0) {
+            return null;
+        }
+
+        return $this->filesRestored.' '.str('file')->plural($this->filesRestored).' will come across with it, pictures and all.';
     }
 
     public function hasLosses(): bool

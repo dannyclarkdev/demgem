@@ -7,7 +7,7 @@
     <x-ui.page-header
         title="Import a campaign"
         eyebrow="Library"
-        description="Take the JSON file another demgem exported and build it here. It always makes a new campaign; nothing you already have is touched."
+        description="Take a file another demgem exported and build it here. It always makes a new campaign; nothing you already have is touched."
     >
         <x-ui.button :href="route('campaigns.index')" variant="ghost" size="sm" icon="arrow-left">Campaigns</x-ui.button>
     </x-ui.page-header>
@@ -17,13 +17,13 @@
             label="Campaign file"
             for="file"
             :error="$errors->first('file')"
-            hint="The JSON from a campaign's Export button, up to 25 MB."
+            hint="Either download from a campaign's Export card: the archive with the pictures in it, or the JSON on its own. Up to {{ $maxMegabytes }} MB."
         >
             <input
                 type="file"
                 id="file"
                 wire:model="file"
-                accept=".json,application/json"
+                accept=".json,.zip,application/json,application/zip"
                 class="block w-full text-sm text-ink-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-raised file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:border-ink-faint"
             >
         </x-ui.field>
@@ -56,6 +56,10 @@
                 </ul>
             @endif
         </x-ui.card>
+
+        @if ($gain)
+            <x-ui.alert variant="success" class="mt-4">{{ $gain }}</x-ui.alert>
+        @endif
 
         @if ($losses !== [])
             <x-ui.card title="What will not" class="mt-4 border-dm/40">

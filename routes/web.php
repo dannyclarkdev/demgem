@@ -2,6 +2,7 @@
 
 use App\Enums\EntityType;
 use App\Http\Controllers\AutocompleteController;
+use App\Http\Controllers\CampaignArchiveController;
 use App\Http\Controllers\CampaignExportController;
 use App\Http\Controllers\InviteController;
 use App\Http\Middleware\EnsureCampaignMember;
@@ -62,6 +63,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/export', CampaignExportController::class)
                 ->middleware('throttle:5,1')
                 ->name('campaigns.export');
+
+            // The same campaign with its bytes in it. Throttled harder: building one
+            // costs a temp file and a walk over every media row on disk.
+            Route::get('/archive', CampaignArchiveController::class)
+                ->middleware('throttle:3,1')
+                ->name('campaigns.archive');
             Route::get('/autocomplete', AutocompleteController::class)->name('entities.autocomplete');
             Route::get('/search', Search::class)->name('search');
 

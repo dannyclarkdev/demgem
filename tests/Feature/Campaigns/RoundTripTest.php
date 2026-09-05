@@ -1,7 +1,9 @@
 <?php
 
+use App\Actions\Campaigns\BuildCampaignArchive;
 use App\Actions\Campaigns\ExportCampaign;
 use App\Actions\Campaigns\ImportCampaign;
+use App\Actions\Campaigns\ReadCampaignArchive;
 use App\Actions\Campaigns\ReadCampaignFile;
 use App\Models\Campaign;
 use App\Models\Entity;
@@ -135,6 +137,43 @@ it('carries a campaign through twice without drifting', function () {
 
     // The second trip has nothing left to lose, so it must be lossless.
     expect(comparable(exportedArray($twice)))->toBe(comparable(exportedArray($once)));
+});
+
+it('carries the pictures through an archive round trip', function () {
+    $source = aCampaignWithPictures();
+
+    $before = exportedArray($source);
+
+    $result = app(ReadCampaignArchive::class)
+        ->handle(app(BuildCampaignArchive::class)->handle($source));
+
+    expect($result->succeeded())->toBeTrue();
+
+    $importer = User::factory()->create();
+    $copy = app(ImportCampaign::class)->handle($result->read->document, $importer, $result->restored);
+
+    $after = exportedArray($copy);
+
+    // Loss 1 is closed, so the media keys stay in the comparison rather than being
+    // stripped out of it. Only the URLs differ, because the files are new rows.
+    $mediaShape = fn (array $document) => collect($document['entities'])
+        ->map(fn (array $entity) => [
+            'name' => $entity['name'],
+            'image' => $entity['image']['file_name'] ?? null,
+            'files' => collect($entity['files'] ?? [])->pluck('file_name')->all(),
+        ])
+        ->sortBy('name')
+        ->values()
+        ->all();
+
+    expect($mediaShape($after))->toBe($mediaShape($before));
+
+    $expected = comparable(asImported($before, $importer));
+    $actual = comparable($after);
+
+    foreach (ExportCampaign::SECTION_TABLES as $section) {
+        expect($actual[$section])->toBe($expected[$section], "the {$section} section did not survive the archive round trip");
+    }
 });
 
 it('imports the same file twice into two separate campaigns', function () {

@@ -35,14 +35,28 @@
 
     <x-ui.card title="Export">
         <p class="text-sm text-ink-muted">
-            One JSON file holding this campaign: every entity with its GM notes, every session with its prep,
-            secrets, and recaps, the quests, the encounters, the tables, and the dice log.
+            Everything in this campaign: every entity with its GM notes, every session with its prep, secrets,
+            and recaps, the quests, the encounters, the tables, and the dice log.
         </p>
         <p class="mt-2 text-sm text-ink-faint">
-            It leaves out email addresses, invite links, and deleted things. Images travel as links, not files.
+            Both leave out email addresses, invite links, and deleted things.
         </p>
-        <div class="mt-4">
-            <x-ui.button :href="route('campaigns.export', $campaign)" variant="secondary" icon="arrow-down">Download JSON</x-ui.button>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+                <x-ui.button :href="route('campaigns.archive', $campaign)" variant="secondary" icon="arrow-down">Download archive</x-ui.button>
+                <p class="mt-2 text-xs text-ink-faint">
+                    A zip with the pictures in it, plus a Markdown copy an Obsidian vault can open.
+                    This is the one to keep, and the one to import somewhere else.
+                </p>
+            </div>
+            <div>
+                <x-ui.button :href="route('campaigns.export', $campaign)" variant="ghost" icon="arrow-down">Download JSON</x-ui.button>
+                <p class="mt-2 text-xs text-ink-faint">
+                    The document on its own: greppable, diffable, and readable in a browser.
+                    Images travel as links rather than files.
+                </p>
+            </div>
         </div>
     </x-ui.card>
 

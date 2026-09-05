@@ -3,6 +3,7 @@
 namespace App\Livewire\Campaigns;
 
 use App\Actions\Campaigns\ImportCampaign;
+use App\Actions\Campaigns\ReadCampaignArchive;
 use App\Actions\Campaigns\ReadCampaignFile;
 use App\Models\Campaign;
 use App\Models\User;
@@ -46,6 +47,10 @@ class Import extends Component
     /** @var list<array{label: string, detail: string}> */
     public array $losses = [];
 
+    public ?string $gain = null;
+
+    public bool $isArchive = false;
+
     public bool $read = false;
 
     public function mount(): void
@@ -55,16 +60,19 @@ class Import extends Component
 
     public function updatedFile(): void
     {
-        $this->reset('problems', 'counts', 'losses', 'read');
+        $this->reset('problems', 'counts', 'losses', 'gain', 'read', 'isArchive');
 
         $this->validate(['file' => ['required', 'file', 'max:'.(int) (ReadCampaignFile::MAX_BYTES / 1024)]]);
 
-        $result = app(ReadCampaignFile::class)->handle((string) file_get_contents($this->file->getRealPath()));
+        // Looked at, not unpacked. A preview that extracted would leave temporary
+        // files behind for every archive a GM ever opened and changed their mind about.
+        $result = $this->readUpload(extract: false);
 
         $this->read = true;
         $this->problems = $result->errors;
-        $this->counts = $result->report->counts;
-        $this->losses = $result->report->losses();
+        $this->counts = $result->succeeded() ? $result->report->counts : [];
+        $this->losses = $result->succeeded() ? $result->report->losses() : [];
+        $this->gain = $result->succeeded() ? $result->report->gains() : null;
     }
 
     public function import(ImportCampaign $importCampaign): void
@@ -75,7 +83,7 @@ class Import extends Component
             return;
         }
 
-        $result = app(ReadCampaignFile::class)->handle((string) file_get_contents($this->file->getRealPath()));
+        $result = $this->readUpload(extract: true);
 
         if (! $result->succeeded()) {
             $this->problems = $result->errors;
@@ -83,11 +91,35 @@ class Import extends Component
             return;
         }
 
-        $campaign = $importCampaign->handle($result->document, $this->user());
+        $campaign = $importCampaign->handle($result->document, $this->user(), $result->restored);
 
-        session()->flash('status', "{$campaign->name} was imported. Its images and its members did not come with it.");
+        $files = $result->report->filesRestored;
+
+        session()->flash('status', "{$campaign->name} was imported"
+            .($files > 0 ? ", with {$files} ".str('file')->plural($files) : ', without its images')
+            .'. Its members did not come with it.');
 
         $this->redirect(route('campaigns.show', $campaign));
+    }
+
+    /**
+     * A zip or a document, decided by the first four bytes rather than the file name.
+     * A GM who renames their download should still get the right reader.
+     */
+    private function readUpload(bool $extract): UploadReading
+    {
+        $path = (string) $this->file?->getRealPath();
+        $head = (string) file_get_contents($path, false, null, 0, 4);
+
+        if (ReadCampaignArchive::looksLikeArchive($head)) {
+            $this->isArchive = true;
+
+            return UploadReading::fromArchive(app(ReadCampaignArchive::class)->handle($path, $extract));
+        }
+
+        $this->isArchive = false;
+
+        return UploadReading::fromDocument(app(ReadCampaignFile::class)->handle((string) file_get_contents($path)));
     }
 
     public function startOver(): void
@@ -99,6 +131,7 @@ class Import extends Component
     {
         return view('livewire.campaigns.import', [
             'ready' => $this->read && $this->problems === [],
+            'maxMegabytes' => (int) round(ReadCampaignFile::MAX_BYTES / 1_048_576),
         ])->title('Import a campaign');
     }
 
