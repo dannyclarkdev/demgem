@@ -12,6 +12,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Support/Dice/** | .ai/rules/dice.md |
 | app/Livewire/Entities/** | .ai/rules/entities.md |
 | app/Events/** | .ai/rules/events.md |
+| tests/Feature/Campaigns/** | .ai/rules/feature-campaigns.md |
 | app/Livewire/** | .ai/rules/livewire.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Models/**, app/Models/MapMarker.php, app/Models/Clock.php, app/Models/Entity.php | .ai/rules/models.md |

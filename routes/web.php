@@ -6,6 +6,7 @@ use App\Http\Controllers\CampaignExportController;
 use App\Http\Controllers\InviteController;
 use App\Http\Middleware\EnsureCampaignMember;
 use App\Livewire\Campaigns\Create as CampaignsCreate;
+use App\Livewire\Campaigns\Import as CampaignsImport;
 use App\Livewire\Campaigns\Index as CampaignsIndex;
 use App\Livewire\Campaigns\Members as CampaignsMembers;
 use App\Livewire\Campaigns\Settings as CampaignsSettings;
@@ -36,6 +37,11 @@ Route::get('/', fn () => redirect()->route(auth()->check() ? 'campaigns.index' :
 Route::middleware('auth')->group(function () {
     Route::get('/campaigns', CampaignsIndex::class)->name('campaigns.index');
     Route::get('/campaigns/create', CampaignsCreate::class)->name('campaigns.create');
+
+    // Outside the campaign group, because an import has no campaign to point at: it
+    // makes one. Above /campaigns/{campaign} for the same reason /clocks sits above
+    // the entity routes.
+    Route::get('/campaigns/import', CampaignsImport::class)->name('campaigns.import');
     Route::get('/profile', ProfileEdit::class)->name('profile.edit');
 
     Route::get('/invites/{token}', [InviteController::class, 'show'])->name('invites.show');
