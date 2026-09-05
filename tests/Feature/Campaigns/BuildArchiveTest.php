@@ -3,10 +3,7 @@
 use App\Actions\Campaigns\BuildCampaignArchive;
 use App\Actions\Campaigns\ExportCampaign;
 use App\Enums\CampaignRole;
-use App\Enums\EntityType;
 use App\Models\Campaign;
-use App\Models\Entity;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(fn () => Storage::fake('public'));
@@ -33,27 +30,6 @@ function archiveEntries(string $path): array
     $zip->close();
 
     return $entries;
-}
-
-function aCampaignWithPictures(): Campaign
-{
-    $campaign = Campaign::factory()->create(['name' => 'The Drowned Duchy']);
-
-    $map = Entity::factory()->for($campaign)->type(EntityType::Map)->forPlayers()
-        ->create(['name' => 'The Duchy of Vell', 'slug' => 'vell']);
-
-    $file = UploadedFile::fake()->image('the duchy of vell.png', 400, 300);
-    $map->addMedia($file->getRealPath())->usingFileName('the duchy of vell.png')->toMediaCollection('image');
-
-    $handout = Entity::factory()->for($campaign)->type(EntityType::Handout)->dmOnly()
-        ->create(['name' => "The duke's letter", 'slug' => 'dukes-letter']);
-
-    foreach (['front.png', 'back.png'] as $page) {
-        $scan = UploadedFile::fake()->image($page, 300, 400);
-        $handout->addMedia($scan->getRealPath())->usingFileName($page)->toMediaCollection('files');
-    }
-
-    return $campaign;
 }
 
 it('puts the document, the media and a readme in one file', function () {

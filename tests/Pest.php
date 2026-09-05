@@ -2,9 +2,12 @@
 
 use App\Actions\Campaigns\ExportCampaign;
 use App\Enums\CampaignRole;
+use App\Enums\EntityType;
 use App\Models\Campaign;
+use App\Models\Entity;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)
@@ -59,6 +62,32 @@ function exportedArrayFrom(ExportCampaign $export, Campaign $campaign): array
     );
 
     return json_decode(json_encode($walked, JSON_THROW_ON_ERROR), true);
+}
+
+/**
+ * A campaign with a map image and a two-page handout, which is the smallest thing
+ * that exercises both media collections. Shared, because the archive tests all need
+ * a campaign with real bytes in it.
+ */
+function aCampaignWithPictures(): Campaign
+{
+    $campaign = Campaign::factory()->create(['name' => 'The Drowned Duchy']);
+
+    $map = Entity::factory()->for($campaign)->type(EntityType::Map)->forPlayers()
+        ->create(['name' => 'The Duchy of Vell', 'slug' => 'vell']);
+
+    $file = UploadedFile::fake()->image('the duchy of vell.png', 400, 300);
+    $map->addMedia($file->getRealPath())->usingFileName('the duchy of vell.png')->toMediaCollection('image');
+
+    $handout = Entity::factory()->for($campaign)->type(EntityType::Handout)->dmOnly()
+        ->create(['name' => "The duke's letter", 'slug' => 'dukes-letter']);
+
+    foreach (['front.png', 'back.png'] as $page) {
+        $scan = UploadedFile::fake()->image($page, 300, 400);
+        $handout->addMedia($scan->getRealPath())->usingFileName($page)->toMediaCollection('files');
+    }
+
+    return $campaign;
 }
 
 /**

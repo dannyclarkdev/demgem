@@ -124,6 +124,7 @@ class ReadCampaignFile
             'description' => $this->text($row, 'description', 2000),
             'ruleset' => $this->enum(Ruleset::class, $row, 'ruleset', 'the campaign') ?? Ruleset::cases()[0],
             'timezone' => $this->text($row, 'timezone', 64) ?? 'UTC',
+            'cover' => $this->mediaReference($row['cover'] ?? null),
         ];
     }
 
@@ -158,7 +159,10 @@ class ReadCampaignFile
                 $this->report->selectedLists++;
             }
 
-            $this->report->files += $this->fileCount($row);
+            $image = $this->mediaReference($row['image'] ?? null);
+            $files = $this->mediaReferences($this->list($row, 'files'));
+
+            $this->report->files += ($image === null ? 0 : 1) + count($files);
 
             $entities[] = [
                 'id' => $id,
@@ -179,6 +183,8 @@ class ReadCampaignFile
                 'tags' => $this->strings($row, 'tags', 60),
                 'objectives' => $this->objectives($row),
                 'markers' => $this->markers($row),
+                'image' => $image,
+                'files' => $files,
             ];
         }
 
@@ -528,9 +534,7 @@ class ReadCampaignFile
             }
         }
 
-        $cover = $this->rows($decoded, 'campaign')['cover'] ?? null;
-
-        if (is_array($cover)) {
+        if (is_array($this->rows($decoded, 'campaign')['cover'] ?? null)) {
             $this->report->files++;
         }
     }
@@ -772,19 +776,47 @@ class ReadCampaignFile
     }
 
     /**
-     * @param  array<string, mixed>  $row
+     * What the document says about one file, and nothing this app will act on until
+     * it has measured it.
+     *
+     * archive_path is kept as an opaque string. It is only ever a key into a map the
+     * archive reader builds, never a path: that is the rule the whole of this feature
+     * rests on, and it holds because nothing here joins it onto a directory.
+     *
+     * @return array{archive_path: string|null, file_name: string|null}|null
      */
-    private function fileCount(array $row): int
+    private function mediaReference(mixed $media): ?array
     {
-        $count = is_array($row['image'] ?? null) ? 1 : 0;
+        if (! is_array($media)) {
+            return null;
+        }
 
-        foreach ($this->list($row, 'files') as $file) {
-            if (is_array($file)) {
-                $count++;
+        $path = $media['archive_path'] ?? null;
+        $name = $media['file_name'] ?? null;
+
+        return [
+            'archive_path' => is_string($path) && $path !== '' ? $path : null,
+            'file_name' => is_string($name) && $name !== '' ? mb_substr($name, 0, 255) : null,
+        ];
+    }
+
+    /**
+     * @param  list<mixed>  $media
+     * @return list<array{archive_path: string|null, file_name: string|null}>
+     */
+    private function mediaReferences(array $media): array
+    {
+        $references = [];
+
+        foreach ($media as $one) {
+            $reference = $this->mediaReference($one);
+
+            if ($reference !== null) {
+                $references[] = $reference;
             }
         }
 
-        return $count;
+        return $references;
     }
 
     /**

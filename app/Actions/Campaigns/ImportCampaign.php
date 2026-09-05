@@ -13,6 +13,8 @@ use App\Models\RandomTable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Spatie\MediaLibrary\HasMedia;
+use Throwable;
 
 /**
  * Builds a campaign from a document ReadCampaignFile has already checked.
@@ -40,12 +42,15 @@ class ImportCampaign
 
     /**
      * @param  array<string, mixed>  $document
+     * @param  array<string, string>  $restored  archive entry => a local file, from an archive import
      */
-    public function handle(array $document, User $importer): Campaign
+    public function handle(array $document, User $importer, array $restored = []): Campaign
     {
-        return DB::transaction(function () use ($document, $importer): Campaign {
-            $ids = new IdMap;
+        // Outside the transaction on purpose: the media pass below needs it, and it
+        // needs to run after the rows have committed.
+        $ids = new IdMap;
 
+        $campaign = DB::transaction(function () use ($document, $importer, $ids): Campaign {
             /** @var array<string, mixed> $attributes */
             $attributes = $document['campaign'];
 
@@ -79,6 +84,92 @@ class ImportCampaign
 
             return $campaign;
         });
+
+        $this->attachMedia($campaign, $document, $ids, $restored);
+
+        return $campaign;
+    }
+
+    /**
+     * The pictures, after the rows have committed.
+     *
+     * Deliberately outside the transaction, and this is a correction to the plan
+     * rather than an oversight. Files are not transactional in any database: attaching
+     * them inside would move bytes onto the disk that a rollback could not take back,
+     * so the transaction would only look total. Outside it, a rollback leaves no
+     * files at all, and a picture that fails to attach costs a picture rather than
+     * the whole campaign.
+     *
+     * @param  array<string, mixed>  $document
+     * @param  array<string, string>  $restored
+     */
+    private function attachMedia(Campaign $campaign, array $document, IdMap $ids, array $restored): void
+    {
+        if ($restored === []) {
+            return;
+        }
+
+        $this->attach($campaign, $document['campaign']['cover'] ?? null, 'cover', $restored);
+
+        foreach ($document['entities'] as $row) {
+            $entity = Entity::withoutGlobalScopes()->find($ids->newFor($row['id']));
+
+            if ($entity === null) {
+                continue;
+            }
+
+            $this->attach($entity, $row['image'], 'image', $restored);
+
+            foreach ($row['files'] as $file) {
+                $this->attach($entity, $file, 'files', $restored);
+            }
+        }
+    }
+
+    /**
+     * archive_path is a key into the map the archive reader built, never a path. The
+     * file it names was written by this application, under a name this application
+     * chose, and checked before it got here.
+     *
+     * @param  array{archive_path: string|null, file_name: string|null}|null  $reference
+     * @param  array<string, string>  $restored
+     */
+    private function attach(HasMedia $model, ?array $reference, string $collection, array $restored): void
+    {
+        $entry = $reference['archive_path'] ?? null;
+        $file = $entry === null ? null : ($restored[$entry] ?? null);
+
+        if ($file === null || ! is_file($file)) {
+            return;
+        }
+
+        try {
+            $model->addMedia($file)
+                ->usingFileName($this->safeFileName($reference['file_name'] ?? null, $file))
+                ->toMediaCollection($collection);
+        } catch (Throwable) {
+            // One picture, not the campaign. The report has already counted it.
+            @unlink($file);
+        }
+    }
+
+    /**
+     * A file name from the document is a label, not a location. Basename first, then
+     * a slug, so nothing that arrives can steer where Media Library writes.
+     */
+    private function safeFileName(?string $name, string $file): string
+    {
+        $base = $name === null ? '' : basename($name);
+        $extension = strtolower((string) pathinfo($base, PATHINFO_EXTENSION));
+        $stem = str(pathinfo($base, PATHINFO_FILENAME))->slug()->limit(60, '')->value();
+
+        if ($stem === '') {
+            $stem = 'file';
+        }
+
+        $extension = preg_replace('/[^a-z0-9]/', '', $extension) ?? '';
+
+        return $extension !== '' ? $stem.'.'.$extension : $stem;
     }
 
     /**
