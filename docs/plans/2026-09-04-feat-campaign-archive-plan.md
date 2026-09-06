@@ -240,7 +240,7 @@ Success: a GM never has to know which of the two they downloaded.
 - [x] The importer still makes no outbound HTTP request.
 - [x] Building an archive holds no media in memory. *(`addFile()`, so the peak is the JSON document.)*
 - [x] The rows of an archive import are one transaction, as a JSON import is. **The media attaches after it commits**, which corrects the plan: files are not transactional in any database, so attaching inside would move bytes a rollback could not take back.
-- [ ] Both download buttons work at 1024px and 768px, dark and light. *(Not checked: a tab created by the browser extension does not inherit the dev login, and I do not type passwords.)*
+- [x] Both download buttons work at 1024px and 768px, dark and light.
 
 ### Quality gates
 
@@ -261,6 +261,12 @@ Success: a GM never has to know which of the two they downloaded.
 | The Markdown tempts somebody to import it | The README says it is a copy, and the plan says a vault reader is its own slice. |
 | Front matter breaks on a strange name | The quoting rule is one function with a test built from the awkward cases. |
 | The slice runs long | Phases 0 and 1 are a release on their own, and they are the half that closes loss 1. |
+
+## What the browser pass found
+
+Nothing broken. Both downloads sit side by side with their explanatory sentences at 1024px and at 768px, in dark and in light, with no sideways scroll and nothing overflowing.
+
+The archive was fetched from the running app rather than only described: 200, 41,049 bytes, and the first four bytes are `PK\x03\x04`, so it is a real zip and not a rendered error page.
 
 ## Future Considerations
 
