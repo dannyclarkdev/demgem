@@ -25,8 +25,11 @@
         @endcan
     </x-ui.page-header>
 
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-        <div class="space-y-6">
+    {{-- minmax(0,1fr) at every width: an auto column grows to fit the poll grid's
+         min-content and the page scrolls sideways, which is the one thing the tablet
+         pass forbids. The grid scrolls inside its own card instead. --}}
+    <div class="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <div class="min-w-0 space-y-6">
             <x-ui.card title="Recap">
                 <x-slot:header>
                     @if ($canEdit)
@@ -72,9 +75,14 @@
                     <div class="prose-entity">{!! $recapHtml !!}</div>
                 @endif
             </x-ui.card>
+
+            {{-- A poll is names against dates and needs the width; an RSVP list does not. --}}
+            @if ($session->isPolling())
+                <livewire:sessions.attendance :campaign="$campaign" :session="$session" :wire:key="'attendance-'.$session->id" />
+            @endif
         </div>
 
-        <aside class="space-y-4">
+        <aside class="min-w-0 space-y-4">
             <x-ui.card title="When">
                 @if ($when)
                     <p class="font-display text-lg font-semibold">{{ $when->format('D j M Y') }}</p>
@@ -85,7 +93,9 @@
                 @endif
             </x-ui.card>
 
-            <livewire:sessions.attendance :campaign="$campaign" :session="$session" :wire:key="'attendance-'.$session->id" />
+            @unless ($session->isPolling())
+                <livewire:sessions.attendance :campaign="$campaign" :session="$session" :wire:key="'attendance-'.$session->id" />
+            @endunless
         </aside>
     </div>
 </div>

@@ -7,6 +7,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Actions/Dice/** | .ai/rules/actions-dice.md |
 | app/Actions/** | .ai/rules/actions.md |
 | app/Actions/Campaigns/**, app/Actions/Campaigns/ExportCampaign.php | .ai/rules/campaigns.md |
+| app/Calendar/**, app/Http/Controllers/CalendarFeedController.php, app/Mail/** | .ai/rules/calendar.md |
 | config/broadcasting.php | .ai/rules/config.md |
 | resources/css/** | .ai/rules/css.md |
 | app/Support/Dice/** | .ai/rules/dice.md |

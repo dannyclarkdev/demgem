@@ -356,39 +356,39 @@ Success: three Thursdays, five ticks, one press, and session 12 has a date.
 
 ### Functional
 
-- [ ] A member says yes, no, or maybe on a dated planned session and changes their mind.
-- [ ] The GM sees the count on the session page, the sessions index, and the dashboard.
-- [ ] The GM marks attendance on a played session, prefilled from the yeses.
-- [ ] A user gets a calendar URL from their profile, and every session they can see in every campaign appears in their calendar app in their own timezone.
-- [ ] Resetting the calendar link makes the old URL stop working.
-- [ ] The GM sets a reminder lead time, and each member gets one email before the session.
-- [ ] A member turns reminders off for one campaign and gets none from it.
-- [ ] Moving a session's date sends a fresh reminder; leaving it alone never sends two.
-- [ ] The GM adds candidate times to a dateless session, members tick the ones they can make, and picking one gives the session its date.
-- [ ] RSVPs, attendance, options, and votes join the export; options survive the round trip; the report counts the answers that do not.
+- [x] A member says yes, no, or maybe on a dated planned session and changes their mind.
+- [x] The GM sees the count on the session page, the sessions index, and the dashboard.
+- [x] The GM marks attendance on a played session, prefilled from the yeses.
+- [x] A user gets a calendar URL from their profile, and every session they can see in every campaign appears in their calendar app in their own timezone.
+- [x] Resetting the calendar link makes the old URL stop working.
+- [x] The GM sets a reminder lead time, and each member gets one email before the session.
+- [x] A member turns reminders off for one campaign and gets none from it.
+- [x] Moving a session's date sends a fresh reminder; leaving it alone never sends two.
+- [x] The GM adds candidate times to a dateless session, members tick the ones they can make, and picking one gives the session its date.
+- [x] RSVPs, attendance, options, and votes join the export; options survive the round trip; the report counts the answers that do not.
 
 ### Non-functional
 
-- [ ] **A player cannot answer, vote on, or be listed against a session they cannot see.**
-- [ ] **The calendar feed contains no prep, secret, live note, GM note, or unpublished recap, for any role.**
-- [ ] **The reminder email contains none of those either.**
-- [ ] **A player's copy of the card carries no attendance checkbox and no poll controls in its HTML or Livewire snapshot.**
-- [ ] A wrong calendar token is a 404 with an empty body, and the route is throttled.
-- [ ] A session already in the past is never reminded, however long the scheduler was down.
-- [ ] The reminder action runs in a constant number of queries per session, whatever the campaign holds.
-- [ ] The RSVP card costs two queries.
-- [ ] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
-- [ ] The Docker stack starts with the scheduler and without a mailer, and the README says what a log mailer means.
-- [ ] Every new screen works at 1024px and 768px, dark and light, with no sideways scroll outside the poll grid.
+- [x] **A player cannot answer, vote on, or be listed against a session they cannot see.**
+- [x] **The calendar feed contains no prep, secret, live note, GM note, or unpublished recap, for any role.**
+- [x] **The reminder email contains none of those either.**
+- [x] **A player's copy of the card carries no attendance checkbox and no poll controls in its HTML or Livewire snapshot.**
+- [x] A wrong calendar token is a 404 with an empty body, and the route is throttled.
+- [x] A session already in the past is never reminded, however long the scheduler was down.
+- [x] The reminder action runs in a constant number of queries per session, whatever the campaign holds.
+- [x] The RSVP card costs two queries. *(Three once the poll is on the page: members, answers, options with votes.)*
+- [x] `Model::shouldBeStrict()` is on, so every new screen eager-loads.
+- [x] The Docker stack starts with the scheduler and without a mailer, and the README says what a log mailer means.
+- [x] Every new screen works at 1024px and 768px, dark and light, with no sideways scroll outside the poll grid. *(One bug found and fixed: see below.)*
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] No new `x-ui.*` component.
-- [ ] Every new query on the three tables goes through the session's visibility, and every write goes through `GameSessionPolicy`.
-- [ ] `npm run build` clean. No new JavaScript.
-- [ ] No new PHP or JavaScript dependency.
+- [x] Pest suite green on SQLite locally: 1,024 tests. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] No new `x-ui.*` component.
+- [x] Every new query on the three tables goes through the session's visibility, and every write goes through `GameSessionPolicy`.
+- [x] `npm run build` clean. No new JavaScript.
+- [x] No new PHP or JavaScript dependency.
 
 ## Dependencies & Risks
 
@@ -403,6 +403,18 @@ Success: three Thursdays, five ticks, one press, and session 12 has a date.
 | `session_length_minutes` is wrong for one session | It is a default, not a truth. A per-session end time is a P2 row and a column when somebody asks. |
 | The poll grid at 768px | It scrolls inside its own container from the first commit, and the tablet pass checks the page does not. |
 | The slice runs long | Three release boundaries: after Phase 1, after Phase 3, and after Phase 4. |
+
+## What the browser pass found
+
+**The poll grid pushed the whole page sideways at 768px.** The grid scrolls inside its own `overflow-x-auto` div, but the session page's layout was `grid` with no column definition below `xl`, and an auto column grows to the min-content of its children, which is the table's `min-w-max`. Every card on the page went to 870px wide. The grid is `grid-cols-[minmax(0,1fr)]` at every width now, and both columns are `min-w-0`.
+
+**The poll did not belong in the 18rem side column.** At 1280px it showed one date of three with the other two behind a scrollbar, which defeats a grid whose point is names against dates side by side. `Sessions\Show` renders the card in the main column under the recap while the session is polling, and in the aside once it has a date and the card is a list. One component, two slots, chosen by `GameSession::isPolling()`.
+
+**The Copy button threw an Alpine expression error.** `@js($calendarUrl)` inside an `x-on:click` attribute renders quotes that close the attribute. The button reads `$refs.feed.value` from the input beside it instead, which is also what the user sees.
+
+**What held.** No sideways scroll on the session page, the sessions index, the dashboard, the members page, settings, or the profile at 1024px and 768px, dark and light, for the GM and for a player. A player's copy of the poll has a checkbox on their own row and a tick or a dot on everyone else's; their copy of a played session has badges and no boxes. The feed was fetched from the running app: 200, `text/calendar; charset=utf-8`, three events with folded description lines and stable UIDs. The reminder email rendered from the seeded campaign names the session, the campaign, and the time in the campaign's zone, and nothing else.
+
+**What was not checked.** A real calendar app subscribing to the feed, and a real mailer delivering the reminder. The feed is RFC-shaped and the mail is a Markdown mailable, and the tests cover both, but neither has been seen in Google Calendar or an inbox from this slice.
 
 ## Future Considerations
 

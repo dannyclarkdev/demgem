@@ -32,8 +32,8 @@
             @else
                 <p class="text-sm text-ink-muted">Subscribe to this address in Google Calendar, Apple Calendar, or Outlook. Anyone holding it can see your session dates, so treat it like a password.</p>
                 <div class="mt-4 flex items-center gap-2" x-data="{ copied: false }">
-                    <input type="text" readonly value="{{ $calendarUrl }}" class="ui-input min-w-0 flex-1 font-mono text-xs" aria-label="Calendar feed address" x-on:focus="$el.select()">
-                    <x-ui.button type="button" variant="secondary" size="sm" icon="copy" x-on:click="navigator.clipboard.writeText(@js($calendarUrl)).then(() => { copied = true; setTimeout(() => copied = false, 2000) })">
+                    <input type="text" readonly value="{{ $calendarUrl }}" class="ui-input min-w-0 flex-1 font-mono text-xs" aria-label="Calendar feed address" x-ref="feed" x-on:focus="$el.select()">
+                    <x-ui.button type="button" variant="secondary" size="sm" icon="copy" x-on:click="navigator.clipboard.writeText($refs.feed.value).then(() => { copied = true; setTimeout(() => copied = false, 2000) })">
                         <span x-show="!copied">Copy</span><span x-show="copied" x-cloak>Copied</span>
                     </x-ui.button>
                 </div>

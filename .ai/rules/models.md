@@ -52,3 +52,11 @@ Two rules follow.
 2. performOnCollections() comes BEFORE fit(). fit() forwards to the image driver and returns it, so chained the other way the call lands on the driver and the conversion stays global. Larastan catches this one.
 
 The Blade asks $media->hasGeneratedConversion('tile'), never the mime type: whether there is a tile is a fact about the file, and it stays true on a machine with no Ghostscript.
+
+## A session's answers are one row, and a poll is a dateless session
+`session_rsvps` holds `rsvp` and `attended` as two nullable columns on one row per member per session: two scalars about one pair, so no second table. `RespondToSession` deletes a row with nothing left in it, so "never answered" and "cleared" look the same. `SessionRsvp::wasThere()` reads the GM's mark first and the member's own yes until there is one, and the card, the headcount and the Markdown front matter all go through it, so there is one answer to "who was there".
+
+There is no `polls` table. `GameSession::isPolling()` is `Planned` with no `scheduled_at`, and `session_date_options` hang off the session. `PickDate` writes the date and deletes the options in one transaction; a date typed into the edit form keeps the poll and the card shows a notice with a GM-only clear button, because deleting five members' answers on a form save is a surprise.
+
+## reminder_sent_at is cleared in one place
+`game_sessions.reminder_sent_at` is the whole idempotency story for reminder emails. `SendSessionReminders` stamps it after queueing (a crash between the two sends twice rather than never, which is the right way round), and `GameSessionObserver::saving()` clears it when `scheduled_at` is dirty. Nothing else touches it. A session already in the past is never reminded however long the scheduler was down: the query says `scheduled_at > now()`.
