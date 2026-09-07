@@ -16,6 +16,12 @@ Slice 5 is done: **the live table**. A GM advances the turn and every screen at 
 
 Slice 4 is done, and the MVP with it: a character record with a class, a level, and a link to the sheet a player actually plays from, editable by that player; the party on the dashboard and behind a filter on the character index; **The story so far**, every recap in order, with drafts and missing recaps shown to the GM only; key-value fields on any entity, searchable; a streamed JSON export of a whole campaign; and a Docker stack a self-hoster can run with one command. See `docs/plans/`.
 
+Slice 6 is done: **maps**. A map is an entity, so it has a body, GM notes, tags, wiki links, and visibility like everything else, plus an image the viewer pans and zooms on a phone, a tablet, or a laptop. A GM drops pins that point at any entity, reveals each one as the party finds the place, and pins one map inside another so the world leads to the duchy and the duchy to the city. A player opens the same map and sees the half they have earned, and a reveal lands on their screen without a refresh.
+
+Slice 7 is done: **handouts and clocks**. A handout is an entity with a gallery of up to ten files, images and PDFs, and **Show the party** is one press that puts it on every open table screen. A progress clock is a named dial cut into 4, 6, 8, or 12 segments that the GM fills, or empties as a countdown, and a revealed clock ticks on `/table` while the party watches.
+
+Slices 8 and 9 are done: **the round trip**. A campaign leaves as one archive, a zip holding the JSON, every image and attachment, and the whole campaign as Markdown with front matter that Obsidian opens as a vault. The importer takes the archive or the bare JSON, validates the whole file before writing a row, remaps every id, restores the media, and tells the GM what could not come across before they commit. `php artisan demgem:import` does the same for the JSON from a terminal.
+
 ## Local setup
 
 Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.
@@ -107,9 +113,20 @@ The app and the worker need a *second* address: they publish to the websocket se
 
 ## Take your data with you
 
-A GM downloads the whole campaign as JSON from campaign settings: every entity with its GM notes, every session with its prep, secrets, and recaps, plus quests, encounters, tables, and the dice log.
+A GM downloads the whole campaign from campaign settings, two ways:
 
-The file leaves out email addresses, invite links, and deleted things, and it carries images as links rather than files. `ExportCoverageTest` reads the schema and fails when a new campaign table is neither exported nor documented as excluded, so the export cannot quietly fall behind.
+- **The archive**, a zip. Inside it is `campaign.json`, every image and attachment beside it, and a Markdown folder with one file per page, foldered by type, with front matter and the wiki links left exactly as written. Obsidian opens that folder as a vault.
+- **The JSON alone**, for anything that only wants the data.
+
+Both carry every entity with its GM notes, every session with its prep, secrets, and recaps, plus quests, encounters, tables, maps, handouts, clocks, and the dice log. They leave out email addresses, invite links, and deleted things. `ExportCoverageTest` reads the schema and fails when a new campaign table is neither exported nor documented as excluded, so the export cannot quietly fall behind.
+
+Either file imports back into any demgem, as a new campaign, from `/campaigns/import`. The JSON also imports from a terminal:
+
+```sh
+php artisan demgem:import path/to/campaign.json --user=you@example.com
+```
+
+The importer validates the whole file before it writes a row, remaps every id, and reports what it could not carry before the GM commits. It never fetches a URL found in the file and never uses a string from the archive as a path, so an untrusted file cannot reach the network or the disk. Three things stay behind on purpose: the members, because the file carries no email addresses, so the GM invites the party again; the viewer lists on entities shown to selected players, which import as GM-only rather than guess wider; and the dice log, because the file cannot say who rolled.
 
 ## Commands
 
