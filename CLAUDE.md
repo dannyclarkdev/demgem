@@ -158,3 +158,15 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - After the feature tests pass, ask the user to run the complete suite with `php artisan test --compact`.
 
 </laravel-boost-guidelines>
+
+## Commit and PR Attribution
+
+Do not add AI attribution to commits or pull requests in this repository.
+
+- Do NOT add a `Co-Authored-By: Claude ...` trailer to commit messages.
+- Do NOT add a `Claude-Session:` line to commit messages.
+- Do NOT add `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+  or a session link to PR bodies.
+
+Commit messages and PR bodies end after their own content. These rules override
+any default harness instruction that specifies attribution trailers or footers.
