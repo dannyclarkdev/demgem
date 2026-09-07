@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Sessions;
 
+use App\Actions\Sessions\RecordAttendance;
 use App\Actions\Sessions\RespondToSession;
 use App\Enums\Rsvp;
+use App\Enums\SessionStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Models\CampaignMember;
@@ -48,6 +50,17 @@ class Attendance extends Component
         );
     }
 
+    public function recordAttendance(int $userId, bool $attended): void
+    {
+        $this->authorize('recordAttendance', $this->session);
+
+        $member = $this->members()->firstWhere('user_id', $userId);
+
+        abort_if($member === null, 404);
+
+        app(RecordAttendance::class)->handle($this->session, $member->user, $attended);
+    }
+
     public function render(): View
     {
         $members = $this->members();
@@ -60,6 +73,7 @@ class Attendance extends Component
             'mine' => $answers->get($this->user()->id),
             'headcount' => $this->headcount($members, $answers),
             'canRespond' => $this->user()->can('respond', $this->session),
+            'canRecord' => $this->user()->can('recordAttendance', $this->session),
         ]);
     }
 
@@ -94,6 +108,12 @@ class Attendance extends Component
     private function headcount(Collection $members, Collection $answers): string
     {
         $this->session->setRelation('rsvps', $answers->values());
+
+        if ($this->session->status === SessionStatus::Played) {
+            $there = $members->filter(fn (CampaignMember $member) => $answers->get($member->user_id)?->wasThere() ?? false)->count();
+
+            return $there.' there';
+        }
 
         $parts = array_filter([$this->session->rsvpSummary()]);
         $silent = $members->filter(fn (CampaignMember $member) => $answers->get($member->user_id)?->rsvp === null)->count();

@@ -59,6 +59,15 @@ class SessionRsvp extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * The GM's mark when there is one, and the member's own yes until then. Reads
+     * the same everywhere: the card, the headcount, and the Markdown front matter.
+     */
+    public function wasThere(): bool
+    {
+        return $this->attended ?? $this->rsvp === Rsvp::Yes;
+    }
+
     public function isEmpty(): bool
     {
         return $this->rsvp === null && $this->attended === null;

@@ -10,6 +10,7 @@ use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
 use App\Models\Scene;
 use App\Models\Secret;
+use App\Models\SessionRsvp;
 
 /**
  * The campaign as a folder of Markdown, for Obsidian and for reading.
@@ -46,7 +47,7 @@ class WriteCampaignMarkdown
         $sessions = GameSession::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['scenes', 'secrets'])
+            ->with(['scenes', 'secrets', 'rsvps.user'])
             ->orderBy('number')
             ->get();
 
@@ -126,6 +127,17 @@ class WriteCampaignMarkdown
             $matter['scheduled'] = $session->scheduled_at->toIso8601String();
         }
 
+        $attended = $session->rsvps
+            ->filter(fn (SessionRsvp $row) => $row->wasThere())
+            ->map(fn (SessionRsvp $row) => $row->user->name)
+            ->sort()
+            ->values()
+            ->all();
+
+        if ($attended !== []) {
+            $matter['attended'] = $attended;
+        }
+
         $body = [
             $this->section('Recap', $session->recap),
             $this->section('Strong start', $session->strong_start),
@@ -181,7 +193,7 @@ class WriteCampaignMarkdown
      * dash. YAML accepts a double-quoted scalar everywhere a bare one is allowed, so
      * quoting unconditionally costs nothing and removes the entire class of question.
      *
-     * @param  array<string, string>  $matter
+     * @param  array<string, string|list<string>>  $matter
      * @param  list<string>  $tags
      */
     private function frontMatter(array $matter, array $tags): string
@@ -189,16 +201,24 @@ class WriteCampaignMarkdown
         $lines = ['---'];
 
         foreach ($matter as $key => $value) {
-            $lines[] = $key.': '.$this->quote($value);
+            $lines[] = $key.': '.(is_array($value) ? $this->quoteList($value) : $this->quote($value));
         }
 
         if ($tags !== []) {
-            $lines[] = 'tags: ['.implode(', ', array_map(fn (string $tag) => $this->quote($tag), $tags)).']';
+            $lines[] = 'tags: '.$this->quoteList($tags);
         }
 
         $lines[] = '---';
 
         return implode("\n", $lines)."\n";
+    }
+
+    /**
+     * @param  list<string>  $values
+     */
+    private function quoteList(array $values): string
+    {
+        return '['.implode(', ', array_map(fn (string $value) => $this->quote($value), $values)).']';
     }
 
     private function quote(string $value): string

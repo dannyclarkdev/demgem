@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\CampaignRole;
+use App\Enums\SessionStatus;
 use App\Models\Campaign;
 use App\Models\GameSession;
 use App\Models\User;
@@ -71,6 +72,14 @@ class GameSessionPolicy
     public function respond(User $user, GameSession $session): bool
     {
         return $this->view($user, $session) && $session->acceptsRsvps();
+    }
+
+    /**
+     * A GM records who turned up, and only once the session has been played.
+     */
+    public function recordAttendance(User $user, GameSession $session): bool
+    {
+        return ($this->roleFor($user, $session)?->isDm() ?? false) && $session->status === SessionStatus::Played;
     }
 
     private function roleFor(User $user, GameSession $session): ?CampaignRole
