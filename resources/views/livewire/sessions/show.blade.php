@@ -84,6 +84,8 @@
                     <p class="text-sm text-ink-faint">No date yet.</p>
                 @endif
             </x-ui.card>
+
+            <livewire:sessions.attendance :campaign="$campaign" :session="$session" :wire:key="'attendance-'.$session->id" />
         </aside>
     </div>
 </div>

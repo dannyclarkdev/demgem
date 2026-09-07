@@ -74,6 +74,7 @@ class Show extends Component
             ->where('status', SessionStatus::Planned)
             ->whereNotNull('scheduled_at')
             ->where('scheduled_at', '>=', now())
+            ->with('rsvps')
             ->orderBy('scheduled_at')
             ->first();
 

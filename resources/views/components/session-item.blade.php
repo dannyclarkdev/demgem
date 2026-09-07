@@ -1,6 +1,8 @@
 @props(['session', 'role', 'timezone'])
 @php
     $when = $session->scheduledAtIn($timezone);
+    $summary = $session->acceptsRsvps() ? $session->rsvpSummary() : '';
+    $mine = $session->acceptsRsvps() ? $session->rsvpOf(auth()->user()) : null;
 @endphp
 <li wire:key="session-{{ $session->id }}">
     <a href="{{ $session->url() }}" class="flex items-center gap-3 px-5 py-3 transition hover:bg-raised/50">
@@ -15,9 +17,15 @@
                 @else
                     No date yet
                 @endif
+                @if ($summary !== '')
+                    <span class="text-ink-muted">· {{ $summary }}</span>
+                @endif
             </p>
         </div>
         <div class="hidden items-center gap-1.5 sm:flex">
+            @if ($mine !== null)
+                <x-ui.badge :variant="$mine->badgeVariant()" :icon="$mine->icon()">You said {{ strtolower($mine->label()) }}</x-ui.badge>
+            @endif
             @if ($session->isOverdue() && $role->isDm())
                 <x-ui.badge variant="danger" icon="clock">Overdue</x-ui.badge>
             @endif

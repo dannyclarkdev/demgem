@@ -16,6 +16,7 @@ use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
 use App\Models\Scene;
 use App\Models\Secret;
+use App\Models\SessionRsvp;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
@@ -49,6 +50,7 @@ class ExportCampaign
         'scenes' => 'sessions[].scenes',
         'secrets' => 'sessions[].secrets',
         'game_session_entities' => 'sessions[].prepped',
+        'session_rsvps' => 'sessions[].attendance, by name',
         'combatants' => 'encounters[].combatants',
         'random_table_entries' => 'random_tables[].entries',
         'tags' => 'entities[].tags, by name',
@@ -253,7 +255,7 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['scenes', 'secrets', 'entities'])
+            ->with(['scenes', 'secrets', 'entities', 'rsvps.user'])
             ->orderBy('number')
             ->cursor()
             ->map(fn (GameSession $session) => [
@@ -288,6 +290,14 @@ class ExportCampaign
                         'entity_id' => $entity->id,
                         'role' => $entity->pivot?->getAttribute('role'),
                         'position' => $entity->pivot?->getAttribute('position'),
+                    ])->values()->all(),
+                // By name, like the members section: the file never carries a way to
+                // re-link a person, so the importer counts these and leaves them.
+                'attendance' => $session->rsvps
+                    ->map(fn (SessionRsvp $row) => [
+                        'name' => $row->user->name,
+                        'rsvp' => $row->rsvp?->value,
+                        'attended' => $row->attended,
                     ])->values()->all(),
                 'created_at' => $session->created_at?->toIso8601String(),
                 'updated_at' => $session->updated_at?->toIso8601String(),

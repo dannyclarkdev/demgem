@@ -31,6 +31,9 @@ final class ImportReport
 
     public int $diceRolls = 0;
 
+    /** RSVPs, attendance marks, and poll votes. Each names a person the file cannot re-link. */
+    public int $answers = 0;
+
     public int $truncated = 0;
 
     public function count(string $section, int $rows): void
@@ -80,6 +83,13 @@ final class ImportReport
             $losses[] = [
                 'label' => $this->diceRolls.' dice '.str('roll')->plural($this->diceRolls).' will be left behind',
                 'detail' => 'A roll records who made it, and those people cannot be re-linked. Attributing every roll to you would be a lie in the record, so the log stays behind.',
+            ];
+        }
+
+        if ($this->answers > 0) {
+            $losses[] = [
+                'label' => $this->answers.' '.str('answer')->plural($this->answers).' about dates and attendance will be left behind',
+                'detail' => 'Who said yes, who turned up, and who could make which Thursday all name people this install does not have. The sessions come across; the answers about them do not.',
             ];
         }
 

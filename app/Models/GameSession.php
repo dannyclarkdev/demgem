@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CampaignRole;
 use App\Enums\PrepRole;
+use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Concerns\BelongsToCampaign;
@@ -49,6 +50,7 @@ use Illuminate\Support\Str;
  * @property-read Campaign $campaign
  * @property-read Collection<int, Scene> $scenes
  * @property-read Collection<int, Secret> $secrets
+ * @property-read Collection<int, SessionRsvp> $rsvps
  * @property-read Collection<int, Entity> $entities
  */
 #[ObservedBy([GameSessionObserver::class])]
@@ -122,6 +124,47 @@ class GameSession extends Model
     public function prepped(PrepRole $role): BelongsToMany
     {
         return $this->entities()->wherePivot('role', $role->value);
+    }
+
+    /**
+     * @return HasMany<SessionRsvp, $this>
+     */
+    public function rsvps(): HasMany
+    {
+        return $this->hasMany(SessionRsvp::class);
+    }
+
+    /**
+     * A dated, planned session is the only kind a member can answer about. A played
+     * one is for attendance, and a cancelled one shows what was said and takes no more.
+     */
+    /**
+     * "2 yes · 1 maybe", from the loaded answers. Empty when nobody has answered.
+     * The "not answered" count needs the member list, so it lives on the card.
+     */
+    public function rsvpSummary(): string
+    {
+        $parts = [];
+
+        foreach (Rsvp::cases() as $case) {
+            $count = $this->rsvps->filter(fn (SessionRsvp $row) => $row->rsvp === $case)->count();
+
+            if ($count > 0) {
+                $parts[] = $count.' '.strtolower($case->label());
+            }
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    public function rsvpOf(User $user): ?Rsvp
+    {
+        return $this->rsvps->firstWhere('user_id', $user->id)?->rsvp;
+    }
+
+    public function acceptsRsvps(): bool
+    {
+        return $this->status === SessionStatus::Planned && $this->scheduled_at !== null;
     }
 
     /**

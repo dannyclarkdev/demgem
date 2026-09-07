@@ -27,6 +27,16 @@
                     @if ($when)
                         <p class="mt-2 text-sm text-ink-muted">{{ $when->format('D j M Y') }} at {{ $when->format('H:i') }} {{ $when->format('T') }}</p>
                         <p class="mt-1 text-xs text-ink-faint">{{ $nextSession->scheduled_at->diffForHumans() }}</p>
+                        @php($summary = $nextSession->rsvpSummary())
+                        @php($mine = $nextSession->rsvpOf(auth()->user()))
+                        @if ($summary !== '' || $mine !== null)
+                            <p class="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+                                @if ($summary !== '')<span>{{ $summary }}</span>@endif
+                                @if ($mine !== null)
+                                    <x-ui.badge :variant="$mine->badgeVariant()" :icon="$mine->icon()">You said {{ strtolower($mine->label()) }}</x-ui.badge>
+                                @endif
+                            </p>
+                        @endif
                     @else
                         <p class="mt-2 text-sm text-ink-faint">Not scheduled yet.</p>
                     @endif

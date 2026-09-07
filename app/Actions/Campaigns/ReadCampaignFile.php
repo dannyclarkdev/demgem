@@ -526,6 +526,10 @@ class ReadCampaignFile
     {
         $this->report->diceRolls = count($this->list($decoded, 'dice_rolls'));
 
+        foreach ($this->list($decoded, 'sessions') as $session) {
+            $this->report->answers += count($this->list($session, 'attendance'));
+        }
+
         foreach ($this->list($decoded, 'members') as $member) {
             $name = $this->text($member, 'name', 120);
 
