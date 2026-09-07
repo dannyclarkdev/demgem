@@ -84,6 +84,10 @@ function asImported(array $document, User $importer): array
     // Loss 5: who said yes and who turned up name people the file cannot re-link.
     foreach ($document['sessions'] as $index => $row) {
         $document['sessions'][$index]['attendance'] = [];
+
+        foreach ($row['date_options'] ?? [] as $optionIndex => $option) {
+            $document['sessions'][$index]['date_options'][$optionIndex]['votes'] = [];
+        }
     }
 
     // Loss 4: the dice log stays behind.

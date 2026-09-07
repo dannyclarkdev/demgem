@@ -52,6 +52,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Scene> $scenes
  * @property-read Collection<int, Secret> $secrets
  * @property-read Collection<int, SessionRsvp> $rsvps
+ * @property-read Collection<int, SessionDateOption> $dateOptions
  * @property-read Collection<int, Entity> $entities
  */
 #[ObservedBy([GameSessionObserver::class])]
@@ -134,6 +135,23 @@ class GameSession extends Model
     public function rsvps(): HasMany
     {
         return $this->hasMany(SessionRsvp::class);
+    }
+
+    /**
+     * @return HasMany<SessionDateOption, $this>
+     */
+    public function dateOptions(): HasMany
+    {
+        return $this->hasMany(SessionDateOption::class)->orderBy('position');
+    }
+
+    /**
+     * A planned session with no date is the poll. Options left behind on a dated
+     * session are shown with a notice rather than pretending to be one.
+     */
+    public function isPolling(): bool
+    {
+        return $this->status === SessionStatus::Planned && $this->scheduled_at === null;
     }
 
     /**

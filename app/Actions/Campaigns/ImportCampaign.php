@@ -325,6 +325,14 @@ class ImportCampaign
                 ]);
             }
 
+            foreach ($row['date_options'] as $option) {
+                $session->dateOptions()->create([
+                    'campaign_id' => $campaign->id,
+                    'starts_at' => $option['starts_at'],
+                    'position' => $option['position'],
+                ]);
+            }
+
             foreach ($row['secrets'] as $secret) {
                 $session->secrets()->create([
                     'campaign_id' => $campaign->id,

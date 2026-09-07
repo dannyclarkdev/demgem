@@ -2,17 +2,25 @@
 
 namespace App\Livewire\Sessions;
 
+use App\Actions\Sessions\AddDateOption;
+use App\Actions\Sessions\ClearDateOptions;
+use App\Actions\Sessions\PickDate;
 use App\Actions\Sessions\RecordAttendance;
+use App\Actions\Sessions\RemoveDateOption;
 use App\Actions\Sessions\RespondToSession;
+use App\Actions\Sessions\ToggleDateVote;
+use App\Actions\Sessions\UpdateSession;
 use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Models\CampaignMember;
 use App\Models\GameSession;
+use App\Models\SessionDateOption;
 use App\Models\SessionRsvp;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -26,6 +34,9 @@ class Attendance extends Component
     use InteractsWithCampaign;
 
     public GameSession $session;
+
+    /** A datetime-local string in the campaign's zone, from the add form. */
+    public string $newOption = '';
 
     public function mount(Campaign $campaign, GameSession $session): void
     {
@@ -61,15 +72,81 @@ class Attendance extends Component
         app(RecordAttendance::class)->handle($this->session, $member->user, $attended);
     }
 
+    public function addDateOption(): void
+    {
+        $this->authorize('poll', $this->session);
+
+        $validated = $this->validate(['newOption' => ['required', 'date']]);
+        $startsAt = Carbon::parse((string) $validated['newOption'], $this->campaign->timezone)->utc();
+
+        if ($this->session->dateOptions()->where('starts_at', $startsAt)->exists()) {
+            $this->addError('newOption', 'That time is already on the list.');
+
+            return;
+        }
+
+        app(AddDateOption::class)->handle($this->session, $startsAt);
+        $this->newOption = '';
+    }
+
+    public function removeDateOption(string $optionId): void
+    {
+        $this->authorize('poll', $this->session);
+
+        app(RemoveDateOption::class)->handle($this->option($optionId));
+    }
+
+    public function toggleDateVote(string $optionId): void
+    {
+        $this->authorize('vote', $this->session);
+
+        app(ToggleDateVote::class)->handle($this->option($optionId), $this->user());
+    }
+
+    public function pickDate(string $optionId): void
+    {
+        $this->authorize('poll', $this->session);
+
+        $this->session = app(PickDate::class)->handle($this->session, $this->option($optionId), $this->user(), app(UpdateSession::class));
+
+        session()->flash('status', $this->session->label().' has a date. The party can say whether they are coming.');
+        $this->redirect($this->session->url());
+    }
+
+    public function clearDateOptions(): void
+    {
+        $this->authorize('poll', $this->session);
+
+        app(ClearDateOptions::class)->handle($this->session);
+    }
+
+    /**
+     * An option is only ever looked up through its own session, so an id from some
+     * other campaign's poll is a 404 rather than a write.
+     */
+    private function option(string $optionId): SessionDateOption
+    {
+        $option = $this->session->dateOptions()->whereKey($optionId)->first();
+
+        abort_if($option === null, 404);
+
+        return $option;
+    }
+
     public function render(): View
     {
         $members = $this->members();
         $answers = $this->answers();
 
+        $options = $this->session->dateOptions()->with('votes')->get();
+
         return view('livewire.sessions.attendance', [
             'role' => $this->role(),
             'members' => $members,
             'answers' => $answers,
+            'options' => $options,
+            'canPoll' => $this->user()->can('poll', $this->session),
+            'canVote' => $this->user()->can('vote', $this->session),
             'mine' => $answers->get($this->user()->id),
             'headcount' => $this->headcount($members, $answers),
             'canRespond' => $this->user()->can('respond', $this->session),

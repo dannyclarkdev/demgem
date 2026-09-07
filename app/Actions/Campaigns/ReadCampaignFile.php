@@ -316,6 +316,7 @@ class ReadCampaignFile
                 'scenes' => $this->scenes($row),
                 'secrets' => $this->secrets($row),
                 'prepped' => $this->prepped($row),
+                'date_options' => $this->dateOptions($row, $number),
             ];
         }
 
@@ -338,6 +339,37 @@ class ReadCampaignFile
         }
 
         return $visibility;
+    }
+
+    /**
+     * The candidate times come across; the votes on them name people and are
+     * counted into the same loss as the RSVPs.
+     *
+     * @param  array<string, mixed>  $row
+     * @return list<array{starts_at: string, position: int}>
+     */
+    private function dateOptions(array $row, int $number): array
+    {
+        $options = [];
+
+        foreach ($this->list($row, 'date_options') as $index => $option) {
+            $startsAt = $this->text($option, 'starts_at', 40);
+
+            if ($startsAt === null) {
+                $this->errors[] = "A candidate time on session {$number} has no time.";
+
+                continue;
+            }
+
+            $this->report->answers += count($this->list($option, 'votes'));
+
+            $options[] = [
+                'starts_at' => $startsAt,
+                'position' => $this->integer($option, 'position') ?? $index,
+            ];
+        }
+
+        return $options;
     }
 
     /**

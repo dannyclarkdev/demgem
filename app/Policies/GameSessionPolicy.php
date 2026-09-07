@@ -82,6 +82,23 @@ class GameSessionPolicy
         return ($this->roleFor($user, $session)?->isDm() ?? false) && $session->status === SessionStatus::Played;
     }
 
+    /**
+     * A GM offers times, takes them back, picks one, and clears a stale poll.
+     */
+    public function poll(User $user, GameSession $session): bool
+    {
+        return ($this->roleFor($user, $session)?->isDm() ?? false) && $session->status === SessionStatus::Planned;
+    }
+
+    /**
+     * Any member the session is visible to ticks the times they can make, while the
+     * session is still waiting for one.
+     */
+    public function vote(User $user, GameSession $session): bool
+    {
+        return $this->view($user, $session) && $session->isPolling();
+    }
+
     private function roleFor(User $user, GameSession $session): ?CampaignRole
     {
         $current = app(CurrentCampaign::class);

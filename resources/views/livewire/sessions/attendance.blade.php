@@ -5,8 +5,20 @@
         @endif
     </x-slot:header>
 
+    @if ($session->scheduled_at !== null && $options->isNotEmpty())
+        <div class="flex flex-wrap items-center gap-2 border-b border-line bg-raised/40 px-5 py-3 text-sm">
+            <span class="text-ink-muted">This session has a date now. The poll below is what the party said before it did.</span>
+            @if ($canPoll)
+                <x-ui.button size="sm" variant="ghost" icon="x" wire:click="clearDateOptions" class="ml-auto">Clear the poll</x-ui.button>
+            @endif
+        </div>
+    @endif
+
+    @if ($session->scheduled_at === null || $options->isNotEmpty())
+        @include('livewire.sessions.partials.date-poll')
+    @endif
+
     @if ($session->scheduled_at === null)
-        <p class="px-5 py-4 text-sm text-ink-faint">No date yet.</p>
     @else
         @if ($canRespond)
             <div class="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">

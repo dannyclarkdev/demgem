@@ -16,6 +16,8 @@ use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
 use App\Models\Scene;
 use App\Models\Secret;
+use App\Models\SessionDateOption;
+use App\Models\SessionDateVote;
 use App\Models\SessionRsvp;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -51,6 +53,8 @@ class ExportCampaign
         'secrets' => 'sessions[].secrets',
         'game_session_entities' => 'sessions[].prepped',
         'session_rsvps' => 'sessions[].attendance, by name',
+        'session_date_options' => 'sessions[].date_options',
+        'session_date_votes' => 'sessions[].date_options[].votes, by name',
         'combatants' => 'encounters[].combatants',
         'random_table_entries' => 'random_tables[].entries',
         'tags' => 'entities[].tags, by name',
@@ -258,7 +262,7 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['scenes', 'secrets', 'entities', 'rsvps.user'])
+            ->with(['scenes', 'secrets', 'entities', 'rsvps.user', 'dateOptions.votes.user'])
             ->orderBy('number')
             ->cursor()
             ->map(fn (GameSession $session) => [
@@ -302,6 +306,13 @@ class ExportCampaign
                         'name' => $row->user->name,
                         'rsvp' => $row->rsvp?->value,
                         'attended' => $row->attended,
+                    ])->values()->all(),
+                'date_options' => $session->dateOptions
+                    ->map(fn (SessionDateOption $option) => [
+                        'id' => $option->id,
+                        'starts_at' => $option->starts_at->toIso8601String(),
+                        'position' => $option->position,
+                        'votes' => $option->votes->map(fn (SessionDateVote $vote) => $vote->user->name)->values()->all(),
                     ])->values()->all(),
                 'created_at' => $session->created_at?->toIso8601String(),
                 'updated_at' => $session->updated_at?->toIso8601String(),
