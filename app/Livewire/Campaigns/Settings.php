@@ -34,6 +34,9 @@ class Settings extends Component
 
     public int $sessionLengthMinutes = 240;
 
+    /** Hours, as a string because the select carries '' for off. */
+    public string $reminderLeadHours = '';
+
     public string $newOwnerId = '';
 
     public string $deleteConfirmation = '';
@@ -48,6 +51,7 @@ class Settings extends Component
         $this->ruleset = $campaign->ruleset->value;
         $this->timezone = $campaign->timezone;
         $this->sessionLengthMinutes = $campaign->session_length_minutes;
+        $this->reminderLeadHours = (string) ($campaign->reminder_lead_hours ?? '');
     }
 
     public function save(): void
@@ -60,6 +64,7 @@ class Settings extends Component
             'ruleset' => ['required', Rule::enum(Ruleset::class)],
             'timezone' => ['required', 'timezone'],
             'sessionLengthMinutes' => ['required', 'integer', 'min:30', 'max:720'],
+            'reminderLeadHours' => ['nullable', Rule::in(array_keys(Campaign::reminderLeadOptions()))],
             'cover' => ['nullable', 'image', 'max:8192'],
         ]);
 
@@ -79,6 +84,7 @@ class Settings extends Component
             'ruleset' => $validated['ruleset'],
             'timezone' => $validated['timezone'],
             'session_length_minutes' => $validated['sessionLengthMinutes'],
+            'reminder_lead_hours' => filled($validated['reminderLeadHours'] ?? null) ? (int) $validated['reminderLeadHours'] : null,
         ]);
 
         session()->flash('status', 'Campaign settings saved.');
@@ -128,6 +134,7 @@ class Settings extends Component
             'role' => $role,
             'rulesets' => Ruleset::cases(),
             'timezones' => timezone_identifiers_list(),
+            'reminderLeadOptions' => Campaign::reminderLeadOptions(),
             'transferCandidates' => $role === CampaignRole::Owner
                 ? $this->campaign->members()->with('user')->where('role', '!=', CampaignRole::Owner)->get()->sortBy('user.name')
                 : collect(),

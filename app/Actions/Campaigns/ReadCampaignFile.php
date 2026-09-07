@@ -11,6 +11,7 @@ use App\Enums\QuestStatus;
 use App\Enums\Ruleset;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
+use App\Models\Campaign;
 use BackedEnum;
 use Illuminate\Support\Str;
 use JsonException;
@@ -125,8 +126,22 @@ class ReadCampaignFile
             'ruleset' => $this->enum(Ruleset::class, $row, 'ruleset', 'the campaign') ?? Ruleset::cases()[0],
             'timezone' => $this->text($row, 'timezone', 64) ?? 'UTC',
             'session_length_minutes' => min(720, max(30, $this->integer($row, 'session_length_minutes') ?? 240)),
+            'reminder_lead_hours' => $this->reminderLead($row),
             'cover' => $this->mediaReference($row['cover'] ?? null),
         ];
+    }
+
+    /**
+     * Only the values the settings screen offers. Anything else means off, which is
+     * the hidden direction for a feature that sends email.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function reminderLead(array $row): ?int
+    {
+        $hours = $this->integer($row, 'reminder_lead_hours');
+
+        return $hours !== null && array_key_exists((string) $hours, Campaign::reminderLeadOptions()) ? $hours : null;
     }
 
     /**
@@ -290,6 +305,7 @@ class ReadCampaignFile
                 'number' => $number,
                 'title' => $this->text($row, 'title', 120),
                 'scheduled_at' => $this->text($row, 'scheduled_at', 40),
+                'reminder_sent_at' => $this->text($row, 'reminder_sent_at', 40),
                 'status' => $this->enum(SessionStatus::class, $row, 'status', "session {$number}") ?? SessionStatus::cases()[0],
                 'visibility' => $this->sessionVisibility($row, $number),
                 'strong_start' => $this->text($row, 'strong_start', 100_000),

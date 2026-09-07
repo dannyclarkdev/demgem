@@ -43,7 +43,7 @@ php artisan queue:work
 php artisan reverb:start
 ```
 
-`php artisan dev` runs both for you, along with Vite. Without them, screens fall back to their sixty-second poll.
+`php artisan dev` runs both for you, along with Vite. Without them, screens fall back to their sixty-second poll. Reminder emails also need `php artisan schedule:work`, and go to the log until `MAIL_MAILER` is a real mailer.
 
 Optional demo world with a GM and a player:
 
@@ -69,7 +69,8 @@ Open <http://localhost:8000> and register. The first account is an ordinary acco
 | Service | What it does |
 |---|---|
 | `app` | FrankenPHP, serving the app on port 8000. Runs the migrations on boot. |
-| `worker` | `queue:work`. It carries the live table's broadcasts, so the table is only as quick as this container. |
+| `worker` | `queue:work`. It carries the live table's broadcasts and the reminder emails, so the table is only as quick as this container. |
+| `scheduler` | `schedule:work`. Every fifteen minutes it queues the reminder emails that are due. |
 | `reverb` | The websocket server, on port 8080. Every open browser holds a connection to it. |
 | `db` | PostgreSQL 17, in the `pgdata` volume. |
 | `redis` | Cache and queue. Sessions stay in PostgreSQL, so a Redis restart keeps everyone signed in. |
@@ -111,6 +112,25 @@ The app and the worker need a *second* address: they publish to the websocket se
 
 **A sluggish table is a queue question, not a socket one.** Broadcasts are queued, so the wait is the worker picking the job up. Redis, which this stack uses, blocks on pop and pays nothing; the database queue driver adds a second or three.
 
+## Reminders
+
+A GM turns on a reminder email in campaign settings: a day, two days, or a week before each session with a date. Every member who wants one gets one, in the campaign's timezone, with a link back to the session to say whether they are coming. A member who said no is not reminded, and every member has their own switch on the members page.
+
+**With `MAIL_MAILER=log`, which is the default, a reminder is written to the log and nobody receives it.** Set a real mailer before a GM turns reminders on. In `.env.docker`:
+
+```sh
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=you
+MAIL_PASSWORD=secret
+MAIL_FROM_ADDRESS=demgem@example.com
+```
+
+The compose stack runs the scheduler for you. Outside Docker, run `php artisan schedule:work` beside the queue worker, or add `php artisan schedule:run` to cron every minute. To see what would go out right now, run `php artisan demgem:send-reminders` by hand.
+
+Every session you can see is also available as a calendar feed. Get the link from your profile and subscribe to it in Google Calendar, Apple Calendar, or Outlook; it covers every campaign you belong to, and the times land in your own timezone. The feed carries the session's number, title, and campaign, and never its prep or recap.
+
 ## Take your data with you
 
 A GM downloads the whole campaign from campaign settings, two ways:
@@ -126,7 +146,7 @@ Either file imports back into any demgem, as a new campaign, from `/campaigns/im
 php artisan demgem:import path/to/campaign.json --user=you@example.com
 ```
 
-The importer validates the whole file before it writes a row, remaps every id, and reports what it could not carry before the GM commits. It never fetches a URL found in the file and never uses a string from the archive as a path, so an untrusted file cannot reach the network or the disk. Three things stay behind on purpose: the members, because the file carries no email addresses, so the GM invites the party again; the viewer lists on entities shown to selected players, which import as GM-only rather than guess wider; and the dice log, because the file cannot say who rolled.
+The importer validates the whole file before it writes a row, remaps every id, and reports what it could not carry before the GM commits. It never fetches a URL found in the file and never uses a string from the archive as a path, so an untrusted file cannot reach the network or the disk. Four things stay behind on purpose: the members, because the file carries no email addresses, so the GM invites the party again; the viewer lists on entities shown to selected players, which import as GM-only rather than guess wider; the dice log, because the file cannot say who rolled; and the answers about sessions, who said yes and who turned up, for the same reason.
 
 ## Commands
 
@@ -166,7 +186,7 @@ The importer validates the whole file before it writes a row, remaps every id, a
 
 ## Timezones
 
-A campaign has one timezone, set in campaign settings. Session times are stored in UTC and shown in that zone. Per-user timezones are a later feature.
+A campaign has one timezone, set in campaign settings. Session times are stored in UTC and shown in that zone, and reminder emails use it. The calendar feed sends UTC and every calendar app converts, so a player in another zone sees the session at their own local time there. Per-user timezones inside the app are a later feature.
 
 ## Content licensing
 

@@ -159,6 +159,7 @@ class ExportCampaign
             'ruleset' => $campaign->ruleset->value,
             'timezone' => $campaign->timezone,
             'session_length_minutes' => $campaign->session_length_minutes,
+            'reminder_lead_hours' => $campaign->reminder_lead_hours,
             'created_at' => $campaign->created_at?->toIso8601String(),
             'updated_at' => $campaign->updated_at?->toIso8601String(),
             'cover' => $this->media($campaign->getFirstMedia('cover')),
@@ -183,6 +184,7 @@ class ExportCampaign
                 'user_id' => $member->user_id,
                 'name' => $member->user->name,
                 'role' => $member->role->value,
+                'reminders_enabled' => $member->reminders_enabled,
                 'joined_at' => $member->created_at?->toIso8601String(),
             ]);
     }
@@ -264,6 +266,7 @@ class ExportCampaign
                 'number' => $session->number,
                 'title' => $session->title,
                 'scheduled_at' => $session->scheduled_at?->toIso8601String(),
+                'reminder_sent_at' => $session->reminder_sent_at?->toIso8601String(),
                 'status' => $session->status->value,
                 'visibility' => $session->visibility->value,
                 'strong_start' => $session->strong_start,

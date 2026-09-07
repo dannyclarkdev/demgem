@@ -26,12 +26,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Ruleset $ruleset
  * @property string $timezone
  * @property int $session_length_minutes
+ * @property int|null $reminder_lead_hours
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read CampaignMember|null $owner
  */
-#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'created_by'])]
+#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'created_by'])]
 class Campaign extends Model implements HasMedia
 {
     /** @use HasFactory<CampaignFactory> */
@@ -48,6 +49,7 @@ class Campaign extends Model implements HasMedia
         return [
             'ruleset' => Ruleset::class,
             'session_length_minutes' => 'integer',
+            'reminder_lead_hours' => 'integer',
         ];
     }
 
@@ -165,6 +167,27 @@ class Campaign extends Model implements HasMedia
         }
 
         return $this->memberCache[$user->id];
+    }
+
+    /**
+     * "a day before", for the settings screen and the members page. Null means off.
+     *
+     * @return array<int|string, string> hours => label, with '' for off. PHP turns the
+     *                                   numeric keys into ints, so both key types appear.
+     */
+    public static function reminderLeadOptions(): array
+    {
+        return [
+            '' => 'Off',
+            '24' => 'A day before',
+            '48' => 'Two days before',
+            '168' => 'A week before',
+        ];
+    }
+
+    public function reminderLeadLabel(): string
+    {
+        return strtolower(self::reminderLeadOptions()[(string) ($this->reminder_lead_hours ?? '')] ?? 'off');
     }
 
     public function roleFor(?User $user): ?CampaignRole

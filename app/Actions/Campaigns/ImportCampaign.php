@@ -60,6 +60,7 @@ class ImportCampaign
                 'ruleset' => $attributes['ruleset']->value,
                 'timezone' => $attributes['timezone'],
                 'session_length_minutes' => $attributes['session_length_minutes'],
+                'reminder_lead_hours' => $attributes['reminder_lead_hours'],
             ]);
 
             // Scout indexes on save, and a bulk import is the one time that is worth
@@ -299,6 +300,7 @@ class ImportCampaign
                 'number' => $row['number'],
                 'title' => $row['title'],
                 'scheduled_at' => $row['scheduled_at'],
+                'reminder_sent_at' => $row['reminder_sent_at'],
                 'status' => $row['status'],
                 'visibility' => $row['visibility'],
                 'strong_start' => $row['strong_start'],

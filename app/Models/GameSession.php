@@ -35,6 +35,7 @@ use Illuminate\Support\Str;
  * @property int $number
  * @property string|null $title
  * @property Carbon|null $scheduled_at
+ * @property Carbon|null $reminder_sent_at
  * @property SessionStatus $status
  * @property Visibility $visibility
  * @property string|null $strong_start
@@ -55,7 +56,7 @@ use Illuminate\Support\Str;
  */
 #[ObservedBy([GameSessionObserver::class])]
 #[Fillable([
-    'campaign_id', 'number', 'title', 'scheduled_at', 'status', 'visibility',
+    'campaign_id', 'number', 'title', 'scheduled_at', 'reminder_sent_at', 'status', 'visibility',
     'strong_start', 'live_notes', 'recap', 'recap_published_at', 'dm_notes',
     'created_by', 'updated_by',
 ])]
@@ -74,6 +75,7 @@ class GameSession extends Model
         return [
             'number' => 'integer',
             'scheduled_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
             'recap_published_at' => 'datetime',
             'status' => SessionStatus::class,
             'visibility' => Visibility::class,

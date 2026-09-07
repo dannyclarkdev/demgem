@@ -10,6 +10,18 @@ class GameSessionObserver
 {
     public function __construct(private readonly SyncMentions $syncMentions) {}
 
+    /**
+     * A moved session is a new appointment. Clearing the stamp here, and only here,
+     * is what lets a rescheduled session remind everyone again and an unmoved one
+     * never remind twice.
+     */
+    public function saving(GameSession $session): void
+    {
+        if ($session->exists && $session->isDirty('scheduled_at') && ! $session->isDirty('reminder_sent_at')) {
+            $session->reminder_sent_at = null;
+        }
+    }
+
     public function saved(GameSession $session): void
     {
         if ($session->wasRecentlyCreated || $session->wasChanged($session->mentionableFields())) {

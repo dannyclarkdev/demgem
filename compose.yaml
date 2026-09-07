@@ -7,9 +7,11 @@
 # Then open http://localhost:8000 and register. The first account is an ordinary
 # account: demgem has no instance administrator and does not need one.
 #
-# Five services: the app, a queue worker, Reverb for the live table, Postgres, and
-# Redis. The live table needs all three of app, worker and reverb: a broadcast is
-# queued, so a stopped worker means the tracker falls back to its poll.
+# Six services: the app, a queue worker, a scheduler for reminder emails, Reverb for
+# the live table, Postgres, and Redis. The live table needs all three of app, worker
+# and reverb: a broadcast is queued, so a stopped worker means the tracker falls
+# back to its poll. A reminder needs the scheduler to notice it and the worker to
+# send it.
 #
 # The database credentials are written here rather than read from the environment on
 # purpose. Compose reads .env for interpolation, and a developer's .env points at
@@ -57,6 +59,33 @@ services:
     # "compose up --wait" has something to wait for.
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'artisan queue:work' > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      app:
+        condition: service_healthy
+
+  # The clock. Every fifteen minutes it asks which sessions are inside their
+  # campaign's reminder window and queues one email per member; the worker sends
+  # them. Its own service for the reason Reverb is: one process per container is
+  # what makes "docker compose logs scheduler" mean anything.
+  #
+  # With MAIL_MAILER=log the reminders are written to the log and nobody receives
+  # them. Set the MAIL_* keys in .env.docker before a GM turns reminders on.
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    command: ["php", "artisan", "schedule:work"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan schedule:work' > /dev/null"]
       interval: 10s
       timeout: 5s
       retries: 6

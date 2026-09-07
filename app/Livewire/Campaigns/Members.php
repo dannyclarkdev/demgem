@@ -92,6 +92,19 @@ class Members extends Component
         $revokeInvite->handle($this->campaign->invites()->findOrFail($inviteId));
     }
 
+    /**
+     * The viewer's own switch, and nobody else's: whether they want an email before
+     * each session in this campaign.
+     */
+    public function setReminders(bool $enabled): void
+    {
+        $this->campaign->members()
+            ->where('user_id', $this->user()->id)
+            ->update(['reminders_enabled' => $enabled]);
+
+        session()->flash('status', $enabled ? 'You will get an email before each session.' : 'No more reminder emails from this campaign.');
+    }
+
     public function render(): View
     {
         $role = $this->role();
@@ -106,6 +119,8 @@ class Members extends Component
         return view('livewire.campaigns.members', [
             'role' => $role,
             'members' => $members,
+            'remindersEnabled' => $this->campaign->memberFor($this->user())->reminders_enabled ?? true,
+            'remindersOn' => $this->campaign->reminder_lead_hours !== null,
             'invites' => $invites,
             'invitableRoles' => CampaignRole::invitable(),
             'assignableRoles' => CampaignRole::invitable(),
