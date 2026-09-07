@@ -158,6 +158,7 @@ class ExportCampaign
             'description' => $campaign->description,
             'ruleset' => $campaign->ruleset->value,
             'timezone' => $campaign->timezone,
+            'session_length_minutes' => $campaign->session_length_minutes,
             'created_at' => $campaign->created_at?->toIso8601String(),
             'updated_at' => $campaign->updated_at?->toIso8601String(),
             'cover' => $this->media($campaign->getFirstMedia('cover')),

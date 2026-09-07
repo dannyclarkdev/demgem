@@ -124,6 +124,7 @@ class ReadCampaignFile
             'description' => $this->text($row, 'description', 2000),
             'ruleset' => $this->enum(Ruleset::class, $row, 'ruleset', 'the campaign') ?? Ruleset::cases()[0],
             'timezone' => $this->text($row, 'timezone', 64) ?? 'UTC',
+            'session_length_minutes' => min(720, max(30, $this->integer($row, 'session_length_minutes') ?? 240)),
             'cover' => $this->mediaReference($row['cover'] ?? null),
         ];
     }

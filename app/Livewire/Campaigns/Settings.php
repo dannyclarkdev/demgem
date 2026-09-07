@@ -32,6 +32,8 @@ class Settings extends Component
 
     public string $timezone = 'UTC';
 
+    public int $sessionLengthMinutes = 240;
+
     public string $newOwnerId = '';
 
     public string $deleteConfirmation = '';
@@ -45,6 +47,7 @@ class Settings extends Component
         $this->description = $campaign->description ?? '';
         $this->ruleset = $campaign->ruleset->value;
         $this->timezone = $campaign->timezone;
+        $this->sessionLengthMinutes = $campaign->session_length_minutes;
     }
 
     public function save(): void
@@ -56,6 +59,7 @@ class Settings extends Component
             'description' => ['nullable', 'string', 'max:2000'],
             'ruleset' => ['required', Rule::enum(Ruleset::class)],
             'timezone' => ['required', 'timezone'],
+            'sessionLengthMinutes' => ['required', 'integer', 'min:30', 'max:720'],
             'cover' => ['nullable', 'image', 'max:8192'],
         ]);
 
@@ -74,6 +78,7 @@ class Settings extends Component
             'description' => $validated['description'] ?: null,
             'ruleset' => $validated['ruleset'],
             'timezone' => $validated['timezone'],
+            'session_length_minutes' => $validated['sessionLengthMinutes'],
         ]);
 
         session()->flash('status', 'Campaign settings saved.');

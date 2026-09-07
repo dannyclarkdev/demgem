@@ -2,6 +2,7 @@
 
 use App\Enums\EntityType;
 use App\Http\Controllers\AutocompleteController;
+use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\CampaignArchiveController;
 use App\Http\Controllers\CampaignExportController;
 use App\Http\Controllers\InviteController;
@@ -34,6 +35,13 @@ use Illuminate\Support\Facades\Route;
 Route::pattern('type', implode('|', EntityType::slugs()));
 
 Route::get('/', fn () => redirect()->route(auth()->check() ? 'campaigns.index' : 'login'))->name('home');
+
+// A calendar app cannot log in, so the feed lives outside the auth group and the
+// token in the URL is the credential. A wrong one is a bare 404, like a dead invite.
+Route::get('/calendar/{token}.ics', CalendarFeedController::class)
+    ->where('token', '[A-Za-z0-9]+')
+    ->middleware('throttle:30,1')
+    ->name('calendar.feed');
 
 Route::middleware('auth')->group(function () {
     Route::get('/campaigns', CampaignsIndex::class)->name('campaigns.index');

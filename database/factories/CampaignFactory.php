@@ -24,6 +24,7 @@ class CampaignFactory extends Factory
             'description' => fake()->sentence(),
             'ruleset' => Ruleset::Generic,
             'timezone' => 'UTC',
+            'session_length_minutes' => 240,
             'created_by' => User::factory(),
         ];
     }

@@ -53,9 +53,29 @@ class Edit extends Component
         $this->redirectRoute('profile.edit');
     }
 
+    public function getCalendarLink(): void
+    {
+        $this->user()->calendarToken();
+
+        session()->flash('status', 'Your calendar link is ready. Paste it into your calendar app as a subscription.');
+    }
+
+    public function resetCalendarLink(): void
+    {
+        $this->user()->resetCalendarToken();
+
+        session()->flash('status', 'New calendar link. The old one stopped working.');
+    }
+
     public function render(): View
     {
-        return view('livewire.profile.edit');
+        // A column query rather than the attribute: the authenticated instance may be
+        // one the guard built from the session before this column existed on it.
+        $token = User::query()->whereKey($this->user()->id)->value('calendar_token');
+
+        return view('livewire.profile.edit', [
+            'calendarUrl' => $token === null ? null : route('calendar.feed', ['token' => $token]),
+        ]);
     }
 
     private function user(): User

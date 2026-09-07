@@ -15,6 +15,7 @@
                     <option value="{{ $option }}">{{ str_replace('_', ' ', $option) }}</option>
                 @endforeach
             </x-ui.select>
+            <x-ui.input label="Session length" name="sessionLengthMinutes" type="number" min="30" max="720" step="15" wire:model="sessionLengthMinutes" hint="In minutes. Calendar feeds use it for the end of each session." />
             <div class="space-y-3" x-data="{ removing: @entangle('removeCover') }">
                 @if ($campaign->coverUrl())
                     <img src="{{ $campaign->coverUrl('card') }}" alt="" class="h-32 w-full rounded-md border border-line object-cover" :class="removing ? 'opacity-30' : ''">

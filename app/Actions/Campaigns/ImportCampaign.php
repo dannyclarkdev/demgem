@@ -59,6 +59,7 @@ class ImportCampaign
                 'description' => $attributes['description'],
                 'ruleset' => $attributes['ruleset']->value,
                 'timezone' => $attributes['timezone'],
+                'session_length_minutes' => $attributes['session_length_minutes'],
             ]);
 
             // Scout indexes on save, and a bulk import is the one time that is worth

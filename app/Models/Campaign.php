@@ -25,12 +25,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $description
  * @property Ruleset $ruleset
  * @property string $timezone
+ * @property int $session_length_minutes
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read CampaignMember|null $owner
  */
-#[Fillable(['name', 'description', 'ruleset', 'timezone', 'created_by'])]
+#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'created_by'])]
 class Campaign extends Model implements HasMedia
 {
     /** @use HasFactory<CampaignFactory> */
@@ -46,6 +47,7 @@ class Campaign extends Model implements HasMedia
     {
         return [
             'ruleset' => Ruleset::class,
+            'session_length_minutes' => 'integer',
         ];
     }
 
