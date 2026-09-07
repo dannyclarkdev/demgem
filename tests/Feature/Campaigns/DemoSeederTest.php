@@ -29,7 +29,7 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and($campaign->roleFor($dm))->toBe(CampaignRole::Owner)
         ->and($campaign->roleFor($player))->toBe(CampaignRole::Player)
         ->and(Entity::query()->count())->toBeGreaterThan(10)
-        ->and(GameSession::query()->count())->toBe(3)
+        ->and(GameSession::query()->count())->toBe(4)
         ->and(Encounter::query()->count())->toBe(1)
         ->and(RandomTable::query()->count())->toBe(2)
         // Two maps, one nested in the other, with half the pins revealed. A demo

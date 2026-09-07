@@ -264,7 +264,10 @@ class ExportCampaign
             ->whereNull('deleted_at')
             ->with(['scenes', 'secrets', 'entities', 'rsvps.user', 'dateOptions.votes.user'])
             ->orderBy('number')
-            ->cursor()
+            // lazy(), not cursor(): cursor() eager-loads one level and silently leaves
+            // rsvps.user and dateOptions.votes.user unloaded, which strict mode then
+            // refuses. Chunks of a hundred sessions still stream.
+            ->lazy(100)
             ->map(fn (GameSession $session) => [
                 'id' => $session->id,
                 'number' => $session->number,
