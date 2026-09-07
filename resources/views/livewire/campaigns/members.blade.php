@@ -5,6 +5,22 @@
         @endcan
     </x-ui.page-header>
 
+    <x-ui.card class="mb-4">
+        <label class="flex cursor-pointer items-start gap-3 text-sm">
+            <input type="checkbox" class="mt-0.5 size-4 rounded border-line-strong bg-canvas text-ember focus:ring-ember/30" @checked($remindersEnabled) wire:change="setReminders($event.target.checked)">
+            <span>
+                <span class="font-medium text-ink">Email me before each session</span>
+                <span class="mt-0.5 block text-xs text-ink-faint">
+                    @if ($remindersOn)
+                        This campaign sends a reminder {{ $campaign->reminderLeadLabel() }}. Say no to a session and you will not get one for it.
+                    @else
+                        Reminders are off for this campaign. A GM turns them on in settings, and this is where you decide whether you get them.
+                    @endif
+                </span>
+            </span>
+        </label>
+    </x-ui.card>
+
     <x-ui.card :padding="false">
         <ul class="divide-y divide-line">
             @foreach ($members as $member)

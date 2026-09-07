@@ -16,6 +16,9 @@ use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
 use App\Models\Scene;
 use App\Models\Secret;
+use App\Models\SessionDateOption;
+use App\Models\SessionDateVote;
+use App\Models\SessionRsvp;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
@@ -49,6 +52,9 @@ class ExportCampaign
         'scenes' => 'sessions[].scenes',
         'secrets' => 'sessions[].secrets',
         'game_session_entities' => 'sessions[].prepped',
+        'session_rsvps' => 'sessions[].attendance, by name',
+        'session_date_options' => 'sessions[].date_options',
+        'session_date_votes' => 'sessions[].date_options[].votes, by name',
         'combatants' => 'encounters[].combatants',
         'random_table_entries' => 'random_tables[].entries',
         'tags' => 'entities[].tags, by name',
@@ -156,6 +162,8 @@ class ExportCampaign
             'description' => $campaign->description,
             'ruleset' => $campaign->ruleset->value,
             'timezone' => $campaign->timezone,
+            'session_length_minutes' => $campaign->session_length_minutes,
+            'reminder_lead_hours' => $campaign->reminder_lead_hours,
             'created_at' => $campaign->created_at?->toIso8601String(),
             'updated_at' => $campaign->updated_at?->toIso8601String(),
             'cover' => $this->media($campaign->getFirstMedia('cover')),
@@ -180,6 +188,7 @@ class ExportCampaign
                 'user_id' => $member->user_id,
                 'name' => $member->user->name,
                 'role' => $member->role->value,
+                'reminders_enabled' => $member->reminders_enabled,
                 'joined_at' => $member->created_at?->toIso8601String(),
             ]);
     }
@@ -253,14 +262,18 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['scenes', 'secrets', 'entities'])
+            ->with(['scenes', 'secrets', 'entities', 'rsvps.user', 'dateOptions.votes.user'])
             ->orderBy('number')
-            ->cursor()
+            // lazy(), not cursor(): cursor() eager-loads one level and silently leaves
+            // rsvps.user and dateOptions.votes.user unloaded, which strict mode then
+            // refuses. Chunks of a hundred sessions still stream.
+            ->lazy(100)
             ->map(fn (GameSession $session) => [
                 'id' => $session->id,
                 'number' => $session->number,
                 'title' => $session->title,
                 'scheduled_at' => $session->scheduled_at?->toIso8601String(),
+                'reminder_sent_at' => $session->reminder_sent_at?->toIso8601String(),
                 'status' => $session->status->value,
                 'visibility' => $session->visibility->value,
                 'strong_start' => $session->strong_start,
@@ -288,6 +301,21 @@ class ExportCampaign
                         'entity_id' => $entity->id,
                         'role' => $entity->pivot?->getAttribute('role'),
                         'position' => $entity->pivot?->getAttribute('position'),
+                    ])->values()->all(),
+                // By name, like the members section: the file never carries a way to
+                // re-link a person, so the importer counts these and leaves them.
+                'attendance' => $session->rsvps
+                    ->map(fn (SessionRsvp $row) => [
+                        'name' => $row->user->name,
+                        'rsvp' => $row->rsvp?->value,
+                        'attended' => $row->attended,
+                    ])->values()->all(),
+                'date_options' => $session->dateOptions
+                    ->map(fn (SessionDateOption $option) => [
+                        'id' => $option->id,
+                        'starts_at' => $option->starts_at->toIso8601String(),
+                        'position' => $option->position,
+                        'votes' => $option->votes->map(fn (SessionDateVote $vote) => $vote->user->name)->values()->all(),
                     ])->values()->all(),
                 'created_at' => $session->created_at?->toIso8601String(),
                 'updated_at' => $session->updated_at?->toIso8601String(),

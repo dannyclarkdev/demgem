@@ -16,10 +16,11 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property string $campaign_id
  * @property int $user_id
  * @property CampaignRole $role
+ * @property bool $reminders_enabled
  * @property-read Campaign $campaign
  * @property-read User $user
  */
-#[Fillable(['campaign_id', 'user_id', 'role'])]
+#[Fillable(['campaign_id', 'user_id', 'role', 'reminders_enabled'])]
 class CampaignMember extends Pivot
 {
     /** @use HasFactory<CampaignMemberFactory> */
@@ -36,6 +37,7 @@ class CampaignMember extends Pivot
     {
         return [
             'role' => CampaignRole::class,
+            'reminders_enabled' => 'boolean',
         ];
     }
 

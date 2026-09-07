@@ -43,6 +43,7 @@ class Index extends Component
                     }
                 });
             })
+            ->with('rsvps')
             ->orderBy('number')
             ->get();
 

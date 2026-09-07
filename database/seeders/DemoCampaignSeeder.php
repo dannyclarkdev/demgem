@@ -19,15 +19,21 @@ use App\Actions\Entities\CreateEntity;
 use App\Actions\Maps\PlaceMarker;
 use App\Actions\Maps\SetMarkerVisibility;
 use App\Actions\RandomTables\CreateRandomTable;
+use App\Actions\Sessions\AddDateOption;
 use App\Actions\Sessions\CreateSession;
+use App\Actions\Sessions\RecordAttendance;
+use App\Actions\Sessions\RespondToSession;
+use App\Actions\Sessions\ToggleDateVote;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
 use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
+use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\GameSession;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -169,6 +175,40 @@ class DemoCampaignSeeder extends Seeder
     }
 
     /**
+     * The next game: who said they are coming, who was at the last one, a fourth
+     * session still waiting on a Thursday, and a reminder the day before.
+     */
+    private function seedScheduling(Campaign $campaign, User $dm, GameSession $played, GameSession $next): void
+    {
+        $campaign->update(['reminder_lead_hours' => 24]);
+
+        $player = $campaign->members()->where('role', CampaignRole::Player->value)->firstOrFail()->user;
+
+        app(RespondToSession::class)->handle($next, $dm, Rsvp::Yes);
+        app(RespondToSession::class)->handle($next, $player, Rsvp::Maybe);
+
+        app(RecordAttendance::class)->handle($played, $dm, true);
+        app(RecordAttendance::class)->handle($played, $player, true);
+
+        $fourth = app(CreateSession::class)->handle($campaign, $dm, [
+            'number' => 4,
+            'title' => 'What the Tide Left',
+            'scheduled_at' => null,
+            'status' => SessionStatus::Planned,
+        ]);
+
+        $add = app(AddDateOption::class);
+        $thursday = $add->handle($fourth, now()->addDays(11)->setTime(19, 0)->utc());
+        $friday = $add->handle($fourth, now()->addDays(12)->setTime(19, 0)->utc());
+        $add->handle($fourth, now()->addDays(18)->setTime(19, 0)->utc());
+
+        $vote = app(ToggleDateVote::class);
+        $vote->handle($thursday, $dm);
+        $vote->handle($friday, $dm);
+        $vote->handle($friday, $player);
+    }
+
+    /**
      * Three sessions across the loop: one recapped, one waiting on words, one prepped
      * and ready to run, with two secrets carried over from the first night.
      */
@@ -208,6 +248,8 @@ class DemoCampaignSeeder extends Seeder
             'strong_start' => 'The water in the corridor stops rising. Then it starts moving the wrong way, back down the stairs, as if something below is drinking.',
             'dm_notes' => 'Keep [[The Drowned Duke]] off screen. He is a rumour tonight, nothing more.',
         ]);
+
+        $this->seedScheduling($campaign, $dm, $second, $third);
 
         $scenes = [
             ['The corridor empties', 'The water drains toward the crypt under the [[Salt Cathedral]]. Following it is the obvious move. It is also the wrong one, and that is fine.'],

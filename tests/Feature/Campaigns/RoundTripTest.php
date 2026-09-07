@@ -81,12 +81,21 @@ function asImported(array $document, User $importer): array
         }
     }
 
+    // Loss 5: who said yes and who turned up name people the file cannot re-link.
+    foreach ($document['sessions'] as $index => $row) {
+        $document['sessions'][$index]['attendance'] = [];
+
+        foreach ($row['date_options'] ?? [] as $optionIndex => $option) {
+            $document['sessions'][$index]['date_options'][$optionIndex]['votes'] = [];
+        }
+    }
+
     // Loss 4: the dice log stays behind.
     $document['dice_rolls'] = [];
 
     // Loss 2: one member, the importer, as owner. Stated rather than blanked, because
     // "the members section is empty" would pass while the importer was not a member.
-    $document['members'] = [['name' => $importer->name, 'role' => 'owner']];
+    $document['members'] = [['name' => $importer->name, 'role' => 'owner', 'reminders_enabled' => true]];
 
     return $document;
 }

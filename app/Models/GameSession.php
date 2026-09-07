@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CampaignRole;
 use App\Enums\PrepRole;
+use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Concerns\BelongsToCampaign;
@@ -34,6 +35,7 @@ use Illuminate\Support\Str;
  * @property int $number
  * @property string|null $title
  * @property Carbon|null $scheduled_at
+ * @property Carbon|null $reminder_sent_at
  * @property SessionStatus $status
  * @property Visibility $visibility
  * @property string|null $strong_start
@@ -49,11 +51,13 @@ use Illuminate\Support\Str;
  * @property-read Campaign $campaign
  * @property-read Collection<int, Scene> $scenes
  * @property-read Collection<int, Secret> $secrets
+ * @property-read Collection<int, SessionRsvp> $rsvps
+ * @property-read Collection<int, SessionDateOption> $dateOptions
  * @property-read Collection<int, Entity> $entities
  */
 #[ObservedBy([GameSessionObserver::class])]
 #[Fillable([
-    'campaign_id', 'number', 'title', 'scheduled_at', 'status', 'visibility',
+    'campaign_id', 'number', 'title', 'scheduled_at', 'reminder_sent_at', 'status', 'visibility',
     'strong_start', 'live_notes', 'recap', 'recap_published_at', 'dm_notes',
     'created_by', 'updated_by',
 ])]
@@ -72,6 +76,7 @@ class GameSession extends Model
         return [
             'number' => 'integer',
             'scheduled_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
             'recap_published_at' => 'datetime',
             'status' => SessionStatus::class,
             'visibility' => Visibility::class,
@@ -122,6 +127,64 @@ class GameSession extends Model
     public function prepped(PrepRole $role): BelongsToMany
     {
         return $this->entities()->wherePivot('role', $role->value);
+    }
+
+    /**
+     * @return HasMany<SessionRsvp, $this>
+     */
+    public function rsvps(): HasMany
+    {
+        return $this->hasMany(SessionRsvp::class);
+    }
+
+    /**
+     * @return HasMany<SessionDateOption, $this>
+     */
+    public function dateOptions(): HasMany
+    {
+        return $this->hasMany(SessionDateOption::class)->orderBy('position');
+    }
+
+    /**
+     * A planned session with no date is the poll. Options left behind on a dated
+     * session are shown with a notice rather than pretending to be one.
+     */
+    public function isPolling(): bool
+    {
+        return $this->status === SessionStatus::Planned && $this->scheduled_at === null;
+    }
+
+    /**
+     * A dated, planned session is the only kind a member can answer about. A played
+     * one is for attendance, and a cancelled one shows what was said and takes no more.
+     */
+    /**
+     * "2 yes · 1 maybe", from the loaded answers. Empty when nobody has answered.
+     * The "not answered" count needs the member list, so it lives on the card.
+     */
+    public function rsvpSummary(): string
+    {
+        $parts = [];
+
+        foreach (Rsvp::cases() as $case) {
+            $count = $this->rsvps->filter(fn (SessionRsvp $row) => $row->rsvp === $case)->count();
+
+            if ($count > 0) {
+                $parts[] = $count.' '.strtolower($case->label());
+            }
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    public function rsvpOf(User $user): ?Rsvp
+    {
+        return $this->rsvps->firstWhere('user_id', $user->id)?->rsvp;
+    }
+
+    public function acceptsRsvps(): bool
+    {
+        return $this->status === SessionStatus::Planned && $this->scheduled_at !== null;
     }
 
     /**

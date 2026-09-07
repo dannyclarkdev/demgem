@@ -43,3 +43,8 @@ The format policy, settled in slice 9: adding a key to `demgem.campaign` does no
 `archive_path` landed on media objects under that rule, so slice 8's importer reads a slice 9 archive's document perfectly well and an older demgem ignores the key it has never heard of.
 
 `forArchive()` returns a CLONE rather than setting a flag. ExportCampaign is resolved from the container, and a flag left on a shared instance would leak archive_path into a plain JSON download, which must stay byte-for-byte what it has been since slice 4. Two tests hold that line, one of them by running an archive export first and then a plain one.
+
+## Nested eager loads need lazy(), not cursor()
+`Builder::cursor()` eager-loads one level and silently leaves `rsvps.user` and `dateOptions.votes.user` unloaded, which strict mode refuses the first time an export meets a real campaign. It passed every unit test and failed on the seeded world. The sessions section streams through `->lazy(100)`, which loads nested relations per chunk. Use the same the next time a section needs a relation of a relation.
+
+The RSVPs, poll votes and attendance are exported by member name, like the members section, and the importer counts them into `ImportReport::$answers` and leaves them: the file cannot say who a person is on this install. The candidate times themselves come across, because they are dates rather than people.

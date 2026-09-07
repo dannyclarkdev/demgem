@@ -11,6 +11,7 @@ use App\Enums\QuestStatus;
 use App\Enums\Ruleset;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
+use App\Models\Campaign;
 use BackedEnum;
 use Illuminate\Support\Str;
 use JsonException;
@@ -124,8 +125,23 @@ class ReadCampaignFile
             'description' => $this->text($row, 'description', 2000),
             'ruleset' => $this->enum(Ruleset::class, $row, 'ruleset', 'the campaign') ?? Ruleset::cases()[0],
             'timezone' => $this->text($row, 'timezone', 64) ?? 'UTC',
+            'session_length_minutes' => min(720, max(30, $this->integer($row, 'session_length_minutes') ?? 240)),
+            'reminder_lead_hours' => $this->reminderLead($row),
             'cover' => $this->mediaReference($row['cover'] ?? null),
         ];
+    }
+
+    /**
+     * Only the values the settings screen offers. Anything else means off, which is
+     * the hidden direction for a feature that sends email.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function reminderLead(array $row): ?int
+    {
+        $hours = $this->integer($row, 'reminder_lead_hours');
+
+        return $hours !== null && array_key_exists((string) $hours, Campaign::reminderLeadOptions()) ? $hours : null;
     }
 
     /**
@@ -289,6 +305,7 @@ class ReadCampaignFile
                 'number' => $number,
                 'title' => $this->text($row, 'title', 120),
                 'scheduled_at' => $this->text($row, 'scheduled_at', 40),
+                'reminder_sent_at' => $this->text($row, 'reminder_sent_at', 40),
                 'status' => $this->enum(SessionStatus::class, $row, 'status', "session {$number}") ?? SessionStatus::cases()[0],
                 'visibility' => $this->sessionVisibility($row, $number),
                 'strong_start' => $this->text($row, 'strong_start', 100_000),
@@ -299,6 +316,7 @@ class ReadCampaignFile
                 'scenes' => $this->scenes($row),
                 'secrets' => $this->secrets($row),
                 'prepped' => $this->prepped($row),
+                'date_options' => $this->dateOptions($row, $number),
             ];
         }
 
@@ -321,6 +339,37 @@ class ReadCampaignFile
         }
 
         return $visibility;
+    }
+
+    /**
+     * The candidate times come across; the votes on them name people and are
+     * counted into the same loss as the RSVPs.
+     *
+     * @param  array<string, mixed>  $row
+     * @return list<array{starts_at: string, position: int}>
+     */
+    private function dateOptions(array $row, int $number): array
+    {
+        $options = [];
+
+        foreach ($this->list($row, 'date_options') as $index => $option) {
+            $startsAt = $this->text($option, 'starts_at', 40);
+
+            if ($startsAt === null) {
+                $this->errors[] = "A candidate time on session {$number} has no time.";
+
+                continue;
+            }
+
+            $this->report->answers += count($this->list($option, 'votes'));
+
+            $options[] = [
+                'starts_at' => $startsAt,
+                'position' => $this->integer($option, 'position') ?? $index,
+            ];
+        }
+
+        return $options;
     }
 
     /**
@@ -525,6 +574,10 @@ class ReadCampaignFile
     private function countTheUncarried(array $decoded): void
     {
         $this->report->diceRolls = count($this->list($decoded, 'dice_rolls'));
+
+        foreach ($this->list($decoded, 'sessions') as $session) {
+            $this->report->answers += count($this->list($session, 'attendance'));
+        }
 
         foreach ($this->list($decoded, 'members') as $member) {
             $name = $this->text($member, 'name', 120);
