@@ -6,6 +6,7 @@ use App\Enums\EntityType;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\User;
+use App\Support\CurrentCampaign;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -120,4 +121,38 @@ function aCampaignWithPictures(): Campaign
 function ownerOf(Campaign $campaign): User
 {
     return $campaign->owner()->firstOrFail()->user;
+}
+
+/**
+ * A bearer token for the API tests. Read-only unless asked, the way the profile makes them.
+ */
+function apiKeyFor(User $user, bool $write = false): string
+{
+    return $user->createToken('test', $write ? ['read', 'write'] : ['read'])->plainTextToken;
+}
+
+/**
+ * The next request, made with this user's key and nothing else.
+ *
+ * One test app serves every request in a test, so the guard still holds the last
+ * request's user and CurrentCampaign still holds its campaign. Both are forgotten
+ * here, which is what a fresh process does for free in production.
+ */
+function asKey(User $user, bool $write = false): TestCase
+{
+    app('auth')->forgetGuards();
+    app(CurrentCampaign::class)->clear();
+
+    return test()->withToken(apiKeyFor($user, $write));
+}
+
+/**
+ * The next request with no credential at all.
+ */
+function withoutKey(): TestCase
+{
+    app('auth')->forgetGuards();
+    app(CurrentCampaign::class)->clear();
+
+    return test()->flushHeaders();
 }

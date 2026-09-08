@@ -27,13 +27,14 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string $timezone
  * @property int $session_length_minutes
  * @property int|null $reminder_lead_hours
+ * @property string|null $discord_webhook_url Decrypted on read. Never exported.
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read CampaignMember|null $owner
  * @property-read Calendar|null $calendar
  */
-#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'created_by'])]
+#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'discord_webhook_url', 'created_by'])]
 class Campaign extends Model implements HasMedia
 {
     /** @use HasFactory<CampaignFactory> */
@@ -51,6 +52,7 @@ class Campaign extends Model implements HasMedia
             'ruleset' => Ruleset::class,
             'session_length_minutes' => 'integer',
             'reminder_lead_hours' => 'integer',
+            'discord_webhook_url' => 'encrypted',
         ];
     }
 

@@ -28,6 +28,8 @@ Slice 11 is done: **relationships**. A typed link between two entities with a la
 
 Slice 12 is done: **the world's own calendar**. A GM names the months, sets the week, hangs a moon or two, adds a leap rule and an era, and says what day it is; every member reads today on the dashboard and on a month grid with the moons on every day. An event is an entity with a day. A session carries the days the party spent in the world. The timeline lists every dated event and session the viewer may see, in world order, with a marker for today. The calendar and every date travel in the export and the Markdown front matter.
 
+Slice 13 is done: **a key, an API, and the party's channel**. A user mints a named API key from their profile, read-only or read and write, shown once and revoked with a click. `/api/v1` serves the campaigns that key belongs to, the entities and sessions its role may see, search, and the same writes a GM makes on screen, gated by the same scopes and policies as every page. A campaign can hold one Discord webhook, and when a recap is published or a reminder goes out the channel gets one line and a link, never the prose.
+
 ## Local setup
 
 Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.
@@ -135,6 +137,8 @@ MAIL_FROM_ADDRESS=demgem@example.com
 
 The compose stack runs the scheduler for you. Outside Docker, run `php artisan schedule:work` beside the queue worker, or add `php artisan schedule:run` to cron every minute. To see what would go out right now, run `php artisan demgem:send-reminders` by hand.
 
+**Discord.** A GM pastes a channel's webhook URL into campaign settings and sends a test message. From then on the channel gets one line when a recap is published and one when a reminder goes out: the campaign, the session, and a link. Never the recap itself. The URL is stored encrypted and never exported, and the server only ever posts to `discord.com`; any other address is refused when it is pasted.
+
 Every session you can see is also available as a calendar feed. Get the link from your profile and subscribe to it in Google Calendar, Apple Calendar, or Outlook; it covers every campaign you belong to, and the times land in your own timezone. The feed carries the session's number, title, and campaign, and never its prep or recap.
 
 ## Take your data with you
@@ -153,6 +157,31 @@ php artisan demgem:import path/to/campaign.json --user=you@example.com
 ```
 
 The importer validates the whole file before it writes a row, remaps every id, and reports what it could not carry before the GM commits. It never fetches a URL found in the file and never uses a string from the archive as a path, so an untrusted file cannot reach the network or the disk. Four things stay behind on purpose: the members, because the file carries no email addresses, so the GM invites the party again; the viewer lists on entities shown to selected players, which import as GM-only rather than guess wider; the dice log, because the file cannot say who rolled; and the answers about sessions, who said yes and who turned up, for the same reason.
+
+## The API
+
+Every screen's data, in JSON, for a script or an assistant. Get a key from your profile: it reads what you can read in every campaign you belong to, and writes what you can write if you ticked **Can write** when you made it. Send it as a bearer token.
+
+```sh
+curl -H "Authorization: Bearer $DEMGEM_KEY" https://demgem.example/api/v1/me
+```
+
+| Method and path | What it does |
+|---|---|
+| `GET /api/v1/me` | You, and the campaigns you belong to with your role in each. |
+| `GET /api/v1/campaigns` | The same campaigns, with each calendar's current date. |
+| `GET /api/v1/campaigns/{id}` | One campaign. |
+| `GET /api/v1/campaigns/{id}/entities` | Every entity you may see. Filter with `type=locations`, `tag=harbor`, or `q=bell`. Fifty a page. |
+| `GET /api/v1/campaigns/{id}/entities/{entityId}` | One entity with its parent, children, and relationships, each through its own visibility gate. |
+| `GET /api/v1/campaigns/{id}/search?q=` | Full-text search over what you may see. |
+| `GET /api/v1/campaigns/{id}/sessions` | Every session you may see. A player gets the schedule and the published recap; a GM gets the prep too. |
+| `GET /api/v1/campaigns/{id}/sessions/{number}` | One session, with scenes, secrets, and prepped entities for GM roles. |
+| `POST /api/v1/campaigns/{id}/entities` | Create an entity. GM roles, write key. |
+| `PATCH /api/v1/campaigns/{id}/entities/{entityId}` | Change one. GM roles on anything; a player on their own PC's body and record. |
+| `PATCH /api/v1/campaigns/{id}/sessions/{number}` | Change a session's title, status, and notes. GM roles, write key. |
+| `POST /api/v1/campaigns/{id}/sessions/{number}/publish-recap` | Publish the recap, and save a new one on the way if you send `recap`. |
+
+The API creates and changes; it never deletes. A field your key may not set comes back as a 422 that names it, not a silent drop. Sixty requests a minute per key. A campaign you are not a member of is a 404, the same as on the web.
 
 ## Commands
 
@@ -181,6 +210,8 @@ The importer validates the whole file before it writes a row, remaps every id, a
 - **Never bake a deploy-specific value into the Vite bundle.** The layout renders the websocket settings and the bundle reads them at runtime, so one built image serves any host.
 - **Every list of sessions goes through `GameSession::visibleTo()`.** Index, dashboard cards, sidebar count, and the "Appears in sessions" panel on an entity.
 - **A session's prep is GM-only.** Strong start, scenes, secrets, live notes, GM notes, and an unpublished recap. Only a published recap on a visible session reaches a player.
+- **The API is the screens in JSON.** Every list goes through the same scope the page uses; every resource under `App\Http\Resources\Api` reads the viewer's role from `CurrentCampaign` and leaves a GM-only key out rather than nulling it; every write calls the action the form calls, behind the same policy. A new endpoint gets the leak tests its screen has, asserted on the JSON.
+- **The server posts to Discord and to nothing else.** `DiscordWebhook` is the one place the host rule is spelled. A URL the server will request is validated there before it is stored, and a second destination is a change to that class with its own allow-list, never a field that takes any URL.
 - **Markdown renders through `MarkdownRenderer` only.** Raw HTML is stripped and unsafe links are blocked there.
 - **`entities.sheet_url` is the one user URL rendered as an `href` outside the renderer.** It is validated with `url:http,https` at write time and rendered with `rel="noopener noreferrer nofollow"`. A second such field needs the same two things.
 - **A new campaign-scoped table joins the export in the same commit that creates it.** Give it a section in `ExportCampaign`, nest it in one, or write down why it stays behind. `ExportCoverageTest` reads the schema and fails until you do.

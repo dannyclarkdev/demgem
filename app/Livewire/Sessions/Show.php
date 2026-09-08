@@ -3,6 +3,7 @@
 namespace App\Livewire\Sessions;
 
 use App\Actions\Sessions\DeleteSession;
+use App\Actions\Sessions\PublishRecap;
 use App\Actions\Sessions\UpdateSession;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
@@ -58,7 +59,7 @@ class Show extends Component
      * The recap is published on purpose, never as a side effect of marking a session
      * played. A GM sets the status at the table and writes the recap the next day.
      */
-    public function publishRecap(UpdateSession $updateSession): void
+    public function publishRecap(PublishRecap $publishRecap): void
     {
         $this->authorize('publishRecap', $this->session);
 
@@ -68,10 +69,7 @@ class Show extends Component
             return;
         }
 
-        $updateSession->handle($this->session, $this->user(), [
-            'recap' => $this->recap,
-            'recap_published_at' => now(),
-        ]);
+        $publishRecap->handle($this->session, $this->user(), $this->recap);
 
         session()->flash('status', 'The party can read the recap now.');
     }

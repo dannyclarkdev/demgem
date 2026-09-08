@@ -39,6 +39,22 @@
         </form>
     </x-ui.card>
 
+    <x-ui.card title="Discord">
+        <p class="text-sm text-ink-muted">
+            When a recap is published and when a reminder goes out, the channel gets one line and a link.
+            Never the recap itself: the channel's members are not always the campaign's.
+        </p>
+        <form wire:submit="saveDiscord" class="mt-4 space-y-3">
+            <x-ui.input label="Webhook URL" name="discordWebhookUrl" wire:model="discordWebhookUrl" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" hint="In Discord: channel settings, Integrations, Webhooks, New Webhook, Copy Webhook URL. Anyone holding it can post to the channel, so it is stored encrypted and never exported. Leave it empty to disconnect." />
+            <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                @if ($campaign->discord_webhook_url !== null)
+                    <x-ui.button type="button" variant="ghost" icon="zap" wire:click="sendDiscordTest" wire:loading.attr="disabled">Send a test message</x-ui.button>
+                @endif
+                <x-ui.button type="submit" variant="secondary" wire:loading.attr="disabled">Save</x-ui.button>
+            </div>
+        </form>
+    </x-ui.card>
+
     <x-ui.card title="Export">
         <p class="text-sm text-ink-muted">
             Everything in this campaign: every entity with its GM notes, every session with its prep, secrets,
