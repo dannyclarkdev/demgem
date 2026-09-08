@@ -251,6 +251,7 @@ class ExportCampaign
                 'sheet_url' => $entity->sheet_url,
                 'quest_status' => $entity->quest_status?->value,
                 'giver_entity_id' => $entity->giver_entity_id,
+                'happens_on' => $entity->happens_on?->toArray(),
                 'tags' => $entity->tags->pluck('name')->values()->all(),
                 'viewer_user_ids' => $entity->viewers->pluck('id')->values()->all(),
                 'objectives' => $entity->objectives
@@ -311,6 +312,8 @@ class ExportCampaign
                 'number' => $session->number,
                 'title' => $session->title,
                 'scheduled_at' => $session->scheduled_at?->toIso8601String(),
+                'in_game_start' => $session->in_game_start?->toArray(),
+                'in_game_end' => $session->in_game_end?->toArray(),
                 'reminder_sent_at' => $session->reminder_sent_at?->toIso8601String(),
                 'status' => $session->status->value,
                 'visibility' => $session->visibility->value,

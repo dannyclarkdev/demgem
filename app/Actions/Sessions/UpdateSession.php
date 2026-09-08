@@ -18,7 +18,7 @@ class UpdateSession
         return DB::transaction(function () use ($session, $actor, $data): GameSession {
             $attributes = collect($data)
                 ->only([
-                    'number', 'title', 'scheduled_at', 'status', 'visibility',
+                    'number', 'title', 'scheduled_at', 'in_game_start', 'in_game_end', 'status', 'visibility',
                     'strong_start', 'live_notes', 'recap', 'recap_published_at', 'dm_notes',
                 ])
                 ->all();

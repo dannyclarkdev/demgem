@@ -10,10 +10,13 @@ use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\User;
 use App\Rules\UniqueEntityName;
+use App\Support\Reckoning\Bounds;
+use App\Support\Reckoning\GameDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -69,6 +72,14 @@ class Form extends Component
 
     public string $quest_status = '';
 
+    /**
+     * An event's day in the world, three parts, all blank or all set. Only an event
+     * has one, and the fields only show when the campaign has a calendar.
+     *
+     * @var array{year: int|string, month: int|string, day: int|string}
+     */
+    public array $happensOn = ['year' => '', 'month' => '', 'day' => ''];
+
     public string $giver_entity_id = '';
 
     public string $rewards = '';
@@ -116,6 +127,7 @@ class Form extends Component
         $this->body = $entity->body ?? '';
         $this->tags = $entity->tags->pluck('name')->implode(', ');
         $this->custom_fields = $entity->customFields();
+        $this->happensOn = $entity->happens_on?->toArray() ?? $this->happensOn;
 
         // The character record is not a DM field: a player edits their own PC, so these
         // three load for anybody who passed the update check above.
@@ -160,6 +172,11 @@ class Form extends Component
     private function isHandout(): bool
     {
         return $this->entityType === EntityType::Handout;
+    }
+
+    private function isEvent(): bool
+    {
+        return $this->entityType === EntityType::Event;
     }
 
     /**
@@ -222,6 +239,20 @@ class Form extends Component
         // on their own PC. sheet_url is the one user URL in the app rendered as an href
         // outside MarkdownRenderer, and url:http,https is what stops javascript: from
         // becoming a link the whole party can click.
+        // A date means something on an event only, and the part rules are the loose
+        // ones: whether the calendar can place the day is checked after, so the error
+        // can name the month.
+        $rules += $this->isEvent()
+            ? [
+                'happensOn' => ['array'],
+                'happensOn.year' => ['nullable', 'integer', 'min:'.Bounds::MIN_YEAR, 'max:'.Bounds::MAX_YEAR],
+                'happensOn.month' => ['nullable', 'integer', 'min:1', 'max:'.Bounds::MAX_MONTHS],
+                'happensOn.day' => ['nullable', 'integer', 'min:1', 'max:'.Bounds::MAX_DAYS],
+            ]
+            : [
+                'happensOn' => [Rule::prohibitedIf(fn (): bool => $this->happensOn !== ['year' => '', 'month' => '', 'day' => ''])],
+            ];
+
         $rules += $this->isCharacter()
             ? [
                 'character_class' => ['nullable', 'string', 'max:60'],
@@ -273,6 +304,12 @@ class Form extends Component
 
         $validated = $this->validate($rules);
 
+        $happensOn = $this->isEvent() ? $this->happensOnDate() : null;
+
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+
         if ($this->isHandout() && $this->fileCountAfterSave() > Entity::MAX_FILES) {
             $this->addError('files', 'A handout carries at most '.Entity::MAX_FILES.' files. Remove one first.');
 
@@ -297,6 +334,10 @@ class Form extends Component
             'tags' => $this->parseTags($validated['tags'] ?? ''),
             'custom_fields' => $this->parseCustomFields($validated['custom_fields'] ?? []),
         ];
+
+        if ($this->isEvent()) {
+            $data['happens_on'] = $happensOn;
+        }
 
         if ($this->isCharacter()) {
             $data += [
@@ -436,6 +477,8 @@ class Form extends Component
             'isQuest' => $this->isQuest(),
             'isMap' => $this->isMap(),
             'isHandout' => $this->isHandout(),
+            'isEvent' => $this->isEvent(),
+            'months' => $this->isEvent() ? (Calendar::query()->first()?->reckoning()->months ?? []) : [],
             'existingFiles' => $this->isHandout() ? ($this->entity?->files() ?? collect()) : collect(),
             'maxFiles' => Entity::MAX_FILES,
             'questStatuses' => QuestStatus::cases(),
@@ -505,6 +548,50 @@ class Form extends Component
         }
 
         return $this->user()->can('updateDmFields', $this->entity);
+    }
+
+    /**
+     * The event's day, or null when every part is blank. A part missing or a day the
+     * month lacks lands its error on the field.
+     */
+    private function happensOnDate(): ?GameDate
+    {
+        $parts = $this->happensOn;
+
+        if ($parts['year'] === '' && $parts['month'] === '' && $parts['day'] === '') {
+            return null;
+        }
+
+        foreach (['year', 'month', 'day'] as $part) {
+            if ($parts[$part] === '') {
+                $this->addError('happensOn.'.$part, 'Fill in the day, the month, and the year, or leave all three blank.');
+
+                return null;
+            }
+        }
+
+        $date = new GameDate((int) $parts['year'], (int) $parts['month'], (int) $parts['day']);
+        $reckoning = Calendar::query()->first()?->reckoning();
+
+        if ($reckoning === null) {
+            $this->addError('happensOn.day', 'This campaign has no calendar to place that day in.');
+
+            return null;
+        }
+
+        if (! $reckoning->hasMonth($date->month)) {
+            $this->addError('happensOn.month', 'That month is not in this calendar.');
+
+            return null;
+        }
+
+        if (! $reckoning->isValid($date)) {
+            $this->addError('happensOn.day', $reckoning->monthName($date->month).' has '.$reckoning->daysInMonth($date->month, $date->year).' days that year.');
+
+            return null;
+        }
+
+        return $date;
     }
 
     private function user(): User

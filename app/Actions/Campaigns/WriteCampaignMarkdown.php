@@ -12,6 +12,7 @@ use App\Models\RandomTableEntry;
 use App\Models\Scene;
 use App\Models\Secret;
 use App\Models\SessionRsvp;
+use App\Support\Reckoning\Reckoning;
 
 /**
  * The campaign as a folder of Markdown, for Obsidian and for reading.
@@ -28,11 +29,19 @@ use App\Models\SessionRsvp;
 class WriteCampaignMarkdown
 {
     /**
+     * The world's reckoning, for printing dates. Set per handle() call, because the
+     * writer is resolved from the container and a campaign's calendar is its own.
+     */
+    private ?Reckoning $reckoning = null;
+
+    /**
      * @return array<string, string> archive entry => file contents
      */
     public function handle(Campaign $campaign): array
     {
         $files = [];
+
+        $this->reckoning = $campaign->calendar?->reckoning();
 
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
@@ -99,6 +108,10 @@ class WriteCampaignMarkdown
             $matter['level'] = (string) $entity->level;
         }
 
+        if ($entity->happens_on !== null && $this->reckoning !== null) {
+            $matter['happens_on'] = $this->reckoning->format($entity->happens_on);
+        }
+
         $body = [$entity->body];
 
         if ($entity->objectives->isNotEmpty()) {
@@ -140,6 +153,14 @@ class WriteCampaignMarkdown
 
         if ($session->scheduled_at !== null) {
             $matter['scheduled'] = $session->scheduled_at->toIso8601String();
+        }
+
+        if ($session->in_game_start !== null && $this->reckoning !== null) {
+            $matter['in_game_start'] = $this->reckoning->format($session->in_game_start);
+        }
+
+        if ($session->in_game_end !== null && $this->reckoning !== null) {
+            $matter['in_game_end'] = $this->reckoning->format($session->in_game_end);
         }
 
         $attended = $session->rsvps

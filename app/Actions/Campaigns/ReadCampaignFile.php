@@ -138,6 +138,40 @@ class ReadCampaignFile
     }
 
     /**
+     * A day in the world, or null. Checked against the bounds only, never against the
+     * calendar: the calendar may itself have been dropped, and a date the months
+     * cannot place still prints as "4 month 13, 1042". A date the bounds refuse is
+     * dropped and counted.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function gameDate(array $row, string $key): ?GameDate
+    {
+        $value = $row[$key] ?? null;
+
+        if ($value === null) {
+            return null;
+        }
+
+        $date = is_array($value) ? new GameDate(
+            $this->integer($value, 'year') ?? 0,
+            $this->integer($value, 'month') ?? 0,
+            $this->integer($value, 'day') ?? 0,
+        ) : null;
+
+        if ($date === null
+            || $date->year < Bounds::MIN_YEAR || $date->year > Bounds::MAX_YEAR
+            || $date->month < 1 || $date->month > Bounds::MAX_MONTHS
+            || $date->day < 1 || $date->day > Bounds::MAX_DAYS) {
+            $this->report->truncated++;
+
+            return null;
+        }
+
+        return $date;
+    }
+
+    /**
      * The world's calendar, or null. Every number goes through Bounds, and a calendar
      * whose shape does not hold, no months, a date the months cannot place, is
      * dropped and counted rather than fatal: the campaign is the point.
@@ -292,6 +326,7 @@ class ReadCampaignFile
                 'sheet_url' => $this->url($row, 'sheet_url'),
                 'quest_status' => $this->optionalEnum(QuestStatus::class, $row, 'quest_status', "entity {$id}"),
                 'giver_entity_id' => $this->reference($row, 'giver_entity_id'),
+                'happens_on' => $this->gameDate($row, 'happens_on'),
                 'tags' => $this->strings($row, 'tags', 60),
                 'objectives' => $this->objectives($row),
                 'markers' => $this->markers($row),
@@ -423,6 +458,8 @@ class ReadCampaignFile
                 'number' => $number,
                 'title' => $this->text($row, 'title', 120),
                 'scheduled_at' => $this->text($row, 'scheduled_at', 40),
+                'in_game_start' => $this->gameDate($row, 'in_game_start'),
+                'in_game_end' => $this->gameDate($row, 'in_game_end'),
                 'reminder_sent_at' => $this->text($row, 'reminder_sent_at', 40),
                 'status' => $this->enum(SessionStatus::class, $row, 'status', "session {$number}") ?? SessionStatus::cases()[0],
                 'visibility' => $this->sessionVisibility($row, $number),

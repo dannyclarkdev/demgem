@@ -7,6 +7,7 @@ use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\GameSession;
 use App\Models\User;
+use App\Support\Reckoning\GameDate;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,8 @@ class CreateSession
      *     number?: int|null,
      *     title?: string|null,
      *     scheduled_at?: Carbon|null,
+     *     in_game_start?: GameDate|null,
+     *     in_game_end?: GameDate|null,
      *     status?: SessionStatus,
      *     visibility?: Visibility,
      * }  $data
@@ -72,6 +75,8 @@ class CreateSession
             'number' => $number ?? $this->nextNumber($campaign),
             'title' => $data['title'] ?? null,
             'scheduled_at' => $data['scheduled_at'] ?? null,
+            'in_game_start' => $data['in_game_start'] ?? null,
+            'in_game_end' => $data['in_game_end'] ?? null,
             'status' => $data['status'] ?? SessionStatus::Planned,
             'visibility' => $data['visibility'] ?? Visibility::Players,
             'created_by' => $actor->id,

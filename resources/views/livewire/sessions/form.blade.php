@@ -29,6 +29,13 @@
                 </x-ui.select>
             </div>
 
+            @if ($months !== [])
+                <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                    <x-ui.game-date name="inGameStart" :months="$months" label="In the world, from" hint="The day the session began, in the world's calendar." />
+                    <x-ui.game-date name="inGameEnd" :months="$months" label="To" hint="Leave it blank for a session that ended the same day." />
+                </div>
+            @endif
+
             <div class="mt-5">
                 <x-ui.select label="Who can see this session" name="visibility" wire:model.live="visibility">
                     @foreach ($visibilities as $option)

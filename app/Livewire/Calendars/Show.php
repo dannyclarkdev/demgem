@@ -4,9 +4,13 @@ namespace App\Livewire\Calendars;
 
 use App\Actions\Calendars\AdvanceDate;
 use App\Actions\Calendars\SetCurrentDate;
+use App\Enums\EntityType;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Calendar;
 use App\Models\Campaign;
+use App\Models\Entity;
+use App\Models\GameSession;
+use App\Models\User;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use App\Support\Reckoning\MoonReading;
@@ -150,16 +154,37 @@ class Show extends Component
             'weekdays' => $reckoning->weekdays,
             'leadingBlanks' => $reckoning->weekdayIndex($first) ?? 0,
             'days' => $this->days($reckoning, $year, $month, $today),
+            'timelineUrl' => route('timeline', $this->campaign),
         ]);
     }
 
     /**
      * One cell per day of the month on screen.
      *
-     * @return list<array{day: int, date: GameDate, isToday: bool, moons: list<MoonReading>}>
+     * The events and sessions come from two gated queries for the month, one each,
+     * and are dealt onto the days here. The view never asks who may see a row.
+     *
+     * @return list<array{day: int, date: GameDate, isToday: bool, moons: list<MoonReading>, events: list<Entity>, sessions: list<GameSession>}>
      */
     private function days(Reckoning $reckoning, int $year, int $month, GameDate $today): array
     {
+        $events = Entity::query()
+            ->ofType(EntityType::Event)
+            ->visibleTo($this->user(), $this->role())
+            ->where('happens_year', $year)
+            ->where('happens_month', $month)
+            ->orderBy('name')
+            ->get()
+            ->groupBy('happens_day');
+
+        $sessions = GameSession::query()
+            ->visibleTo($this->role())
+            ->where('in_game_start_year', $year)
+            ->where('in_game_start_month', $month)
+            ->orderBy('number')
+            ->get()
+            ->groupBy('in_game_start_day');
+
         $days = [];
 
         for ($day = 1; $day <= $reckoning->daysInMonth($month, $year); $day++) {
@@ -170,10 +195,20 @@ class Show extends Component
                 'date' => $date,
                 'isToday' => $date->equals($today),
                 'moons' => $reckoning->phases($date),
+                'events' => $events->get($day, collect())->all(),
+                'sessions' => $sessions->get($day, collect())->all(),
             ];
         }
 
         return $days;
+    }
+
+    private function user(): User
+    {
+        /** @var User $user */
+        $user = auth()->user();
+
+        return $user;
     }
 
     private function shiftMonth(int $by): void

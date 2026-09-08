@@ -10,6 +10,7 @@ use App\Enums\EntityType;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Clock;
 use App\Models\Entity;
@@ -107,6 +108,7 @@ class Show extends Component
             'dmNotesHtml' => $role->isDm() ? $renderer->render($this->entity->dm_notes, $wikiLinks) : null,
             'rewardsHtml' => $this->entity->isQuest() ? $renderer->render($this->entity->rewards, $wikiLinks) : '',
             'questStatus' => $this->entity->questStatus(),
+            'happensOn' => $this->entity->happens_on === null ? null : Calendar::query()->first()?->reckoning()->format($this->entity->happens_on),
             'giver' => $this->visibleGiver($user, $role),
             'pinnedOn' => $this->mapsPinningThis($user, $role),
             // A handout's attachments. Eager-loaded, because strict mode is on and the

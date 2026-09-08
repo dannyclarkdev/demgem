@@ -7,13 +7,19 @@ use App\Actions\Sessions\UpdateSession;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\GameSession;
 use App\Models\User;
+use App\Support\Reckoning\Bounds;
+use App\Support\Reckoning\GameDate;
+use App\Support\Reckoning\Reckoning;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator as ValidatorInstance;
 use Livewire\Component;
 
 class Form extends Component
@@ -27,6 +33,17 @@ class Form extends Component
     public string $title = '';
 
     public string $scheduled_at = '';
+
+    /**
+     * The days the party spent in the world. Three parts each, all blank or all set;
+     * the fields only show when the campaign has a calendar.
+     *
+     * @var array{year: int|string, month: int|string, day: int|string}
+     */
+    public array $inGameStart = ['year' => '', 'month' => '', 'day' => ''];
+
+    /** @var array{year: int|string, month: int|string, day: int|string} */
+    public array $inGameEnd = ['year' => '', 'month' => '', 'day' => ''];
 
     public string $status = SessionStatus::Planned->value;
 
@@ -53,6 +70,8 @@ class Form extends Component
         $this->number = (string) $session->number;
         $this->title = $session->title ?? '';
         $this->scheduled_at = $session->scheduledAtIn($campaign->timezone)?->format('Y-m-d\TH:i') ?? '';
+        $this->inGameStart = $session->in_game_start?->toArray() ?? $this->inGameStart;
+        $this->inGameEnd = $session->in_game_end?->toArray() ?? $this->inGameEnd;
         $this->status = $session->status->value;
         $this->visibility = $session->visibility->value;
     }
@@ -82,8 +101,22 @@ class Form extends Component
             'visibility' => ['required', Rule::enum(Visibility::class)->only([Visibility::Dm, Visibility::Players])],
         ]);
 
+        $reckoning = $this->reckoning();
+        $start = $reckoning === null ? null : $this->gameDate('inGameStart', $reckoning);
+        $end = $reckoning === null ? null : $this->gameDate('inGameEnd', $reckoning);
+
+        if ($reckoning !== null && $start !== null && $end !== null && $end->isBefore($start)) {
+            $this->addError('inGameEnd.day', 'The session cannot end before it starts.');
+        }
+
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+
         $data = [
             'number' => (int) $validated['number'],
+            'in_game_start' => $start,
+            'in_game_end' => $start === null ? null : $end,
             'title' => filled($validated['title']) ? trim((string) $validated['title']) : null,
             'scheduled_at' => filled($validated['scheduled_at'])
                 ? Carbon::parse((string) $validated['scheduled_at'], $this->campaign->timezone)->utc()
@@ -109,12 +142,62 @@ class Form extends Component
 
     public function render(): View
     {
+        $reckoning = $this->reckoning();
+
         return view('livewire.sessions.form', [
+            'months' => $reckoning === null ? [] : $reckoning->months,
             'isEdit' => $this->session !== null,
             'statuses' => SessionStatus::cases(),
             'visibilities' => [Visibility::Players, Visibility::Dm],
             'timezone' => $this->campaign->timezone,
         ])->title($this->session !== null ? 'Edit session' : 'New session');
+    }
+
+    /**
+     * One of the two date fields, checked against the calendar. All blank is null;
+     * anything else has to be a whole date the calendar can place, and a part that
+     * fails lands its error on its own input.
+     */
+    private function gameDate(string $field, Reckoning $reckoning): ?GameDate
+    {
+        $parts = $this->{$field};
+
+        if (($parts['year'] ?? '') === '' && ($parts['month'] ?? '') === '' && ($parts['day'] ?? '') === '') {
+            return null;
+        }
+
+        $validator = Validator::make([$field => $parts], [
+            $field.'.year' => ['required', 'integer', 'min:'.Bounds::MIN_YEAR, 'max:'.Bounds::MAX_YEAR],
+            $field.'.month' => ['required', 'integer', 'min:1', 'max:'.$reckoning->monthCount()],
+            $field.'.day' => ['required', 'integer', 'min:1', 'max:'.Bounds::MAX_DAYS],
+        ], [
+            $field.'.*.required' => 'Fill in the day, the month, and the year, or leave all three blank.',
+        ]);
+
+        $validator->after(function (ValidatorInstance $validator) use ($field, $parts, $reckoning): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $date = new GameDate((int) $parts['year'], (int) $parts['month'], (int) $parts['day']);
+
+            if (! $reckoning->isValid($date)) {
+                $validator->errors()->add($field.'.day', $reckoning->monthName($date->month).' has '.$reckoning->daysInMonth($date->month, $date->year).' days that year.');
+            }
+        });
+
+        if ($validator->fails()) {
+            $this->getErrorBag()->merge($validator->errors());
+
+            return null;
+        }
+
+        return new GameDate((int) $parts['year'], (int) $parts['month'], (int) $parts['day']);
+    }
+
+    private function reckoning(): ?Reckoning
+    {
+        return Calendar::query()->first()?->reckoning();
     }
 
     private function user(): User

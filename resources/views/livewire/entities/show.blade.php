@@ -100,6 +100,13 @@
         </div>
     @endif
 
+    @if ($happensOn !== null)
+        <p class="-mt-4 mb-6 flex items-center gap-2 text-sm text-ink-muted">
+            <x-ui.icon name="sun" class="size-4 text-ink-faint" />
+            <span>{{ $happensOn }}</span>
+        </p>
+    @endif
+
     @if ($entity->hasCharacterRecord())
         <div class="mb-6 flex flex-wrap items-center gap-x-8 gap-y-4 rounded-lg border border-line bg-panel px-5 py-4">
             @if (filled($entity->character_class))

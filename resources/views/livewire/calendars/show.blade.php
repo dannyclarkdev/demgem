@@ -8,6 +8,7 @@
         </x-ui.empty-state>
     @else
         <x-ui.page-header :title="$todayFormatted" :eyebrow="$calendar->name" :description="collect($moonsToday)->map(fn ($moon) => $moon->phase->symbol().' '.$moon->describe())->implode(' · ') ?: null">
+            <x-ui.button :href="$timelineUrl" variant="ghost" size="sm" icon="activity">Timeline</x-ui.button>
             @if ($role->isDm())
                 <x-ui.button :href="route('calendar.edit', $campaign)" variant="secondary" size="sm" icon="settings">Edit the calendar</x-ui.button>
             @endif
@@ -64,6 +65,26 @@
                                         </span>
                                     @endif
                                 </div>
+                                @if ($cell['sessions'] !== [] || $cell['events'] !== [])
+                                    <ul class="mt-1.5 space-y-1">
+                                        @foreach ($cell['sessions'] as $session)
+                                            <li class="truncate text-xs">
+                                                <a href="{{ $session->url() }}" class="inline-flex max-w-full items-center gap-1 rounded bg-raised px-1.5 py-0.5 text-ink hover:text-ember" title="{{ $session->label() }} · {{ $session->displayTitle() }}">
+                                                    <x-ui.icon name="calendar" class="size-3 shrink-0 text-ink-faint" />
+                                                    <span class="truncate">{{ $session->displayTitle() }}</span>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                        @foreach ($cell['events'] as $event)
+                                            <li class="truncate text-xs">
+                                                <a href="{{ $event->url() }}" class="inline-flex max-w-full items-center gap-1 text-ink-muted hover:text-ember" title="{{ $event->name }}">
+                                                    <x-ui.icon name="flag" class="size-3 shrink-0 text-ink-faint" />
+                                                    <span class="truncate">{{ $event->name }}</span>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                             </div>
                         @endforeach
                     </div>

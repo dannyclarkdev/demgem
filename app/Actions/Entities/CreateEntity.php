@@ -8,6 +8,7 @@ use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\User;
+use App\Support\Reckoning\GameDate;
 use Illuminate\Support\Facades\DB;
 
 class CreateEntity
@@ -34,6 +35,7 @@ class CreateEntity
      *     sheet_url?: string|null,
      *     quest_status?: QuestStatus|null,
      *     giver_entity_id?: string|null,
+     *     happens_on?: GameDate|null,
      *     tags?: list<string>,
      *     viewer_ids?: list<int>
      * }  $data
@@ -60,6 +62,7 @@ class CreateEntity
                     ? ($data['quest_status'] ?? QuestStatus::Available)
                     : null,
                 'giver_entity_id' => $data['type'] === EntityType::Quest ? ($data['giver_entity_id'] ?? null) : null,
+                'happens_on' => $data['type'] === EntityType::Event ? ($data['happens_on'] ?? null) : null,
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
             ]);

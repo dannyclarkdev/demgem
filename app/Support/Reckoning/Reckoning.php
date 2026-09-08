@@ -204,16 +204,38 @@ final readonly class Reckoning
      */
     public function format(GameDate $date): string
     {
+        $text = $this->formatBare($date);
+        $weekday = $this->isValid($date) ? $this->weekdayOf($date) : null;
+
+        return $weekday === null ? $text : $weekday.', '.$text;
+    }
+
+    /**
+     * "1 Harvest 1042 AR to 3 Harvest 1042 AR", or the single day with its weekday when
+     * the range is one day or has no end. Weekdays are dropped from a range because
+     * two of them in one line is noise.
+     */
+    public function formatRange(GameDate $start, ?GameDate $end): string
+    {
+        if ($end === null || $end->equals($start)) {
+            return $this->format($start);
+        }
+
+        return $this->formatBare($start).' to '.$this->formatBare($end);
+    }
+
+    /**
+     * The date without its weekday.
+     */
+    public function formatBare(GameDate $date): string
+    {
         $year = trim($date->year.' '.$this->era);
 
         if (! $this->hasMonth($date->month)) {
             return $date->day.' '.$this->monthName($date->month).', '.$year;
         }
 
-        $text = $date->day.' '.$this->monthName($date->month).' '.$year;
-        $weekday = $this->isValid($date) ? $this->weekdayOf($date) : null;
-
-        return $weekday === null ? $text : $weekday.', '.$text;
+        return $date->day.' '.$this->monthName($date->month).' '.$year;
     }
 
     /**

@@ -25,6 +25,13 @@
         @endcan
     </x-ui.page-header>
 
+    @if ($inWorld !== null)
+        <p class="-mt-4 mb-6 flex items-center gap-2 text-sm text-ink-muted">
+            <x-ui.icon name="sun" class="size-4 text-ink-faint" />
+            <span>In the world: {{ $inWorld }}</span>
+        </p>
+    @endif
+
     {{-- minmax(0,1fr) at every width: an auto column grows to fit the poll grid's
          min-content and the page scrolls sideways, which is the one thing the tablet
          pass forbids. The grid scrolls inside its own card instead. --}}

@@ -6,6 +6,7 @@ use App\Enums\SessionStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\GameSession;
 use App\Models\User;
@@ -68,6 +69,7 @@ class Story extends Component
         return view('livewire.sessions.story', [
             'role' => $role,
             'timezone' => $this->campaign->timezone,
+            'reckoning' => Calendar::query()->first()?->reckoning(),
             'sessions' => $sessions,
             'recaps' => $recaps,
         ])->title('Story');

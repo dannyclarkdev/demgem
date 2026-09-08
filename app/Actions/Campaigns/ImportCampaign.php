@@ -229,6 +229,7 @@ class ImportCampaign
                 'level' => $row['level'],
                 'sheet_url' => $row['sheet_url'],
                 'quest_status' => $row['quest_status'],
+                'happens_on' => $row['happens_on'],
                 'created_by' => $importer->id,
                 'updated_by' => $importer->id,
             ]);
@@ -317,6 +318,8 @@ class ImportCampaign
                 'number' => $row['number'],
                 'title' => $row['title'],
                 'scheduled_at' => $row['scheduled_at'],
+                'in_game_start' => $row['in_game_start'],
+                'in_game_end' => $row['in_game_end'],
                 'reminder_sent_at' => $row['reminder_sent_at'],
                 'status' => $row['status'],
                 'visibility' => $row['visibility'],
