@@ -22,6 +22,12 @@ Slice 7 is done: **handouts and clocks**. A handout is an entity with a gallery 
 
 Slices 8 and 9 are done: **the round trip**. A campaign leaves as one archive, a zip holding the JSON, every image and attachment, and the whole campaign as Markdown with front matter that Obsidian opens as a vault. The importer takes the archive or the bare JSON, validates the whole file before writing a row, remaps every id, restores the media, and tells the GM what could not come across before they commit. `php artisan demgem:import` does the same for the JSON from a terminal.
 
+Slice 10 is done: **scheduling**. A member says whether they are coming, the GM records who was there, a dateless session is a poll with candidate times the party votes on, one reminder email goes out before each session at a lead time the GM chooses, and every user has a private calendar feed that carries nothing but the session names.
+
+Slice 11 is done: **relationships**. A typed link between two entities with a label written from one side and an optional reverse label for the other, revealed to the party when the GM says so and gated at both ends, and drawn as wiki links in the Obsidian vault so its graph shows them.
+
+Slice 12 is done: **the world's own calendar**. A GM names the months, sets the week, hangs a moon or two, adds a leap rule and an era, and says what day it is; every member reads today on the dashboard and on a month grid with the moons on every day. An event is an entity with a day. A session carries the days the party spent in the world. The timeline lists every dated event and session the viewer may see, in world order, with a marker for today. The calendar and every date travel in the export and the Markdown front matter.
+
 ## Local setup
 
 Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.

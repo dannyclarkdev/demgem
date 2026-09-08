@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Calendars\SaveCalendar;
 use App\Actions\Campaigns\CreateCampaign;
 use App\Actions\Clocks\CreateClock;
 use App\Actions\Clocks\SetClockVisibility;
@@ -36,6 +37,7 @@ use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\User;
+use App\Support\Reckoning\GameDate;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -162,6 +164,10 @@ class DemoCampaignSeeder extends Seeder
             'body' => "- [[The Drowned Duke]] is awake.\n- [[Mara Voss]] is compromised.\n- [[Wren Ashgrove]]'s sister sits at the Duke's right hand.",
         ]);
 
+        // The calendar before anything dated, so the seeded dates can be read back.
+        $this->seedCalendar($campaign);
+        $this->seedEvents($make);
+
         // Sessions first: the ticked objectives record the night they were finished.
         $this->seedSessions($campaign, $dm);
         $this->seedQuestDetails($campaign);
@@ -180,6 +186,64 @@ class DemoCampaignSeeder extends Seeder
      * The next game: who said they are coming, who was at the last one, a fourth
      * session still waiting on a Thursday, and a reminder the day before.
      */
+    /**
+     * The Tide Reckoning: ten months of 36 days, a six-day week, two moons, and a
+     * leap day on Lowtide every fifth year. Today is early in the third month.
+     */
+    private function seedCalendar(Campaign $campaign): void
+    {
+        app(SaveCalendar::class)->handle($campaign, [
+            'name' => 'The Tide Reckoning',
+            'era' => 'AF',
+            'months' => [
+                ['name' => 'Thawmere', 'days' => 36],
+                ['name' => 'Saltrise', 'days' => 36],
+                ['name' => 'Highwater', 'days' => 36],
+                ['name' => 'Netmend', 'days' => 36],
+                ['name' => 'Longsun', 'days' => 36],
+                ['name' => 'Harvestmoon', 'days' => 36],
+                ['name' => 'Gullfall', 'days' => 36],
+                ['name' => 'Greywind', 'days' => 36],
+                ['name' => 'Deepcold', 'days' => 36],
+                ['name' => 'Lowtide', 'days' => 36],
+            ],
+            'weekdays' => ['Sunday', 'Tideday', 'Wallday', 'Saltday', 'Netday', 'Duskday'],
+            'moons' => [
+                ['name' => 'The Pale', 'cycle' => 30.0, 'offset' => 0],
+                ['name' => 'The Drowned Moon', 'cycle' => 47.5, 'offset' => 12],
+            ],
+            'leap_every' => 5,
+            'leap_month' => 10,
+            'current_year' => 312,
+            'current_month' => 3,
+            'current_day' => 4,
+        ]);
+    }
+
+    /**
+     * Three things that happened on a day. One of them the party has not been told.
+     *
+     * @param  \Closure(EntityType, string, array<string, mixed>): Entity  $make
+     */
+    private function seedEvents(\Closure $make): void
+    {
+        $make(EntityType::Event, 'The Flood', [
+            'happens_on' => new GameDate(1, 1, 1),
+            'body' => 'The sea came over the walls and stayed. The reckoning counts from this morning: year one, After the Flood.',
+            'tags' => ['history'],
+        ]);
+        $make(EntityType::Event, 'The Harbor Fire', [
+            'happens_on' => new GameDate(312, 2, 20),
+            'body' => 'The north quay burned at dusk. [[Mara Voss]] pulled two of the party out of the water.',
+            'tags' => ['recent'],
+        ]);
+        $make(EntityType::Event, 'The Duke Wakes', [
+            'visibility' => Visibility::Dm,
+            'happens_on' => new GameDate(312, 2, 19),
+            'body' => 'The night before the fire, [[The Drowned Duke]] opened his eyes under the [[Salt Cathedral]]. The fire was the first thing he asked for.',
+        ]);
+    }
+
     /**
      * Who is what to whom. One of them the party has not been told.
      */
@@ -238,6 +302,8 @@ class DemoCampaignSeeder extends Seeder
             'status' => SessionStatus::Played,
         ]);
         $first->update([
+            'in_game_start' => new GameDate(312, 2, 20),
+            'in_game_end' => new GameDate(312, 2, 21),
             'recap' => "The warehouse went up at dusk and took half the north quay with it. [[Mara Voss]] pulled two of you out of the water and asked no questions, which was itself a question.\n\nBy morning the party held the [[Tidewarden Signet]] and a debt nobody has named a price for yet.",
             'recap_published_at' => now()->subWeeks(3)->addDay(),
         ]);
@@ -249,6 +315,8 @@ class DemoCampaignSeeder extends Seeder
             'status' => SessionStatus::Played,
         ]);
         $second->update([
+            'in_game_start' => new GameDate(312, 3, 2),
+            'in_game_end' => new GameDate(312, 3, 3),
             'recap' => 'They went down at low tide and found the customs house dry inside, which nobody has explained yet.',
             'live_notes' => "Party went down at low tide. Found the old customs house intact.\nWren recognised the door knocker. Did not say why.\nSpent 40g bribing the gate sergeant.\nEnded mid-corridor, water rising.",
         ]);
@@ -260,6 +328,7 @@ class DemoCampaignSeeder extends Seeder
             'status' => SessionStatus::Planned,
         ]);
         $third->update([
+            'in_game_start' => new GameDate(312, 3, 4),
             'strong_start' => 'The water in the corridor stops rising. Then it starts moving the wrong way, back down the stairs, as if something below is drinking.',
             'dm_notes' => 'Keep [[The Drowned Duke]] off screen. He is a rumour tonight, nothing more.',
         ]);

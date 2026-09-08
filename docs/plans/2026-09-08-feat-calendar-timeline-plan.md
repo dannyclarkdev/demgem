@@ -197,27 +197,27 @@ Success: the timeline shows the harbor fire two weeks before the spring tide.
 
 ### Functional
 
-- [ ] A GM defines a calendar with months, weekdays, moons, a leap rule, an era, and the current date.
-- [ ] A GM advances the date by a day and sets it outright; every member sees today on the dashboard and the calendar.
-- [ ] The calendar screen shows the month grid, the weekdays, the moon phases, and the day's events and sessions.
-- [ ] An event is an entity type with an optional date.
-- [ ] A session carries an in-game start and end, printed on the session, the story, and the timeline.
-- [ ] The timeline lists dated events and sessions in world order with a marker for today.
-- [ ] The calendar and every date survive the round trip and appear in the Markdown front matter.
+- [x] A GM defines a calendar with months, weekdays, moons, a leap rule, an era, and the current date.
+- [x] A GM advances the date by a day and sets it outright; every member sees today on the dashboard and the calendar.
+- [x] The calendar screen shows the month grid, the weekdays, the moon phases, and the day's events and sessions.
+- [x] An event is an entity type with an optional date.
+- [x] A session carries an in-game start and end, printed on the session, the story, and the timeline.
+- [x] The timeline lists dated events and sessions in world order with a marker for today.
+- [x] The calendar and every date survive the round trip and appear in the Markdown front matter.
 
 ### Non-functional
 
-- [ ] **A GM-only event's name never reaches a player's timeline or grid HTML or snapshot.**
-- [ ] **A DM-only session never reaches a player's timeline or grid.**
-- [ ] Every list on the timeline and the grid is filtered in the query, never in the template.
-- [ ] The reckoning is pure and unit tested with no database.
-- [ ] The calendar, timeline, and edit screens work at 1024px and 768px, dark and light, with no sideways scroll.
+- [x] **A GM-only event's name never reaches a player's timeline or grid HTML or snapshot.**
+- [x] **A DM-only session never reaches a player's timeline or grid.**
+- [x] Every list on the timeline and the grid is filtered in the query, never in the template.
+- [x] The reckoning is pure and unit tested with no database.
+- [x] The calendar, timeline, and edit screens work at 1024px and 768px, dark and light, with no sideways scroll.
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
-- [ ] Larastan level 6 clean. Pint clean before every commit.
-- [ ] One new `x-ui.*` component. No new dependency.
+- [x] Pest suite green on SQLite locally: 1,081 tests. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean before every commit.
+- [x] One new `x-ui.*` component. No new dependency.
 
 ## Dependencies & Risks
 
@@ -227,6 +227,14 @@ Success: the timeline shows the harbor fire two weeks before the spring tide.
 | A calendar edit strands a date | The triple keeps its meaning; `format()` prints "month 13" rather than failing. |
 | The grid leaks a hidden event | Both queries go through the existing gates; a leak test on the grid and the timeline. |
 | A float moon cycle drifts | `fmod` on the day number, never an accumulated sum. |
+
+## What the browser pass found
+
+Nothing broken in the layout. The calendar, the timeline, the edit form, the event page, the session page, and the dashboard were checked at 1024px and 768px, dark and light, as the GM of the seeded world. No page scrolls sideways at either width and the console is clean. At 768px the month grid scrolls inside its own card, as the tablet rule asks, and the "Move the day" card stacks its buttons over the date form. The moon symbols are emoji and render on the grid, in the header, and on the dashboard card in both themes.
+
+**The buttons were driven through the page's own DOM events, as slice 11's were.** The tool's synthetic click on a Livewire button reached nothing; `element.click()` on the same buttons did. Through those events "Advance a day" moved the header from Duskday, 4 Highwater to Sunday, 5 Highwater and the row in the database with it, "A day back" returned it, and "Next month" turned the grid to Netmend. The Livewire tests cover the same calls. What has not been seen is a human's click on this screen.
+
+The demo world on the local install predates this slice, so the calendar, the three events, and the session dates were added to it by hand for the pass with the same values the seeder now writes.
 
 ## Future Considerations
 
