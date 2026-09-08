@@ -32,5 +32,15 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
             Route::get('/sessions', [SessionController::class, 'index'])->name('api.sessions.index');
             Route::get('/sessions/{number}', [SessionController::class, 'show'])->whereNumber('number')->name('api.sessions.show');
+
+            // Everything that changes something needs a key made with the box ticked.
+            // The API creates and changes; it never deletes. Deleting is a screen with
+            // a confirmation, and a key in a script has no confirm button.
+            Route::middleware('abilities:write')->group(function () {
+                Route::post('/entities', [EntityController::class, 'store'])->name('api.entities.store');
+                Route::patch('/entities/{entityId}', [EntityController::class, 'update'])->name('api.entities.update');
+                Route::patch('/sessions/{number}', [SessionController::class, 'update'])->whereNumber('number')->name('api.sessions.update');
+                Route::post('/sessions/{number}/publish-recap', [SessionController::class, 'publishRecap'])->whereNumber('number')->name('api.sessions.publish-recap');
+            });
         });
 });
