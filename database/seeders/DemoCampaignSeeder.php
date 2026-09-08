@@ -16,6 +16,7 @@ use App\Actions\Encounters\SetConditions;
 use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
 use App\Actions\Entities\CreateEntity;
+use App\Actions\Entities\RelateEntities;
 use App\Actions\Maps\PlaceMarker;
 use App\Actions\Maps\SetMarkerVisibility;
 use App\Actions\RandomTables\CreateRandomTable;
@@ -168,6 +169,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedTables($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
         $this->seedMaps($campaign, $dm);
+        $this->seedRelations($campaign);
         $this->seedClocks($campaign);
         $this->seedHandouts($campaign, $dm);
 
@@ -178,6 +180,19 @@ class DemoCampaignSeeder extends Seeder
      * The next game: who said they are coming, who was at the last one, a fourth
      * session still waiting on a Thursday, and a reminder the day before.
      */
+    /**
+     * Who is what to whom. One of them the party has not been told.
+     */
+    private function seedRelations(Campaign $campaign): void
+    {
+        $named = fn (string $name): Entity => $campaign->entities()->where('name', $name)->firstOrFail();
+        $relate = app(RelateEntities::class);
+
+        $relate->handle($named('Mara Voss'), $named('Tidewarden Signet'), 'keeper of', 'kept by', true);
+        $relate->handle($named('The Drowned Duke'), $named('Mara Voss'), 'employer of', 'secretly works for', false);
+        $relate->handle($named('Mara Voss'), $named('Wren Ashgrove'), 'trusts', 'trusted by', true);
+    }
+
     private function seedScheduling(Campaign $campaign, User $dm, GameSession $played, GameSession $next): void
     {
         $campaign->update(['reminder_lead_hours' => 24]);

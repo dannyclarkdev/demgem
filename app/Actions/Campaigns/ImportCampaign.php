@@ -272,6 +272,17 @@ class ImportCampaign
                 ]);
             }
 
+            foreach ($row['relations'] as $relation) {
+                $entity->relations()->create([
+                    'campaign_id' => $entity->campaign_id,
+                    'target_entity_id' => $ids->newFor($relation['target_entity_id']),
+                    'label' => $relation['label'],
+                    'reverse_label' => $relation['reverse_label'],
+                    'player_visible' => $relation['player_visible'],
+                    'position' => $relation['position'],
+                ]);
+            }
+
             foreach ($row['markers'] as $marker) {
                 $entity->markers()->create([
                     'campaign_id' => $entity->campaign_id,

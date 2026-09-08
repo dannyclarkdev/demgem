@@ -12,6 +12,7 @@ use App\Enums\Ruleset;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
+use App\Models\EntityRelation;
 use BackedEnum;
 use Illuminate\Support\Str;
 use JsonException;
@@ -199,6 +200,7 @@ class ReadCampaignFile
                 'tags' => $this->strings($row, 'tags', 60),
                 'objectives' => $this->objectives($row),
                 'markers' => $this->markers($row),
+                'relations' => $this->relations($row),
                 'image' => $image,
                 'files' => $files,
             ];
@@ -272,6 +274,27 @@ class ReadCampaignFile
         }
 
         return $markers;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return list<array{target_entity_id: string|null, label: string, reverse_label: string|null, player_visible: bool, position: int}>
+     */
+    private function relations(array $row): array
+    {
+        $relations = [];
+
+        foreach ($this->list($row, 'relations') as $index => $relation) {
+            $relations[] = [
+                'target_entity_id' => $this->reference($relation, 'target_entity_id'),
+                'label' => $this->text($relation, 'label', EntityRelation::MAX_LABEL_LENGTH) ?? 'related to',
+                'reverse_label' => $this->text($relation, 'reverse_label', EntityRelation::MAX_LABEL_LENGTH),
+                'player_visible' => (bool) ($relation['player_visible'] ?? false),
+                'position' => $this->integer($relation, 'position') ?? $index,
+            ];
+        }
+
+        return $relations;
     }
 
     /**
@@ -625,6 +648,10 @@ class ReadCampaignFile
 
             foreach ($entity['markers'] as $marker) {
                 $this->mustResolve($marker['target_entity_id'], $this->entityIds, 'entity', "the pin \"{$marker['label']}\"");
+            }
+
+            foreach ($entity['relations'] as $relation) {
+                $this->mustResolve($relation['target_entity_id'] ?? '', $this->entityIds, 'entity', "the relationship \"{$relation['label']}\" on \"{$entity['name']}\"");
             }
         }
 

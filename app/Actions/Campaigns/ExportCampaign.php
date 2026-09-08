@@ -9,6 +9,7 @@ use App\Models\Combatant;
 use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
+use App\Models\EntityRelation;
 use App\Models\GameSession;
 use App\Models\MapMarker;
 use App\Models\QuestObjective;
@@ -49,6 +50,7 @@ class ExportCampaign
         'entity_viewers' => 'entities[].viewer_user_ids',
         'quest_objectives' => 'entities[].objectives',
         'map_markers' => 'entities[].markers',
+        'entity_relations' => 'entities[].relations',
         'scenes' => 'sessions[].scenes',
         'secrets' => 'sessions[].secrets',
         'game_session_entities' => 'sessions[].prepped',
@@ -202,7 +204,7 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'viewers', 'media', 'objectives', 'markers'])
+            ->with(['tags', 'viewers', 'media', 'objectives', 'markers', 'relations'])
             ->orderBy('created_at')
             ->cursor()
             ->map(fn (Entity $entity) => [
@@ -240,6 +242,15 @@ class ExportCampaign
                         'x' => $marker->x,
                         'y' => $marker->y,
                         'player_visible' => $marker->player_visible,
+                    ])->values()->all(),
+                'relations' => $entity->relations
+                    ->map(fn (EntityRelation $relation) => [
+                        'id' => $relation->id,
+                        'target_entity_id' => $relation->target_entity_id,
+                        'label' => $relation->label,
+                        'reverse_label' => $relation->reverse_label,
+                        'player_visible' => $relation->player_visible,
+                        'position' => $relation->position,
                     ])->values()->all(),
                 'image' => $this->media($entity->getFirstMedia('image')),
                 // A handout's attachments, in the same shape as the single image: the

@@ -65,6 +65,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read Entity|null $giver
  * @property-read Collection<int, QuestObjective> $objectives
  * @property-read Collection<int, Clock> $clocks
+ * @property-read Collection<int, EntityRelation> $relations
+ * @property-read Collection<int, EntityRelation> $incomingRelations
  * @property-read Pivot|null $pivot Set when the row was loaded through GameSession::entities()
  */
 #[ObservedBy([EntityObserver::class])]
@@ -225,6 +227,26 @@ class Entity extends Model implements HasMedia
     public function markers(): HasMany
     {
         return $this->hasMany(MapMarker::class, 'entity_id');
+    }
+
+    /**
+     * Relationships written from this entity's side.
+     *
+     * @return HasMany<EntityRelation, $this>
+     */
+    public function relations(): HasMany
+    {
+        return $this->hasMany(EntityRelation::class, 'entity_id')->orderBy('position');
+    }
+
+    /**
+     * Relationships other entities wrote pointing here.
+     *
+     * @return HasMany<EntityRelation, $this>
+     */
+    public function incomingRelations(): HasMany
+    {
+        return $this->hasMany(EntityRelation::class, 'target_entity_id');
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Actions\Campaigns;
 
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\EntityRelation;
 use App\Models\GameSession;
 use App\Models\QuestObjective;
 use App\Models\RandomTable;
@@ -36,7 +37,7 @@ class WriteCampaignMarkdown
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'parent', 'objectives'])
+            ->with(['tags', 'parent', 'objectives', 'relations.target', 'incomingRelations.source'])
             ->orderBy('name')
             ->get();
 
@@ -104,6 +105,20 @@ class WriteCampaignMarkdown
             $body[] = "## Objectives\n\n".$entity->objectives
                 ->map(fn (QuestObjective $objective) => '- ['.($objective->completed_at !== null ? 'x' : ' ').'] '.$objective->body)
                 ->implode("\n");
+        }
+
+        // Both directions as wiki links, so Obsidian's graph draws the line. Hidden
+        // rows are written too: the vault is the GM's own export, and the front
+        // matter already says which pages are GM-only.
+        $relationships = $entity->relations
+            ->map(fn (EntityRelation $relation) => '- '.$relation->label.' [['.$relation->target->name.']]')
+            ->concat($entity->incomingRelations->map(fn (EntityRelation $relation) => $relation->reverse_label !== null
+                ? '- '.$relation->reverse_label.' [['.$relation->source->name.']]'
+                : '- [['.$relation->source->name.']] · '.$relation->label))
+            ->implode("\n");
+
+        if ($relationships !== '') {
+            $body[] = "## Relationships\n\n".$relationships;
         }
 
         $body[] = $this->section('Rewards', $entity->rewards);
