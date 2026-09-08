@@ -4,6 +4,7 @@ namespace App\Livewire\Entities;
 
 use App\Actions\Entities\RelateEntities;
 use App\Actions\Entities\RemoveRelation;
+use App\Actions\Entities\SetRelationVisibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Models\Entity;
@@ -85,6 +86,13 @@ class Relations extends Component
         $this->authorize('manageRelations', $this->entity);
 
         $removeRelation->handle($this->relation($relationId));
+    }
+
+    public function setVisibility(string $relationId, bool $visible, SetRelationVisibility $setVisibility): void
+    {
+        $this->authorize('manageRelations', $this->entity);
+
+        $setVisibility->handle($this->relation($relationId), $visible);
     }
 
     public function render(): View
