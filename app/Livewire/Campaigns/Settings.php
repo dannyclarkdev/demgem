@@ -6,8 +6,10 @@ use App\Actions\Campaigns\DeleteCampaign;
 use App\Actions\Campaigns\TransferOwnership;
 use App\Enums\CampaignRole;
 use App\Enums\Ruleset;
+use App\Jobs\PostToDiscord;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
+use App\Rules\DiscordWebhookUrl;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
@@ -37,6 +39,8 @@ class Settings extends Component
     /** Hours, as a string because the select carries '' for off. */
     public string $reminderLeadHours = '';
 
+    public string $discordWebhookUrl = '';
+
     public string $newOwnerId = '';
 
     public string $deleteConfirmation = '';
@@ -52,6 +56,7 @@ class Settings extends Component
         $this->timezone = $campaign->timezone;
         $this->sessionLengthMinutes = $campaign->session_length_minutes;
         $this->reminderLeadHours = (string) ($campaign->reminder_lead_hours ?? '');
+        $this->discordWebhookUrl = (string) ($campaign->discord_webhook_url ?? '');
     }
 
     public function save(): void
@@ -88,6 +93,44 @@ class Settings extends Component
         ]);
 
         session()->flash('status', 'Campaign settings saved.');
+
+        $this->redirectRoute('campaigns.settings', $this->campaign);
+    }
+
+    /**
+     * Its own form and its own save, so a GM pasting a URL does not resubmit the
+     * cover image with it. Empty clears the channel.
+     */
+    public function saveDiscord(): void
+    {
+        $this->authorize('update', $this->campaign);
+
+        $url = trim($this->discordWebhookUrl);
+
+        $this->validate([
+            'discordWebhookUrl' => $url === '' ? ['nullable'] : ['string', 'max:300', new DiscordWebhookUrl],
+        ]);
+
+        $this->campaign->update(['discord_webhook_url' => $url === '' ? null : $url]);
+
+        session()->flash('status', $url === '' ? 'Discord disconnected.' : 'Discord connected. Send a test message to be sure.');
+
+        $this->redirectRoute('campaigns.settings', $this->campaign);
+    }
+
+    public function sendDiscordTest(): void
+    {
+        $this->authorize('update', $this->campaign);
+
+        if ($this->campaign->discord_webhook_url === null) {
+            $this->addError('discordWebhookUrl', 'Save a webhook URL first.');
+
+            return;
+        }
+
+        dispatch(PostToDiscord::test($this->campaign));
+
+        session()->flash('status', 'Test message queued. It reaches the channel as soon as the queue worker gets to it.');
 
         $this->redirectRoute('campaigns.settings', $this->campaign);
     }

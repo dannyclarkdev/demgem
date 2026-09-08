@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sessions;
 
+use App\Jobs\PostToDiscord;
 use App\Models\GameSession;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
@@ -26,9 +27,19 @@ class PublishRecap
             throw ValidationException::withMessages(['recap' => 'Write the recap before you publish it.']);
         }
 
-        return $this->updateSession->handle($session, $actor, [
+        $wasPublished = $session->hasPublishedRecap();
+
+        $session = $this->updateSession->handle($session, $actor, [
             'recap' => $text,
             'recap_published_at' => $session->recap_published_at ?? now(),
         ]);
+
+        // The channel hears about it once. Saving a new draft of a published recap
+        // through here changes the words and posts nothing.
+        if (! $wasPublished && $session->campaign->discord_webhook_url !== null) {
+            dispatch(PostToDiscord::forRecap($session));
+        }
+
+        return $session;
     }
 }

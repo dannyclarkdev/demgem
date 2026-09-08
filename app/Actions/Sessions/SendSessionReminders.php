@@ -4,6 +4,7 @@ namespace App\Actions\Sessions;
 
 use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
+use App\Jobs\PostToDiscord;
 use App\Mail\SessionReminder;
 use App\Models\Campaign;
 use App\Models\CampaignMember;
@@ -43,6 +44,12 @@ class SendSessionReminders
             foreach ($recipients as $member) {
                 Mail::to($member->user)->queue(new SessionReminder($session, $campaign, $member->user));
                 $queued++;
+            }
+
+            // The channel gets the same reminder, inside the same stamp, so the inbox
+            // and the thread agree about which sessions were announced.
+            if ($campaign->discord_webhook_url !== null) {
+                dispatch(PostToDiscord::forReminder($session));
             }
 
             // Stamped after queueing, so a crash between the two sends twice rather
