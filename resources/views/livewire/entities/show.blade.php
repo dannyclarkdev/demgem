@@ -149,6 +149,8 @@
                 @endif
             </x-ui.card>
 
+            <livewire:entities.relations :campaign="$campaign" :entity="$entity" :wire:key="'relations-'.$entity->id" />
+
             @php ($customFields = $entity->customFields())
             @if ($customFields !== [])
                 <x-ui.card title="Details">

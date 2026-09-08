@@ -70,6 +70,15 @@ class EntityPolicy
      * This is not update(): a player may edit their own PC, and nothing about that
      * should let them tick an objective on a quest they happen to be able to read.
      */
+    /**
+     * A relationship is a wiki fact rather than a sheet fact, so a player editing
+     * their own PC does not get to link it to the duke.
+     */
+    public function manageRelations(User $user, Entity $entity): bool
+    {
+        return $this->roleFor($user, $entity)?->isDm() ?? false;
+    }
+
     public function manageQuest(User $user, Entity $entity): bool
     {
         return $entity->isQuest() && ($this->roleFor($user, $entity)?->isDm() ?? false);
