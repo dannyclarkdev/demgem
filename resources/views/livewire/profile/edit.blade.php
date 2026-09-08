@@ -42,5 +42,47 @@
                 </div>
             @endif
         </x-ui.card>
+
+        <x-ui.card title="API keys">
+            <p class="text-sm text-ink-muted">A key lets a script or an assistant read what you can read, in every campaign you belong to, and write what you can write if you tick the box. Treat one like a password.</p>
+
+            @if ($newToken !== null)
+                <div class="mt-4 rounded-md border border-ember/40 bg-ember/5 p-3" x-data="{ copied: false }">
+                    <p class="text-sm font-medium text-ink">Copy it now. It is not shown again.</p>
+                    <div class="mt-2 flex items-center gap-2">
+                        <input type="text" readonly value="{{ $newToken }}" class="ui-input min-w-0 flex-1 font-mono text-xs" aria-label="New API key" x-ref="key" x-on:focus="$el.select()">
+                        <x-ui.button type="button" variant="secondary" size="sm" icon="copy" x-on:click="navigator.clipboard.writeText($refs.key.value).then(() => { copied = true; setTimeout(() => copied = false, 2000) })">
+                            <span x-show="!copied">Copy</span><span x-show="copied" x-cloak>Copied</span>
+                        </x-ui.button>
+                    </div>
+                </div>
+            @endif
+
+            <form wire:submit="createToken" class="mt-4 space-y-3">
+                <x-ui.input label="Name" name="tokenName" wire:model="tokenName" placeholder="My assistant" autocomplete="off" hint="So you know which one to revoke later." />
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <x-ui.checkbox label="Can write" name="tokenCanWrite" wire:model="tokenCanWrite" />
+                    <x-ui.button type="submit" variant="secondary" icon="key" wire:loading.attr="disabled">Create key</x-ui.button>
+                </div>
+            </form>
+
+            @if ($tokens->isNotEmpty())
+                <ul class="mt-4 divide-y divide-line border-t border-line">
+                    @foreach ($tokens as $token)
+                        <li class="flex items-center gap-3 py-2.5">
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-medium text-ink">{{ $token->name }}</p>
+                                <p class="text-xs text-ink-faint">
+                                    {{ $token->can('write') ? 'Read and write' : 'Read only' }}
+                                    · created {{ $token->created_at?->diffForHumans() }}
+                                    · {{ $token->last_used_at ? 'last used '.$token->last_used_at->diffForHumans() : 'never used' }}
+                                </p>
+                            </div>
+                            <x-ui.button type="button" variant="ghost" size="sm" icon="trash" wire:click="revokeToken({{ $token->id }})" wire:confirm="Revoke this key? Anything that is using it stops working.">Revoke</x-ui.button>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-ui.card>
     </div>
 </div>

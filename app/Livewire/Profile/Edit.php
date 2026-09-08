@@ -22,6 +22,16 @@ class Edit extends Component
 
     public string $password_confirmation = '';
 
+    public string $tokenName = '';
+
+    public bool $tokenCanWrite = false;
+
+    /**
+     * The secret of the key just created, held for this one response and no other.
+     * It is not stored anywhere in the clear; Sanctum keeps a hash.
+     */
+    public ?string $newToken = null;
+
     public function mount(): void
     {
         $this->name = $this->user()->name;
@@ -67,6 +77,33 @@ class Edit extends Component
         session()->flash('status', 'New calendar link. The old one stopped working.');
     }
 
+    /**
+     * A key reads as its owner reads. "Can write" adds the one other ability, and a
+     * key without it gets 403 from every route that changes something.
+     */
+    public function createToken(): void
+    {
+        $validated = $this->validate([
+            'tokenName' => ['required', 'string', 'max:60'],
+            'tokenCanWrite' => ['boolean'],
+        ]);
+
+        $abilities = $this->tokenCanWrite ? ['read', 'write'] : ['read'];
+
+        $this->newToken = $this->user()->createToken(trim($validated['tokenName']), $abilities)->plainTextToken;
+
+        $this->reset('tokenName', 'tokenCanWrite');
+    }
+
+    public function revokeToken(int $tokenId): void
+    {
+        $this->user()->tokens()->whereKey($tokenId)->delete();
+
+        session()->flash('status', 'Key revoked. Anything that was using it stops working now.');
+
+        $this->redirectRoute('profile.edit');
+    }
+
     public function render(): View
     {
         // A column query rather than the attribute: the authenticated instance may be
@@ -75,6 +112,7 @@ class Edit extends Component
 
         return view('livewire.profile.edit', [
             'calendarUrl' => $token === null ? null : route('calendar.feed', ['token' => $token]),
+            'tokens' => $this->user()->tokens()->orderByDesc('created_at')->get(),
         ]);
     }
 
