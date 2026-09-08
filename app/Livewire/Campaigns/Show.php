@@ -7,6 +7,7 @@ use App\Enums\EntityType;
 use App\Enums\QuestStatus;
 use App\Enums\SessionStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\GameSession;
@@ -38,6 +39,7 @@ class Show extends Component
             'membersCount' => $this->campaign->members()->count(),
             'activeInvites' => $activeInvites,
             'timezone' => $this->campaign->timezone,
+            'calendar' => Calendar::query()->first(),
             'nextSession' => $this->nextSession($role),
             'latestRecap' => GameSession::query()
                 ->visibleTo($role)

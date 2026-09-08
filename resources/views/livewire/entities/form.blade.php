@@ -23,6 +23,21 @@
                 </x-ui.card>
             @endif
 
+            @if ($isEvent)
+                <x-ui.card title="When">
+                    @if ($months === [])
+                        <p class="text-sm text-ink-faint">
+                            This campaign has no calendar yet, so an event has no day to sit on.
+                            @can('update', $campaign)
+                                <a href="{{ route('calendar.edit', $campaign) }}" class="text-ink underline decoration-line-strong hover:text-ember">Set one up</a> and come back.
+                            @endcan
+                        </p>
+                    @else
+                        <x-ui.game-date name="happensOn" :months="$months" label="The day it happened" hint="In the world's calendar. Leave it blank for an event nobody has dated." />
+                    @endif
+                </x-ui.card>
+            @endif
+
             @if ($isHandout)
                 <x-ui.card title="Files">
                     <div class="space-y-3">

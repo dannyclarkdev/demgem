@@ -6,6 +6,7 @@ use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\GameSession;
+use App\Support\Reckoning\GameDate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -32,6 +33,21 @@ class GameSessionFactory extends Factory
             'recap_published_at' => null,
             'dm_notes' => null,
         ];
+    }
+
+    /**
+     * The days the party spent in the world.
+     */
+    public function inWorld(GameDate $start, ?GameDate $end = null): static
+    {
+        return $this->state([
+            'in_game_start_year' => $start->year,
+            'in_game_start_month' => $start->month,
+            'in_game_start_day' => $start->day,
+            'in_game_end_year' => $end?->year,
+            'in_game_end_month' => $end?->month,
+            'in_game_end_day' => $end?->day,
+        ]);
     }
 
     public function number(int $number): static

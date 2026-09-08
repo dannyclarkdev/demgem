@@ -9,6 +9,7 @@ use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\QuestObjective;
 use App\Models\User;
+use App\Support\Reckoning\GameDate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -101,6 +102,19 @@ class EntityFactory extends Factory
         return $this->state([
             'type' => EntityType::Quest,
             'quest_status' => $status ?? QuestStatus::Available,
+        ]);
+    }
+
+    /**
+     * An event, dated when a day is given.
+     */
+    public function event(?GameDate $on = null): static
+    {
+        return $this->state([
+            'type' => EntityType::Event,
+            'happens_year' => $on?->year,
+            'happens_month' => $on?->month,
+            'happens_day' => $on?->day,
         ]);
     }
 

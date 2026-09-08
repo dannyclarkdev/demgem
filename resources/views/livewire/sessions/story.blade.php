@@ -37,6 +37,9 @@
                             <h2 class="mt-1 font-display text-xl font-semibold text-ink">
                                 <a href="{{ $session->url() }}" class="hover:text-ember">{{ $session->displayTitle() }}</a>
                             </h2>
+                            @if ($reckoning !== null && $session->in_game_start !== null)
+                                <p class="mt-1 text-sm text-ink-muted">In the world: {{ $reckoning->formatRange($session->in_game_start, $session->in_game_end) }}</p>
+                            @endif
                         </div>
 
                         @if (! $session->hasPublishedRecap())

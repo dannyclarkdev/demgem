@@ -71,6 +71,11 @@ it('renders every demo screen for the GM it seeds', function () {
         route('entities.index', [$campaign, 'quests']),
         route('entities.index', [$campaign, 'maps']),
         route('entities.show', [$campaign, 'maps', 'the-duchy-of-vell']),
+        route('entities.index', [$campaign, 'events']),
+        route('entities.show', [$campaign, 'events', 'the-harbor-fire']),
+        route('calendar.show', $campaign),
+        route('calendar.edit', $campaign),
+        route('timeline', $campaign),
         route('campaigns.export', $campaign),
     ] as $url) {
         $this->actingAs($dm)->get($url)->assertOk();

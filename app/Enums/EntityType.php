@@ -12,6 +12,7 @@ enum EntityType: string
     case Note = 'note';
     case Handout = 'handout';
     case Map = 'map';
+    case Event = 'event';
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum EntityType: string
             self::Note => 'Note',
             self::Handout => 'Handout',
             self::Map => 'Map',
+            self::Event => 'Event',
         };
     }
 
@@ -38,6 +40,7 @@ enum EntityType: string
             self::Note => 'Notes',
             self::Handout => 'Handouts',
             self::Map => 'Maps',
+            self::Event => 'Events',
         };
     }
 
@@ -55,6 +58,7 @@ enum EntityType: string
             self::Note => 'notes',
             self::Handout => 'handouts',
             self::Map => 'maps',
+            self::Event => 'events',
         };
     }
 
@@ -69,6 +73,7 @@ enum EntityType: string
             self::Note => 'file-text',
             self::Handout => 'paperclip',
             self::Map => 'map',
+            self::Event => 'flag',
         };
     }
 
@@ -83,6 +88,7 @@ enum EntityType: string
             self::Note => 'Lore, house rules, timelines, and anything else.',
             self::Handout => 'The letter, the map fragment, the ledger page. Things the party holds, with the files attached.',
             self::Map => 'The picture of the world, with a pin on everything the party has found.',
+            self::Event => 'The fire, the coronation, the night the bridge fell. Things that happened on a day, for the timeline.',
         };
     }
 
@@ -105,6 +111,7 @@ enum EntityType: string
             self::Note => 5,
             self::Handout => 6,
             self::Map => 7,
+            self::Event => 8,
         };
     }
 

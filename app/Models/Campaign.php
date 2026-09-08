@@ -31,6 +31,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read CampaignMember|null $owner
+ * @property-read Calendar|null $calendar
  */
 #[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'created_by'])]
 class Campaign extends Model implements HasMedia
@@ -126,6 +127,16 @@ class Campaign extends Model implements HasMedia
     public function clocks(): HasMany
     {
         return $this->hasMany(Clock::class)->orderBy('position');
+    }
+
+    /**
+     * The world's calendar, or null while the GM has not defined one.
+     *
+     * @return HasOne<Calendar, $this>
+     */
+    public function calendar(): HasOne
+    {
+        return $this->hasOne(Calendar::class);
     }
 
     public function registerMediaCollections(): void

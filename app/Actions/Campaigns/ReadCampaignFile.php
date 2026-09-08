@@ -11,8 +11,12 @@ use App\Enums\QuestStatus;
 use App\Enums\Ruleset;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\EntityRelation;
+use App\Support\Reckoning\Bounds;
+use App\Support\Reckoning\GameDate;
+use App\Support\Reckoning\Reckoning;
 use BackedEnum;
 use Illuminate\Support\Str;
 use JsonException;
@@ -129,6 +133,131 @@ class ReadCampaignFile
             'session_length_minutes' => min(720, max(30, $this->integer($row, 'session_length_minutes') ?? 240)),
             'reminder_lead_hours' => $this->reminderLead($row),
             'cover' => $this->mediaReference($row['cover'] ?? null),
+            'calendar' => $this->calendar($row['calendar'] ?? null),
+        ];
+    }
+
+    /**
+     * A day in the world, or null. Checked against the bounds only, never against the
+     * calendar: the calendar may itself have been dropped, and a date the months
+     * cannot place still prints as "4 month 13, 1042". A date the bounds refuse is
+     * dropped and counted.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function gameDate(array $row, string $key): ?GameDate
+    {
+        $value = $row[$key] ?? null;
+
+        if ($value === null) {
+            return null;
+        }
+
+        $date = is_array($value) ? new GameDate(
+            $this->integer($value, 'year') ?? 0,
+            $this->integer($value, 'month') ?? 0,
+            $this->integer($value, 'day') ?? 0,
+        ) : null;
+
+        if ($date === null
+            || $date->year < Bounds::MIN_YEAR || $date->year > Bounds::MAX_YEAR
+            || $date->month < 1 || $date->month > Bounds::MAX_MONTHS
+            || $date->day < 1 || $date->day > Bounds::MAX_DAYS) {
+            $this->report->truncated++;
+
+            return null;
+        }
+
+        return $date;
+    }
+
+    /**
+     * The world's calendar, or null. Every number goes through Bounds, and a calendar
+     * whose shape does not hold, no months, a date the months cannot place, is
+     * dropped and counted rather than fatal: the campaign is the point.
+     *
+     * @return array{name: string, era: string|null, months: list<array{name: string, days: int}>, weekdays: list<string>, moons: list<array{name: string, cycle: float, offset: int}>, leap_every: int|null, leap_month: int|null, current_year: int, current_month: int, current_day: int}|null
+     */
+    private function calendar(mixed $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_array($value)) {
+            $this->report->truncated++;
+
+            return null;
+        }
+
+        $months = [];
+
+        foreach (array_slice($this->list($value, 'months'), 0, Bounds::MAX_MONTHS) as $index => $month) {
+            $name = is_array($month) ? $this->text($month, 'name', Bounds::MAX_NAME_LENGTH) : null;
+            $days = is_array($month) ? $this->integer($month, 'days') : null;
+
+            if ($name === null || $days === null) {
+                continue;
+            }
+
+            $months[] = ['name' => $name, 'days' => Bounds::clampDays($days)];
+        }
+
+        $moons = [];
+
+        foreach (array_slice($this->list($value, 'moons'), 0, Bounds::MAX_MOONS) as $moon) {
+            $name = is_array($moon) ? $this->text($moon, 'name', Bounds::MAX_NAME_LENGTH) : null;
+            $cycle = is_array($moon) && is_numeric($moon['cycle'] ?? null) ? Bounds::clampCycle((float) $moon['cycle']) : null;
+
+            if ($name === null || $cycle === null) {
+                continue;
+            }
+
+            $moons[] = [
+                'name' => $name,
+                'cycle' => $cycle,
+                'offset' => Bounds::clampOffset($this->integer($moon, 'offset') ?? 0, $cycle),
+            ];
+        }
+
+        $leapEvery = $this->integer($value, 'leap_every');
+        $leapMonth = $this->integer($value, 'leap_month');
+        $leap = $leapEvery !== null && $leapMonth !== null
+            && $leapEvery >= Bounds::MIN_LEAP_EVERY && $leapEvery <= Bounds::MAX_LEAP_EVERY
+            && $leapMonth >= 1 && $leapMonth <= count($months);
+
+        $reckoning = new Reckoning(
+            months: $months,
+            weekdays: array_slice($this->strings($value, 'weekdays', Bounds::MAX_NAME_LENGTH), 0, Bounds::MAX_WEEKDAYS),
+            moons: $moons,
+            leapEvery: $leap ? $leapEvery : null,
+            leapMonth: $leap ? $leapMonth : null,
+        );
+
+        $current = $this->rows($value, 'current');
+        $today = new GameDate(
+            $this->integer($current, 'year') ?? 0,
+            $this->integer($current, 'month') ?? 0,
+            $this->integer($current, 'day') ?? 0,
+        );
+
+        if ($months === [] || ! $reckoning->isValid($today)) {
+            $this->report->truncated++;
+
+            return null;
+        }
+
+        return [
+            'name' => $this->text($value, 'name', Calendar::MAX_NAME_LENGTH) ?? 'The calendar',
+            'era' => $this->text($value, 'era', Calendar::MAX_ERA_LENGTH),
+            'months' => $reckoning->months,
+            'weekdays' => $reckoning->weekdays,
+            'moons' => $reckoning->moons,
+            'leap_every' => $reckoning->leapEvery,
+            'leap_month' => $reckoning->leapMonth,
+            'current_year' => $today->year,
+            'current_month' => $today->month,
+            'current_day' => $today->day,
         ];
     }
 
@@ -197,6 +326,7 @@ class ReadCampaignFile
                 'sheet_url' => $this->url($row, 'sheet_url'),
                 'quest_status' => $this->optionalEnum(QuestStatus::class, $row, 'quest_status', "entity {$id}"),
                 'giver_entity_id' => $this->reference($row, 'giver_entity_id'),
+                'happens_on' => $this->gameDate($row, 'happens_on'),
                 'tags' => $this->strings($row, 'tags', 60),
                 'objectives' => $this->objectives($row),
                 'markers' => $this->markers($row),
@@ -328,6 +458,8 @@ class ReadCampaignFile
                 'number' => $number,
                 'title' => $this->text($row, 'title', 120),
                 'scheduled_at' => $this->text($row, 'scheduled_at', 40),
+                'in_game_start' => $this->gameDate($row, 'in_game_start'),
+                'in_game_end' => $this->gameDate($row, 'in_game_end'),
                 'reminder_sent_at' => $this->text($row, 'reminder_sent_at', 40),
                 'status' => $this->enum(SessionStatus::class, $row, 'status', "session {$number}") ?? SessionStatus::cases()[0],
                 'visibility' => $this->sessionVisibility($row, $number),

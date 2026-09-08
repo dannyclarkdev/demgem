@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Casts\GameDateCast;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
 use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Models\Concerns\BelongsToCampaign;
 use App\Observers\EntityObserver;
+use App\Support\Reckoning\GameDate;
 use Database\Factories\EntityFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -51,6 +53,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $sheet_url
  * @property QuestStatus|null $quest_status
  * @property string|null $giver_entity_id
+ * @property GameDate|null $happens_on
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property Carbon|null $created_at
@@ -73,7 +76,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[Fillable([
     'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility',
     'parent_id', 'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
-    'quest_status', 'giver_entity_id',
+    'quest_status', 'giver_entity_id', 'happens_on',
     'created_by', 'updated_by',
 ])]
 class Entity extends Model implements HasMedia
@@ -95,6 +98,7 @@ class Entity extends Model implements HasMedia
             'is_pc' => 'boolean',
             'level' => 'integer',
             'custom_fields' => 'array',
+            'happens_on' => GameDateCast::class.':happens',
         ];
     }
 

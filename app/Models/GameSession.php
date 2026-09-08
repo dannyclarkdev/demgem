@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\GameDateCast;
 use App\Enums\CampaignRole;
 use App\Enums\PrepRole;
 use App\Enums\Rsvp;
@@ -9,6 +10,7 @@ use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Concerns\BelongsToCampaign;
 use App\Observers\GameSessionObserver;
+use App\Support\Reckoning\GameDate;
 use Database\Factories\GameSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -35,6 +37,8 @@ use Illuminate\Support\Str;
  * @property int $number
  * @property string|null $title
  * @property Carbon|null $scheduled_at
+ * @property GameDate|null $in_game_start
+ * @property GameDate|null $in_game_end
  * @property Carbon|null $reminder_sent_at
  * @property SessionStatus $status
  * @property Visibility $visibility
@@ -57,7 +61,7 @@ use Illuminate\Support\Str;
  */
 #[ObservedBy([GameSessionObserver::class])]
 #[Fillable([
-    'campaign_id', 'number', 'title', 'scheduled_at', 'reminder_sent_at', 'status', 'visibility',
+    'campaign_id', 'number', 'title', 'scheduled_at', 'in_game_start', 'in_game_end', 'reminder_sent_at', 'status', 'visibility',
     'strong_start', 'live_notes', 'recap', 'recap_published_at', 'dm_notes',
     'created_by', 'updated_by',
 ])]
@@ -76,6 +80,8 @@ class GameSession extends Model
         return [
             'number' => 'integer',
             'scheduled_at' => 'datetime',
+            'in_game_start' => GameDateCast::class.':in_game_start',
+            'in_game_end' => GameDateCast::class.':in_game_end',
             'reminder_sent_at' => 'datetime',
             'recap_published_at' => 'datetime',
             'status' => SessionStatus::class,

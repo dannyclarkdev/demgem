@@ -7,6 +7,9 @@ use App\Http\Controllers\CampaignArchiveController;
 use App\Http\Controllers\CampaignExportController;
 use App\Http\Controllers\InviteController;
 use App\Http\Middleware\EnsureCampaignMember;
+use App\Livewire\Calendars\Edit as CalendarEdit;
+use App\Livewire\Calendars\Show as CalendarShow;
+use App\Livewire\Calendars\Timeline as CalendarTimeline;
 use App\Livewire\Campaigns\Create as CampaignsCreate;
 use App\Livewire\Campaigns\Import as CampaignsImport;
 use App\Livewire\Campaigns\Index as CampaignsIndex;
@@ -112,6 +115,13 @@ Route::middleware('auth')->group(function () {
             // Clocks a GM turns. The segment is not an entity slug, and this sits above
             // the {type} routes, so nothing below can claim it.
             Route::get('/clocks', ClocksIndex::class)->name('clocks.index');
+
+            // The world's own calendar. Singular, like /table: a campaign has one. No
+            // parameter, so nothing for route binding to claim. calendar.feed, outside
+            // the auth group, is the real-world iCal feed and has nothing to do with it.
+            Route::get('/calendar', CalendarShow::class)->name('calendar.show');
+            Route::get('/calendar/edit', CalendarEdit::class)->name('calendar.edit');
+            Route::get('/timeline', CalendarTimeline::class)->name('timeline');
 
             Route::get('/tables', TablesIndex::class)->name('tables.index');
             Route::get('/tables/{tableId}', TablesShow::class)->name('tables.show');

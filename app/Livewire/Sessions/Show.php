@@ -7,6 +7,7 @@ use App\Actions\Sessions\UpdateSession;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\GameSession;
 use App\Models\User;
@@ -132,6 +133,7 @@ class Show extends Component
         return view('livewire.sessions.show', [
             'role' => $role,
             'timezone' => $this->campaign->timezone,
+            'inWorld' => $this->session->in_game_start === null ? null : Calendar::query()->first()?->reckoning()->formatRange($this->session->in_game_start, $this->session->in_game_end),
             'recapHtml' => $recapHtml,
             'canEdit' => $role->isDm(),
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),
