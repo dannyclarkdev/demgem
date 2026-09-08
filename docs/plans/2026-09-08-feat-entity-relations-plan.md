@@ -152,25 +152,25 @@ Success: the party learns about the twin on the night the GM decides.
 
 ### Functional
 
-- [ ] A GM relates two entities with a label and an optional reverse label, and both pages show it.
-- [ ] A GM removes a relationship.
-- [ ] A GM reveals a relationship to the party and hides it again.
-- [ ] Relationships join the export and survive the round trip with both ids remapped.
-- [ ] The Markdown export writes a Relationships section as wiki links.
+- [x] A GM relates two entities with a label and an optional reverse label, and both pages show it.
+- [x] A GM removes a relationship.
+- [x] A GM reveals a relationship to the party and hides it again.
+- [x] Relationships join the export and survive the round trip with both ids remapped.
+- [x] The Markdown export writes a Relationships section as wiki links.
 
 ### Non-functional
 
-- [ ] **A hidden relationship's label and the other entity's name never reach a player's HTML or snapshot, from either page.**
-- [ ] **A revealed relationship whose other end is GM-only never reaches a player, from either page.**
-- [ ] Both lists are filtered in the query, never in the template.
-- [ ] The card costs a constant number of queries.
-- [ ] Both new screens work at 1024px and 768px, dark and light, with no sideways scroll.
+- [x] **A hidden relationship's label and the other entity's name never reach a player's HTML or snapshot, from either page.**
+- [x] **A revealed relationship whose other end is GM-only never reaches a player, from either page.**
+- [x] Both lists are filtered in the query, never in the template.
+- [x] The card costs a constant number of queries. *(Two for the lists, plus the picker for a GM.)*
+- [x] Both new screens work at 1024px and 768px, dark and light, with no sideways scroll.
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
-- [ ] Larastan level 6 clean. Pint clean, on the whole tree, before every commit.
-- [ ] No new `x-ui.*` component. No new dependency.
+- [x] Pest suite green on SQLite locally: 1,035 tests. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean, on the whole tree, before every commit.
+- [x] No new `x-ui.*` component. No new dependency.
 
 ## Dependencies & Risks
 
@@ -179,6 +179,12 @@ Success: the party learns about the twin on the night the GM decides.
 | A hidden or half-hidden relationship leaks | Both gates in the scope, a leak test file with four cases, both pages. |
 | A GM relates an entity to itself | Refused at write time. It is silly rather than dangerous, but it renders as nonsense. |
 | The picker lists a thousand entities | It is the map viewer's picker, and the map viewer has the same list. A search box is the day it hurts. |
+
+## What the browser pass found
+
+Nothing broken in the layout. The card sits under the body at 1024px and 768px, dark and light, with no sideways scroll and no console errors; at 768px the form's two columns stack to one. The player's copy of Mara's page shows the two revealed rows and the hidden "secretly works for" is absent from the HTML; the duke's page, whose only relationships are hidden or point at hidden pages, renders no card for the player at all.
+
+**The form and the eye were driven through the page's own DOM events rather than the browser tool's clicks.** The tool's synthetic click on a Livewire button on this page reached neither the server nor the DOM, on the eye and on Relate alike, while `element.click()` and `form.requestSubmit()` on the same elements did both. That is a fact about the tool, and the Livewire tests cover the same three calls. Through those events a GM created "hunting / hunted by" from the duke's page to Wren with the values Livewire had bound and revealed it. The player's copy of Wren's page still showed nothing, and that is right: the duke is a GM-only page, so the source gate held even though the GM had pressed the eye. The party-visible half of the proof is the seeded rows on Mara's page, which the player sees. What has not been seen is a human's click on this card, and that is the one thing left to check by hand.
 
 ## Future Considerations
 

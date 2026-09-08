@@ -60,3 +60,8 @@ There is no `polls` table. `GameSession::isPolling()` is `Planned` with no `sche
 
 ## reminder_sent_at is cleared in one place
 `game_sessions.reminder_sent_at` is the whole idempotency story for reminder emails. `SendSessionReminders` stamps it after queueing (a crash between the two sends twice rather than never, which is the right way round), and `GameSessionObserver::saving()` clears it when `scheduled_at` is dirty. Nothing else touches it. A session already in the past is never reminded however long the scheduler was down: the query says `scheduled_at > now()`.
+
+## A relationship is gated at both ends, in the scope
+`entity_relations` is directed: the label is written from `entity_id`'s side, `reverse_label` is the optional word for the other side, and `EntityRelation::readsFromTargetAs()` is the one place the fallback ("The Drowned Duke · employer of") is spelled. Both ends cascade, unlike a pin's target: a relationship with nothing on the other end is nothing.
+
+`scopeVisibleTo()` for a non-DM requires `player_visible` **and** both `entity_id` and `target_entity_id` to pass `Entity::visibleTo()`. The pin gates its target only; a relationship also gates its source because the incoming list on the target's page is built from rows whose source is somebody else, and that somebody may be GM-only. Both lists on the card go through the scope, never an `@if`. The leak test checks every case from both pages.

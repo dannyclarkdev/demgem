@@ -8,6 +8,7 @@ use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\EntityRelation;
 use App\Models\GameSession;
 use Illuminate\Support\Facades\Storage;
 
@@ -140,4 +141,22 @@ it('marks a GM-only page as such in its front matter', function () {
     // that quietly dropped half the campaign would be worse than one that says which
     // half is which.
     expect($file)->toContain('visibility: "'.Visibility::Dm->value.'"');
+});
+
+it('writes relationships as wiki links from both sides', function () {
+    $campaign = Campaign::factory()->create();
+    $duke = Entity::factory()->for($campaign)->forPlayers()->create(['name' => 'The Drowned Duke', 'slug' => 'drowned-duke']);
+    $mara = Entity::factory()->for($campaign)->forPlayers()->create(['name' => 'Mara Voss', 'slug' => 'mara-voss']);
+    $twin = Entity::factory()->for($campaign)->dmOnly()->create(['name' => 'The Living Twin', 'slug' => 'living-twin']);
+
+    EntityRelation::factory()->between($duke, $mara)->create(['label' => 'employer of', 'reverse_label' => 'works for']);
+    EntityRelation::factory()->between($duke, $twin)->create(['label' => 'twin of', 'reverse_label' => null]);
+
+    $files = app(WriteCampaignMarkdown::class)->handle($campaign);
+
+    // The vault is the GM's own export, so a hidden relationship is written too.
+    expect($files['markdown/characters/drowned-duke.md'])
+        ->toContain("## Relationships\n\n- employer of [[Mara Voss]]\n- twin of [[The Living Twin]]")
+        ->and($files['markdown/characters/mara-voss.md'])->toContain("## Relationships\n\n- works for [[The Drowned Duke]]")
+        ->and($files['markdown/characters/living-twin.md'])->toContain('- [[The Drowned Duke]] · twin of');
 });
