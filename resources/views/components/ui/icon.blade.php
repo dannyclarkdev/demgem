@@ -30,6 +30,7 @@
     @case('arrow-left')<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>@break
     @case('chevron-down')<polyline points="6 9 12 15 18 9"/>@break
     @case('chevron-right')<polyline points="9 18 15 12 9 6"/>@break
+    @case('chevron-left')<polyline points="15 18 9 12 15 6"/>@break
     @case('lock')<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>@break
     @case('alert')<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>@break
     @case('info')<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>@break

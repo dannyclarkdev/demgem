@@ -2,6 +2,7 @@
 
 namespace App\Actions\Campaigns;
 
+use App\Actions\Calendars\SaveCalendar;
 use App\Actions\Entities\SyncTags;
 use App\Models\Campaign;
 use App\Models\Clock;
@@ -37,6 +38,7 @@ class ImportCampaign
 {
     public function __construct(
         private readonly CreateCampaign $createCampaign,
+        private readonly SaveCalendar $saveCalendar,
         private readonly SyncTags $syncTags,
     ) {}
 
@@ -62,6 +64,10 @@ class ImportCampaign
                 'session_length_minutes' => $attributes['session_length_minutes'],
                 'reminder_lead_hours' => $attributes['reminder_lead_hours'],
             ]);
+
+            if ($attributes['calendar'] !== null) {
+                $this->saveCalendar->handle($campaign, $attributes['calendar']);
+            }
 
             // Scout indexes on save, and a bulk import is the one time that is worth
             // deferring: one index at the end instead of a write per entity.

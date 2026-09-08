@@ -10,6 +10,23 @@
         @endif
     </x-ui.page-header>
 
+    @if ($calendar !== null)
+        @php($moons = $calendar->reckoning()->phases($calendar->today()))
+        <a href="{{ route('calendar.show', $campaign) }}" class="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-line bg-panel px-5 py-4 transition hover:border-line-strong">
+            <span class="min-w-0">
+                <span class="eyebrow block">In the world</span>
+                <span class="mt-1 block font-display text-xl font-semibold text-ink">{{ $calendar->todayFormatted() }}</span>
+            </span>
+            @if (count($moons) > 0)
+                <span class="flex flex-wrap items-center gap-3 text-sm text-ink-muted sm:ml-auto">
+                    @foreach ($moons as $moon)
+                        <span><span aria-hidden="true">{{ $moon->phase->symbol() }}</span> {{ $moon->describe() }}</span>
+                    @endforeach
+                </span>
+            @endif
+        </a>
+    @endif
+
     <div class="mb-4 grid gap-4 md:grid-cols-2">
         <x-ui.card title="Next session">
             <x-slot:header>

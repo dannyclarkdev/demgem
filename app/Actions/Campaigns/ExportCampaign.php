@@ -2,6 +2,7 @@
 
 namespace App\Actions\Campaigns;
 
+use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\CampaignMember;
 use App\Models\Clock;
@@ -46,6 +47,7 @@ class ExportCampaign
      * @var array<string, string>
      */
     public const NESTED_TABLES = [
+        'calendars' => 'campaign.calendar',
         'entity_tag' => 'entities[].tags',
         'entity_viewers' => 'entities[].viewer_user_ids',
         'quest_objectives' => 'entities[].objectives',
@@ -169,6 +171,31 @@ class ExportCampaign
             'created_at' => $campaign->created_at?->toIso8601String(),
             'updated_at' => $campaign->updated_at?->toIso8601String(),
             'cover' => $this->media($campaign->getFirstMedia('cover')),
+            'calendar' => $this->calendar($campaign->calendar),
+        ];
+    }
+
+    /**
+     * The world's calendar, whole, or null. The lists travel as the row holds them;
+     * the current date travels as the triple every date in this document uses.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function calendar(?Calendar $calendar): ?array
+    {
+        if ($calendar === null) {
+            return null;
+        }
+
+        return [
+            'name' => $calendar->name,
+            'era' => $calendar->era,
+            'months' => $calendar->months,
+            'weekdays' => $calendar->weekdays,
+            'moons' => $calendar->moons,
+            'leap_every' => $calendar->leap_every,
+            'leap_month' => $calendar->leap_month,
+            'current' => $calendar->today()->toArray(),
         ];
     }
 

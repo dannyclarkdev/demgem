@@ -60,6 +60,11 @@
                 :active="request()->routeIs('story')"
                 icon="book-open"
             >Story</x-ui.nav-link>
+            <x-ui.nav-link
+                :href="route('calendar.show', $currentCampaign)"
+                :active="request()->routeIs('calendar.*')"
+                icon="sun"
+            >Calendar</x-ui.nav-link>
             @if ($currentRole?->isDm())
                 <x-ui.nav-link
                     :href="route('encounters.index', $currentCampaign)"
