@@ -149,67 +149,67 @@ Campaign settings gains a "Discord" card: the URL field with a hint on where Dis
 
 ### Phase 0: The key
 
-- [ ] `install:api`, Sanctum, `HasApiTokens` on `User`, the migration.
-- [ ] The API keys card on the profile: create with a name and a write flag, shown once, list, revoke.
-- [ ] `GET /api/v1/me`.
+- [x] `install:api`, Sanctum, `HasApiTokens` on `User`, the migration.
+- [x] The API keys card on the profile: create with a name and a write flag, shown once, list, revoke.
+- [x] `GET /api/v1/me`.
 
 Tests: `tests/Feature/Api/TokensTest.php`: a key is created and shown once; a revoked key gets 401; `/me` lists memberships with roles; a key without `write` gets 403 on a write route.
 
 ### Phase 1: Reading
 
-- [ ] Campaign, entity, and session resources with the role gates.
-- [ ] Campaigns index and show, entities index, show, and search, sessions index and show.
-- [ ] `EnsureCampaignMember` and `scopeBindings()` on the group; a non-member's request is a 404.
+- [x] Campaign, entity, and session resources with the role gates.
+- [x] Campaigns index and show, entities index, show, and search, sessions index and show.
+- [x] `EnsureCampaignMember` and `scopeBindings()` on the group; a non-member's request is a 404.
 
 Tests: `CampaignsApiTest`, `EntitiesApiTest`, `SessionsApiTest`: every leak case the screens are tested for, asserted on the JSON. A player's key never receives `dm_notes`, a GM-only entity, a hidden session, a strong start, a scene, a secret, a live note, or an unpublished recap.
 
 ### Phase 2: Writing
 
-- [ ] `POST` and `PATCH` entities, `PATCH` sessions, `POST publish-recap`, all behind `abilities:write`.
-- [ ] `PublishRecap` action; `Sessions\Show` calls it.
+- [x] `POST` and `PATCH` entities, `PATCH` sessions, `POST publish-recap`, all behind `abilities:write`.
+- [x] `PublishRecap` action; `Sessions\Show` calls it.
 
 Tests: a DM key creates an entity and the slug is generated; a player key edits its own PC's body and cannot change its visibility; a player key cannot create; a read key cannot write; the publish endpoint stamps the session.
 
 ### Phase 3: Discord
 
-- [ ] `discord_webhook_url`, encrypted, on campaigns; the settings card; the URL rule; the test button.
-- [ ] `PostToDiscord` job; `PublishRecap` and `SendSessionReminders` dispatch it.
+- [x] `discord_webhook_url`, encrypted, on campaigns; the settings card; the URL rule; the test button.
+- [x] `PostToDiscord` job; `PublishRecap` and `SendSessionReminders` dispatch it.
 
 Tests: `tests/Feature/Discord/DiscordTest.php`: a URL on another host is refused, including `http://169.254.169.254/`; a published recap posts once with the label and the link and none of the session's prose; a re-publish does not post again; a reminder posts to the channel; a failed post is logged and the reminder is still stamped; the test button posts.
 
 ### Phase 4: Polish
 
-- [ ] README: an "API" section with a curl example and the endpoint table, a "Discord" section under Reminders, the status paragraph.
-- [ ] Browser pass on the profile and the settings page at 1024px and 768px, dark and light.
+- [x] README: an "API" section with a curl example and the endpoint table, a "Discord" section under Reminders, the status paragraph.
+- [x] Browser pass on the profile and the settings page at 1024px and 768px, dark and light. *(See below.)*
 
 ## Acceptance Criteria
 
 ### Functional
 
-- [ ] A user creates a named key, sees the secret once, and revokes it.
-- [ ] With the key, a script lists the user's campaigns and reads every entity and session that user can see on screen.
-- [ ] With a write key, a GM creates and edits entities and sessions and publishes a recap.
-- [ ] A GM pastes a Discord webhook URL, sends a test message, and the channel receives it.
-- [ ] Publishing a recap posts one line to the channel. A reminder posts one line to the channel.
+- [x] A user creates a named key, sees the secret once, and revokes it.
+- [x] With the key, a script lists the user's campaigns and reads every entity and session that user can see on screen.
+- [x] With a write key, a GM creates and edits entities and sessions and publishes a recap.
+- [x] A GM pastes a Discord webhook URL, sends a test message, and the channel receives it. *(The receiving end is Discord; the test asserts the request that leaves, its URL, and its one line.)*
+- [x] Publishing a recap posts one line to the channel. A reminder posts one line to the channel.
 
 ### Non-functional
 
-- [ ] **A player's key receives exactly what the player's screen shows: never `dm_notes`, a GM-only entity, a hidden session, a strong start, a scene, a secret, a live note, or an unpublished recap.**
-- [ ] **A non-member's key gets a 404 for every campaign route, and a revoked key gets a 401 everywhere.**
-- [ ] **A key without `write` gets a 403 from every write route.**
-- [ ] **The server posts to `discord.com` and to nothing else. A URL on any other host is refused at validation.**
-- [ ] **A Discord post carries no prose from the session.**
-- [ ] The API creates and changes and never deletes.
-- [ ] A Discord outage never surfaces on a GM's screen.
-- [ ] `discord_webhook_url` never appears in an export or an archive.
-- [ ] The API is `throttle:api`.
+- [x] **A player's key receives exactly what the player's screen shows: never `dm_notes`, a GM-only entity, a hidden session, a strong start, a scene, a secret, a live note, or an unpublished recap.**
+- [x] **A non-member's key gets a 404 for every campaign route, and a revoked key gets a 401 everywhere.**
+- [x] **A key without `write` gets a 403 from every write route.**
+- [x] **The server posts to `discord.com` and to nothing else. A URL on any other host is refused at validation.**
+- [x] **A Discord post carries no prose from the session.**
+- [x] The API creates and changes and never deletes.
+- [x] A Discord outage never surfaces on a GM's screen.
+- [x] `discord_webhook_url` never appears in an export or an archive.
+- [x] The API is `throttle:api`.
 
 ### Quality gates
 
-- [ ] Pest suite green on SQLite locally. PostgreSQL in CI is the pull request's job.
-- [ ] Larastan level 6 clean. Pint clean.
-- [ ] No new `x-ui.*` component.
-- [ ] One new PHP dependency, Sanctum, and no new JavaScript.
+- [x] Pest suite green on SQLite locally: 1,132 tests. PostgreSQL in CI is the pull request's job.
+- [x] Larastan level 6 clean. Pint clean.
+- [x] No new `x-ui.*` component.
+- [x] One new PHP dependency, Sanctum, and no new JavaScript.
 
 ## Dependencies & Risks
 
@@ -220,6 +220,22 @@ Tests: `tests/Feature/Discord/DiscordTest.php`: a URL on another host is refused
 | The webhook URL is an SSRF vector | `DiscordWebhook` accepts one host and one path prefix. The test tries the metadata address. |
 | Discord is down during a reminder | The job retries three times and then logs. The mail already went, and the stamp is written either way. |
 | A recap posts twice | `PublishRecap` posts only when `recap_published_at` was null before the write. |
+
+## What the browser pass found
+
+Nothing broken. The API keys card and the Discord card both sit inside their column at 1024px and at 768px, in dark and in light, with no sideways scroll on either page. Creating a key from the profile at 768px shows the secret once in its panel with the copy button beside it, and the list below gains the row; a reload shows the row and not the secret.
+
+Two things the pass learned about the pass itself, recorded for the next one. A tab that has visited any demgem page holds an HttpOnly session cookie, and a script cannot overwrite one, so the dev cookie is injected with paths `/profile`, `/campaigns`, and `/livewire`, which the browser sends ahead of the `/` cookie. And the live API was exercised with curl against the running app rather than only in Pest: `/me` named the dev user and their campaign with the owner role, the locations index carried `dm_notes` for that owner's key as it should, a write with a read-only key was a 403, no key was a 401, and the throttle header read sixty.
+
+## Future Considerations
+
+- **Slack.** The same job with a different payload key and a second host in `DiscordWebhook`'s allow-list, the day somebody asks.
+- **Generic webhooks.** Need a resolver that refuses private ranges and a DNS rebinding story before any URL a user typed becomes a request. A slice of its own.
+- **A post when a date is picked.** "Session 13 is on Thu 17 Sep at 19:00" from `PickDate` and the form. The job is ready for it; the trigger is one line in two places.
+- **Per-campaign keys.** A key that can see one campaign only. Needs its own role column and a second `roleFor()`, and the leak tests twice.
+- **Key expiry.** Sanctum supports `expires_at`; the profile does not offer it yet.
+- **An MCP server.** The brainstorm's P3 row, now one thin layer over `/api/v1`.
+- **Sessions and entities through the API in bulk.** The index is fifty a page; an export is the whole thing, and a script that wants everything should download that.
 
 ## References
 
