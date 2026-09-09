@@ -198,6 +198,12 @@ class Entity extends Model implements HasMedia
         return $this->hasMany(Entity::class, 'giver_entity_id');
     }
 
+    /** @return HasMany<EntityBodyRevision, $this> */
+    public function bodyRevisions(): HasMany
+    {
+        return $this->hasMany(EntityBodyRevision::class);
+    }
+
     public function isQuest(): bool
     {
         return $this->type === EntityType::Quest;

@@ -6,6 +6,24 @@
             <x-ui.card>
                 <div class="space-y-5">
                     <x-ui.input label="Name" name="name" wire:model="name" required autofocus />
+                    @if (! $isEdit && ($templateOptions->isNotEmpty() || $templateId !== null))
+                        <div class="space-y-3 rounded border border-line p-3">
+                            <x-ui.select label="Start from a template" name="templateId" wire:model="templateId">
+                                <option value="">Choose a template</option>
+                                @foreach ($templateOptions as $template)
+                                    <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                @endforeach
+                            </x-ui.select>
+                            <x-ui.button type="button" variant="secondary" size="sm" wire:click="useTemplate">Use template</x-ui.button>
+                            @if ($confirmTemplate)
+                                <p class="text-sm text-ink-muted">Replace your unsaved body with this template?</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <x-ui.button type="button" variant="secondary" size="sm" wire:click="useTemplate(true)">Replace draft body</x-ui.button>
+                                    <x-ui.button type="button" variant="ghost" size="sm" wire:click="$set('confirmTemplate', false)">Keep draft</x-ui.button>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                     <x-ui.markdown-editor label="Body" name="body" wire:model="body" rows="16" :autocomplete-url="$autocompleteUrl" preview-action="previewBody" :preview="$bodyPreview" hint="Markdown. Type [[ or @ to link an entity. Use [[type:Name]] when two entities share a name." />
                     <x-ui.input label="Tags" name="tags" wire:model="tags" placeholder="ally, harbor, rumor" hint="Comma separated." />
                 </div>

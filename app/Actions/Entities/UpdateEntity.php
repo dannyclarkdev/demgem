@@ -21,6 +21,22 @@ class UpdateEntity
     public function handle(Entity $entity, User $actor, array $data): Entity
     {
         return DB::transaction(function () use ($entity, $actor, $data): Entity {
+            $entity = Entity::query()->where('campaign_id', $entity->campaign_id)->lockForUpdate()->findOrFail($entity->id);
+
+            if (array_key_exists('body', $data)) {
+                $data['body'] = $data['body'] === '' ? null : $data['body'];
+
+                if ($data['body'] !== ($entity->body === '' ? null : $entity->body)) {
+                    $entity->bodyRevisions()->create([
+                        'campaign_id' => $entity->campaign_id,
+                        'body' => $entity->body,
+                        'replaced_by' => $actor->id,
+                        'replaced_by_name' => $actor->name,
+                        'recorded_at' => now(),
+                    ]);
+                }
+            }
+
             $attributes = collect($data)
                 ->only([
                     'name', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility', 'parent_id',

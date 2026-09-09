@@ -19,6 +19,7 @@ use App\Models\Mention;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Show extends Component
@@ -71,6 +72,14 @@ class Show extends Component
         session()->flash('status', $visible
             ? "{$this->entity->name} is on the table."
             : "{$this->entity->name} is back behind the screen.");
+    }
+
+    #[On('entity-body-restored')]
+    public function refreshBody(): void
+    {
+        $entity = Entity::query()->findOrFail($this->entity->id);
+        $this->authorize('view', $entity);
+        $this->entity = $entity;
     }
 
     public function render(MarkdownRenderer $renderer): View

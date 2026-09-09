@@ -18,7 +18,9 @@ use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use App\Support\Reckoning\Reckoning;
 use BackedEnum;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use JsonException;
 
 /**
@@ -75,7 +77,7 @@ class ReadCampaignFile
 
         if (strlen($json) > self::MAX_BYTES) {
             return ReadResult::failed([
-                'That file is larger than '.round(self::MAX_BYTES / 1_048_576).'MB, which is more than an import reads in one piece. Use the artisan command for a file this size.',
+                'That file is larger than '.round(self::MAX_BYTES / 1_048_576).'MB, which is more than an import reads in one piece. Both the browser and artisan importer have this limit.',
             ]);
         }
 
@@ -105,6 +107,8 @@ class ReadCampaignFile
         $document = [
             'campaign' => $this->campaign($this->rows($decoded, 'campaign')),
             'entities' => $this->entities($this->list($decoded, 'entities')),
+            'entity_templates' => $this->entityTemplates($decoded),
+            'entity_body_revisions' => $this->entityBodyRevisions($decoded),
             'sessions' => $this->sessions($this->list($decoded, 'sessions')),
             'encounters' => $this->encounters($this->list($decoded, 'encounters')),
             'random_tables' => $this->randomTables($this->list($decoded, 'random_tables')),
@@ -275,6 +279,70 @@ class ReadCampaignFile
     }
 
     /**
+     * @param  array<string, mixed>  $decoded
+     * @return list<array<string, mixed>>
+     */
+    private function entityTemplates(array $decoded): array
+    {
+        return $this->historySection($decoded, 'entity_templates', [
+            '*.type' => ['required', Rule::enum(EntityType::class)],
+            '*.name' => ['required', 'string', 'max:120'],
+            '*.created_at' => ['nullable', 'date'],
+            '*.updated_at' => ['nullable', 'date'],
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $decoded
+     * @return list<array<string, mixed>>
+     */
+    private function entityBodyRevisions(array $decoded): array
+    {
+        $rows = $this->historySection($decoded, 'entity_body_revisions', [
+            '*.entity_id' => ['required', 'string'],
+            '*.replaced_by_name' => ['nullable', 'string', 'max:255'],
+            '*.recorded_at' => ['required', 'date'],
+        ]);
+
+        foreach ($rows as $row) {
+            $this->mustResolve($row['entity_id'], $this->entityIds, 'entity', 'a body revision');
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Historical prose must arrive byte-for-byte, never through text()'s trim and truncation.
+     *
+     * @param  array<string, mixed>  $decoded
+     * @param  array<string, list<mixed>>  $rules
+     * @return list<array<string, mixed>>
+     */
+    private function historySection(array $decoded, string $section, array $rules): array
+    {
+        $rows = $decoded[$section] ?? [];
+        $validator = Validator::make(['rows' => $rows], [
+            'rows' => ['array', 'list'],
+            'rows.*' => ['array'],
+            'rows.*.id' => ['required', 'string', 'distinct'],
+            'rows.*.body' => ['present', 'nullable', 'string', 'max:100000'],
+            ...collect($rules)->mapWithKeys(fn (array $value, string $key) => ['rows.'.$key => $value])->all(),
+        ]);
+
+        if ($validator->fails()) {
+            foreach ($validator->errors()->all() as $error) {
+                $this->errors[] = $section.': '.$error;
+            }
+
+            return [];
+        }
+
+        $this->report->count($section, count($rows));
+
+        return $rows;
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $rows
      * @return list<array<string, mixed>>
      */
@@ -315,7 +383,7 @@ class ReadCampaignFile
                 'type' => $this->enum(EntityType::class, $row, 'type', "entity {$id}") ?? EntityType::Note,
                 'name' => $this->text($row, 'name', 120, "entity {$id}") ?? 'Untitled',
                 'slug' => $this->slug($row, $id),
-                'body' => $this->text($row, 'body', 100_000),
+                'body' => $this->bodyText($row),
                 'dm_notes' => $this->text($row, 'dm_notes', 100_000),
                 'rewards' => $this->text($row, 'rewards', 100_000),
                 'visibility' => $visibility,
@@ -910,6 +978,24 @@ class ReadCampaignFile
         $value = $row[$key] ?? null;
 
         return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    /** @param array<string, mixed> $row */
+    private function bodyText(array $row): ?string
+    {
+        $body = $row['body'] ?? null;
+
+        if ($body === null || $body === '') {
+            return null;
+        }
+
+        if (! is_string($body) || mb_strlen($body) > 100_000) {
+            $this->errors[] = 'A body must be text of at most 100000 characters.';
+
+            return null;
+        }
+
+        return $body;
     }
 
     /**

@@ -157,6 +157,9 @@
             </x-ui.card>
 
             <livewire:entities.relations :campaign="$campaign" :entity="$entity" :wire:key="'relations-'.$entity->id" />
+            @if ($role->isDm())
+                <livewire:entities.history :campaign="$campaign" :entity="$entity" :key="'history-'.$entity->id" />
+            @endif
 
             @php ($customFields = $entity->customFields())
             @if ($customFields !== [])

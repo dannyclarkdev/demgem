@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Names the limiter AppServiceProvider defines. Without this line the api group
         // carries no throttle at all.
         $middleware->throttleApi();
+
+        $middleware->trimStrings(except: ['body', 'updates.body']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -118,6 +118,8 @@ it('holds the whole world, GM half included', function () {
 it('takes nobody\'s email address, password, or invite link with it', function () {
     [$campaign, $player] = exportableCampaign();
 
+    $player->update(['name' => "Marie O'Keefe"]);
+
     $owner = ownerOf($campaign);
     $invite = $campaign->invites()->create([
         'token' => 'a-live-invite-token',
@@ -135,7 +137,8 @@ it('takes nobody\'s email address, password, or invite link with it', function (
         ->and($raw)->not->toContain('two_factor');
 
     // The names and the roles do travel: an importer needs to know who was at the table.
-    expect($raw)->toContain($owner->name)->toContain($player->name);
+    $document = json_decode($raw, true, flags: JSON_THROW_ON_ERROR);
+    expect(array_column($document['members'], 'name'))->toContain($owner->name, $player->name);
 });
 
 it('carries images as links and facts, not as files', function () {

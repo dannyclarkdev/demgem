@@ -9,6 +9,8 @@ use App\Models\Clock;
 use App\Models\Combatant;
 use App\Models\Encounter;
 use App\Models\Entity;
+use App\Models\EntityBodyRevision;
+use App\Models\EntityTemplate;
 use App\Models\GameSession;
 use App\Models\RandomTable;
 use App\Models\User;
@@ -73,6 +75,7 @@ class ImportCampaign
             // deferring: one index at the end instead of a write per entity.
             Entity::withoutSyncingToSearch(function () use ($document, $importer, $campaign, $ids): void {
                 $this->entities($document, $campaign, $importer, $ids);
+                $this->templatesAndHistory($document, $campaign, $ids);
                 $this->sessions($document, $campaign, $importer, $ids);
                 $this->linkEntities($document, $ids);
                 $this->children($document, $ids);
@@ -178,6 +181,34 @@ class ImportCampaign
         $extension = preg_replace('/[^a-z0-9]/', '', $extension) ?? '';
 
         return $extension !== '' ? $stem.'.'.$extension : $stem;
+    }
+
+    /** @param array<string, mixed> $document */
+    private function templatesAndHistory(array $document, Campaign $campaign, IdMap $ids): void
+    {
+        foreach ($document['entity_templates'] ?? [] as $row) {
+            $this->write(new EntityTemplate, [
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                'type' => $row['type'],
+                'name' => $row['name'],
+                'body' => $row['body'],
+                'created_at' => $row['created_at'] ?? now(),
+                'updated_at' => $row['updated_at'] ?? now(),
+            ]);
+        }
+
+        foreach ($document['entity_body_revisions'] ?? [] as $row) {
+            $this->write(new EntityBodyRevision, [
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                'entity_id' => $ids->newFor($row['entity_id']),
+                'body' => $row['body'],
+                'replaced_by' => null,
+                'replaced_by_name' => $row['replaced_by_name'] ?? null,
+                'recorded_at' => $row['recorded_at'],
+            ]);
+        }
     }
 
     /**

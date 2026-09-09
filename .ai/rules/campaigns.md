@@ -48,3 +48,6 @@ The format policy, settled in slice 9: adding a key to `demgem.campaign` does no
 `Builder::cursor()` eager-loads one level and silently leaves `rsvps.user` and `dateOptions.votes.user` unloaded, which strict mode refuses the first time an export meets a real campaign. It passed every unit test and failed on the seeded world. The sessions section streams through `->lazy(100)`, which loads nested relations per chunk. Use the same the next time a section needs a relation of a relation.
 
 The RSVPs, poll votes and attendance are exported by member name, like the members section, and the importer counts them into `ImportReport::$answers` and leaves them: the file cannot say who a person is on this install. The candidate times themselves come across, because they are dates rather than people.
+
+## Templates and body history travel as streamed top-level sections
+ExportCampaign streams entity_templates and entity_body_revisions separately; history includes only non-deleted entities in the exported campaign. The reader accepts absent sections from old documents but validates new prose without trimming or silently truncating it. Import remaps IDs, preserves recorded_at and replaced_by_name, and leaves replaced_by null; it never synthesizes revisions. Markdown contains current pages only. Both CLI and browser imports share the 25 MiB limit.

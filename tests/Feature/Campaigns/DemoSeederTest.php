@@ -4,6 +4,7 @@ use App\Enums\CampaignRole;
 use App\Models\Campaign;
 use App\Models\Encounter;
 use App\Models\Entity;
+use App\Models\EntityTemplate;
 use App\Models\GameSession;
 use App\Models\MapMarker;
 use App\Models\RandomTable;
@@ -29,6 +30,7 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and($campaign->roleFor($dm))->toBe(CampaignRole::Owner)
         ->and($campaign->roleFor($player))->toBe(CampaignRole::Player)
         ->and(Entity::query()->count())->toBeGreaterThan(10)
+        ->and(EntityTemplate::query()->count())->toBe(2)
         ->and(GameSession::query()->count())->toBe(4)
         ->and(Encounter::query()->count())->toBe(1)
         ->and(RandomTable::query()->count())->toBe(2)

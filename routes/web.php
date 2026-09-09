@@ -22,6 +22,7 @@ use App\Livewire\Encounters\Show as EncountersShow;
 use App\Livewire\Entities\Form as EntitiesForm;
 use App\Livewire\Entities\Index as EntitiesIndex;
 use App\Livewire\Entities\Show as EntitiesShow;
+use App\Livewire\Entities\Templates;
 use App\Livewire\Profile\Edit as ProfileEdit;
 use App\Livewire\RandomTables\Index as TablesIndex;
 use App\Livewire\RandomTables\Show as TablesShow;
@@ -125,6 +126,8 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/tables', TablesIndex::class)->name('tables.index');
             Route::get('/tables/{tableId}', TablesShow::class)->name('tables.show');
+
+            Route::get('/entity-templates', Templates::class)->name('entity-templates.index');
 
             Route::get('/{type}/create', EntitiesForm::class)->name('entities.create');
             Route::get('/{type}', EntitiesIndex::class)->name('entities.index');

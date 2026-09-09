@@ -65,6 +65,13 @@ final class ImportReport
             ];
         }
 
+        if (($this->counts['entity_body_revisions'] ?? 0) > 0) {
+            $losses[] = [
+                'label' => 'History keeps names, without reconnecting accounts',
+                'detail' => 'Earlier bodies and their replacement dates come across. Historical names remain labels; they are not linked to users on this install.',
+            ];
+        }
+
         if ($this->memberNames !== []) {
             $losses[] = [
                 'label' => count($this->memberNames).' '.str('member')->plural(count($this->memberNames)).' cannot be re-linked',

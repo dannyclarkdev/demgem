@@ -55,6 +55,11 @@
         </form>
     </x-ui.card>
 
+    <x-ui.card title="Entity templates">
+        <p class="text-sm text-ink-muted">Reusable starting bodies for characters, locations, quests, and other pages.</p>
+        <div class="mt-4"><x-ui.button :href="route('entity-templates.index', $campaign)" variant="secondary">Manage templates</x-ui.button></div>
+    </x-ui.card>
+
     <x-ui.card title="Export">
         <p class="text-sm text-ink-muted">
             Everything in this campaign: every entity with its GM notes, every session with its prep, secrets,
