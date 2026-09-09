@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CampaignController;
+use App\Http\Controllers\Api\V1\EntityBodyRevisionController;
 use App\Http\Controllers\Api\V1\EntityController;
+use App\Http\Controllers\Api\V1\EntityTemplateController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SessionController;
@@ -28,6 +30,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
             // would break on a rename. The response carries both.
             Route::get('/entities', [EntityController::class, 'index'])->name('api.entities.index');
             Route::get('/entities/{entityId}', [EntityController::class, 'show'])->name('api.entities.show');
+            Route::get('/entity-templates', [EntityTemplateController::class, 'index'])->name('api.entity-templates.index');
+            Route::get('/entity-templates/{templateId}', [EntityTemplateController::class, 'show'])->name('api.entity-templates.show');
+            Route::get('/entities/{entityId}/body-revisions', [EntityBodyRevisionController::class, 'index'])->name('api.body-revisions.index');
+            Route::get('/entities/{entityId}/body-revisions/{revisionId}', [EntityBodyRevisionController::class, 'show'])->name('api.body-revisions.show');
             Route::get('/search', SearchController::class)->name('api.search');
 
             Route::get('/sessions', [SessionController::class, 'index'])->name('api.sessions.index');
@@ -37,6 +43,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
             // The API creates and changes; it never deletes. Deleting is a screen with
             // a confirmation, and a key in a script has no confirm button.
             Route::middleware('abilities:write')->group(function () {
+                Route::post('/entity-templates', [EntityTemplateController::class, 'store'])->name('api.entity-templates.store');
+                Route::patch('/entity-templates/{templateId}', [EntityTemplateController::class, 'update'])->name('api.entity-templates.update');
+                Route::post('/entities/{entityId}/body-revisions/{revisionId}/restore', [EntityBodyRevisionController::class, 'restore'])->name('api.body-revisions.restore');
                 Route::post('/entities', [EntityController::class, 'store'])->name('api.entities.store');
                 Route::patch('/entities/{entityId}', [EntityController::class, 'update'])->name('api.entities.update');
                 Route::patch('/sessions/{number}', [SessionController::class, 'update'])->whereNumber('number')->name('api.sessions.update');

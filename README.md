@@ -30,6 +30,8 @@ Slice 12 is done: **the world's own calendar**. A GM names the months, sets the 
 
 Slice 13 is done: **a key, an API, and the party's channel**. A user mints a named API key from their profile, read-only or read and write, shown once and revoked with a click. `/api/v1` serves the campaigns that key belongs to, the entities and sessions its role may see, search, and the same writes a GM makes on screen, gated by the same scopes and policies as every page. A campaign can hold one Discord webhook, and when a recap is published or a reminder goes out the channel gets one line and a link, never the prose.
 
+Slice 14 adds **entity templates and body history**. GMs keep named starting bodies per entity type in campaign settings, copy one into a new page, and edit the copy freely. Earlier bodies are kept whenever a form or API save replaces the text. GMs can inspect and restore them from the entity page; restoring preserves the displaced body too. Templates and history travel in campaign JSON and archives.
+
 ## Local setup
 
 Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.
@@ -158,6 +160,18 @@ php artisan demgem:import path/to/campaign.json --user=you@example.com
 
 The importer validates the whole file before it writes a row, remaps every id, and reports what it could not carry before the GM commits. It never fetches a URL found in the file and never uses a string from the archive as a path, so an untrusted file cannot reach the network or the disk. Four things stay behind on purpose: the members, because the file carries no email addresses, so the GM invites the party again; the viewer lists on entities shown to selected players, which import as GM-only rather than guess wider; the dice log, because the file cannot say who rolled; and the answers about sessions, who said yes and who turned up, for the same reason.
 
+## Templates and body history
+
+Open **Entity templates** from campaign settings to create a reusable Markdown outline for a character, location, quest, or any other entity type. On a new page, choose an outline and press **Use template**. Replacing an unsaved body requires confirmation. Only the body is copied; the page keeps its own name, visibility, tags, and other fields. Editing or deleting a template never changes existing pages.
+
+**Body history** on an entity page lets a GM inspect and restore earlier text. Every changed body saved through the form or API preserves the body it replaces, including an empty body. History starts with the first body change after this feature is installed; earlier edits cannot be recovered. Automatic wiki-link replacements following a rename do not add revisions, and old snapshots retain their original link text. Restoring an old link may therefore leave it unresolved until edited.
+
+History is GM-only, including on a player's own character: an earlier body may hold a secret removed before the page was revealed. Revision labels say who replaced the body and when, rather than claiming who originally wrote it. A restore changes only the body. This is not an undo for GM notes, media, visibility, or other fields.
+
+Bodies are kept without expiry or individual deletion. Deleting an entity hides its history and leaves it out of exports; permanently deleting the entity or campaign removes it. Templates and history are carried in `campaign.json` inside an archive. The Markdown vault contains current pages only. Imported history keeps the replacement time and name, without linking that name to a local account.
+
+The importer reads documents up to **25 MiB**, in both the browser and the Artisan command. Keeping all history can eventually exceed that limit. Exports still include every revision; they never silently drop history to fit. Larger imports and configurable retention are future work.
+
 ## The API
 
 Every screen's data, in JSON, for a script or an assistant. Get a key from your profile: it reads what you can read in every campaign you belong to, and writes what you can write if you ticked **Can write** when you made it. Send it as a bearer token.
@@ -180,6 +194,20 @@ curl -H "Authorization: Bearer $DEMGEM_KEY" https://demgem.example/api/v1/me
 | `PATCH /api/v1/campaigns/{id}/entities/{entityId}` | Change one. GM roles on anything; a player on their own PC's body and record. |
 | `PATCH /api/v1/campaigns/{id}/sessions/{number}` | Change a session's title, status, and notes. GM roles, write key. |
 | `POST /api/v1/campaigns/{id}/sessions/{number}/publish-recap` | Publish the recap, and save a new one on the way if you send `recap`. |
+
+Templates and history use the same campaign prefix, `/api/v1/campaigns/{id}`:
+
+| Method and path | What it does |
+|---|---|
+| `GET /entity-templates` | GM-only summaries, 50 per page. Optional `type=character` filter uses the singular entity type. |
+| `GET /entity-templates/{templateId}` | GM-only template with its body. |
+| `POST /entity-templates` | Create with `name`, singular `type`, and optional `body`. GM role, write key. |
+| `PATCH /entity-templates/{templateId}` | Change the template's name, type, or body. GM role, write key. |
+| `GET /entities/{entityId}/body-revisions` | GM-only summaries, 25 per page, newest first. |
+| `GET /entities/{entityId}/body-revisions/{revisionId}` | One previous body with `recorded_at` and `replaced_by_name`. GM-only. |
+| `POST /entities/{entityId}/body-revisions/{revisionId}/restore` | Restore the body and return the updated entity. No payload. GM role, write key. |
+
+`POST /entities` also accepts `template_id` for a matching entity type. Omit `body` to use the template's text; an explicitly supplied body, including null, takes precedence. A template is resolved within the campaign even when the body is overridden. `PATCH /entities/{entityId}` cannot apply a template. Markdown body whitespace is preserved.
 
 The API creates and changes; it never deletes. A field your key may not set comes back as a 422 that names it, not a silent drop. Sixty requests a minute per key. A campaign you are not a member of is a 404, the same as on the web.
 

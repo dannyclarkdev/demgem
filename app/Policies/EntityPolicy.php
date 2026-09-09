@@ -84,6 +84,16 @@ class EntityPolicy
         return $entity->isQuest() && ($this->roleFor($user, $entity)?->isDm() ?? false);
     }
 
+    public function viewHistory(User $user, Entity $entity): bool
+    {
+        return $this->roleFor($user, $entity)?->isDm() ?? false;
+    }
+
+    public function restoreBody(User $user, Entity $entity): bool
+    {
+        return $this->viewHistory($user, $entity);
+    }
+
     private function roleFor(User $user, Entity $entity): ?CampaignRole
     {
         $current = app(CurrentCampaign::class);

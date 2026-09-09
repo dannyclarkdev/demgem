@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Entities\ApplyEntityTemplate;
 use App\Actions\Entities\CreateEntity;
 use App\Actions\Entities\UpdateEntity;
 use App\Enums\EntityType;
@@ -90,7 +91,7 @@ class EntityController extends ApiController
      * GM roles only, like the form's create. The type is fixed at birth: nothing
      * changes it afterwards, on the page or here.
      */
-    public function store(Request $request, Campaign $campaign, CreateEntity $createEntity): JsonResponse
+    public function store(Request $request, Campaign $campaign, CreateEntity $createEntity, ApplyEntityTemplate $applyTemplate): JsonResponse
     {
         Gate::authorize('create', [Entity::class, $campaign]);
 
@@ -98,6 +99,14 @@ class EntityController extends ApiController
         $type = EntityType::fromSlug($typeSlug) ?? abort(422);
 
         $validated = $request->validate($this->rules($campaign, $type, true, null));
+
+        if (isset($validated['template_id'])) {
+            $templateBody = $applyTemplate->handle($campaign, $this->viewer(), $type, $validated['template_id']);
+
+            if (! array_key_exists('body', $validated)) {
+                $validated['body'] = $templateBody;
+            }
+        }
 
         $entity = $createEntity->handle($campaign, $this->viewer(), [
             'type' => $type,
@@ -155,6 +164,7 @@ class EntityController extends ApiController
         $rules = [
             'name' => [$entity === null ? 'required' : 'sometimes', 'required', 'string', 'max:120', new UniqueEntityName($campaign->id, $type, $entity?->id)],
             'body' => ['nullable', 'string', 'max:100000'],
+            'template_id' => $entity === null ? ['nullable', 'string'] : ['prohibited'],
             'tags' => ['array', 'max:50'],
             'tags.*' => ['string', 'max:60'],
             'custom_fields' => ['array', 'max:20'],
@@ -204,6 +214,10 @@ class EntityController extends ApiController
             if (array_key_exists($key, $validated)) {
                 $data[$key] = filled($validated[$key]) ? trim((string) $validated[$key]) : null;
             }
+        }
+
+        if (array_key_exists('body', $validated)) {
+            $data['body'] = $validated['body'] === '' ? null : $validated['body'];
         }
 
         if (array_key_exists('level', $validated)) {

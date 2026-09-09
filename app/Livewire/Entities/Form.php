@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Entities;
 
+use App\Actions\Entities\ApplyEntityTemplate;
 use App\Actions\Entities\CreateEntity;
 use App\Actions\Entities\UpdateEntity;
 use App\Enums\EntityType;
@@ -13,12 +14,15 @@ use App\Markdown\WikiLink\WikiLinkRenderer;
 use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\EntityTemplate;
 use App\Models\User;
 use App\Rules\UniqueEntityName;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -53,6 +57,10 @@ class Form extends Component
     public string $name = '';
 
     public string $body = '';
+
+    public ?string $templateId = null;
+
+    public bool $confirmTemplate = false;
 
     public string $dm_notes = '';
 
@@ -443,6 +451,32 @@ class Form extends Component
         return WikiLinkRenderer::for($this->campaign, $this->user(), $this->role());
     }
 
+    public function useTemplate(ApplyEntityTemplate $applyTemplate, bool $confirmed = false): void
+    {
+        abort_if($this->entity !== null, 403);
+        $this->authorize('create', [Entity::class, $this->campaign]);
+        $this->validate(['templateId' => ['required', 'string']]);
+        try {
+            $templateBody = $applyTemplate->handle($this->campaign, $this->user(), $this->entityType, $this->templateId);
+        } catch (ModelNotFoundException|ValidationException) {
+            $this->addError('templateId', 'That template is no longer available for this entity type. Your draft has been kept.');
+            $this->confirmTemplate = false;
+
+            return;
+        }
+
+        if ($this->body !== '' && ! $confirmed) {
+            $this->confirmTemplate = true;
+
+            return;
+        }
+
+        $this->body = $templateBody ?? '';
+        $this->bodyPreview = '';
+        $this->confirmTemplate = false;
+        $this->resetValidation('templateId');
+    }
+
     public function render(): View
     {
         $canEditDmFields = $this->canEditDmFields();
@@ -466,6 +500,8 @@ class Form extends Component
             : collect();
 
         return view('livewire.entities.form', [
+            'templateOptions' => $this->entity === null && $canEditDmFields
+                ? EntityTemplate::query()->where('type', $this->entityType->value)->orderBy('name')->orderBy('id')->get(['id', 'name']) : collect(),
             'type' => $this->entityType,
             'isEdit' => $this->entity !== null,
             'canEditDmFields' => $canEditDmFields,

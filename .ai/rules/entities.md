@@ -14,3 +14,6 @@ The character fields (character_class, level, sheet_url) are not DM fields: they
 
 ## Relationships are a GM's to write, not a player's
 `EntityPolicy::manageRelations()` is GM roles only, even on a PC the player may edit: a relationship is a wiki fact rather than a sheet fact, and the visibility toggle on it is a reveal. The card's target picker goes through `Entity::visibleTo()` and `whereKeyNot` the page itself, and `Relations::relation()` looks a row up only through the page's own two lists, so an id from another page is a 404 rather than a write.
+
+## Templates are GM-owned starting bodies, applied only to new entities
+Entity templates belong to one campaign and one entity type, carry only a name and body, and are never player-visible. ApplyEntityTemplate resolves the campaign/type/policy gates for both the form and API. Selecting an option alone does not change a draft; applying it confirms before replacing nonempty prose. Keep the picker and its unavailable error visible when the last selected template is deleted. Created entities retain independent copies.

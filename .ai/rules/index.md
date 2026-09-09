@@ -5,8 +5,10 @@ Before planning or editing, find the row whose globs match the file's path and r
 | Applies to | Rule file |
 | --- | --- |
 | app/Actions/Dice/** | .ai/rules/actions-dice.md |
+| app/Actions/Entities/** | .ai/rules/actions-entities.md |
 | app/Actions/** | .ai/rules/actions.md |
 | app/Http/Controllers/Api/** | .ai/rules/api.md |
+| bootstrap/app.php | .ai/rules/bootstrap.md |
 | app/Calendar/**, app/Http/Controllers/CalendarFeedController.php, app/Mail/** | .ai/rules/calendar.md |
 | app/Livewire/Calendars/** | .ai/rules/calendars.md |
 | app/Actions/Campaigns/**, app/Actions/Campaigns/ExportCampaign.php | .ai/rules/campaigns.md |

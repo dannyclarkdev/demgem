@@ -17,7 +17,9 @@ use App\Actions\Encounters\SetConditions;
 use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
 use App\Actions\Entities\CreateEntity;
+use App\Actions\Entities\CreateEntityTemplate;
 use App\Actions\Entities\RelateEntities;
+use App\Actions\Entities\UpdateEntity;
 use App\Actions\Maps\PlaceMarker;
 use App\Actions\Maps\SetMarkerVisibility;
 use App\Actions\RandomTables\CreateRandomTable;
@@ -72,6 +74,10 @@ class DemoCampaignSeeder extends Seeder
         ]);
         $campaign->members()->firstOrCreate(['user_id' => $player->id], ['role' => CampaignRole::Player]);
 
+        $templates = app(CreateEntityTemplate::class);
+        $templates->handle($campaign, EntityType::Character, 'Someone the party meets', "## Appearance\n\n## Wants\n\n## Knows\n");
+        $templates->handle($campaign, EntityType::Location, 'A place worth visiting', "## First impression\n\n## People\n\n## Discoveries\n");
+
         $create = app(CreateEntity::class);
         $make = fn (EntityType $type, string $name, array $extra = []): Entity => $create->handle($campaign, $dm, [
             'type' => $type,
@@ -84,6 +90,10 @@ class DemoCampaignSeeder extends Seeder
             'body' => "The drowned duchy. Half its streets flood at high tide. The court sits in [[Harrowgate]] and pretends otherwise.\n\nThe [[Tidewardens]] keep the sea walls. Everyone else keeps their head down.",
             'tags' => ['region', 'coast'],
         ]);
+        app(UpdateEntity::class)->handle($vell, $dm, [
+            'body' => $vell->body."\n\nAt low tide, the old roads still lead somewhere.",
+        ]);
+
         $harrowgate = $make(EntityType::Location, 'Harrowgate', [
             'parent_id' => $vell->id,
             'body' => 'Capital of [[Vell]]. Built on pilings over the old city. The [[Salt Cathedral]] is its only dry building.',

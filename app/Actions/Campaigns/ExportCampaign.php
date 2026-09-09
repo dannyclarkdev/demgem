@@ -10,7 +10,9 @@ use App\Models\Combatant;
 use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
+use App\Models\EntityBodyRevision;
 use App\Models\EntityRelation;
+use App\Models\EntityTemplate;
 use App\Models\GameSession;
 use App\Models\MapMarker;
 use App\Models\QuestObjective;
@@ -86,6 +88,8 @@ class ExportCampaign
         'campaign_members' => 'members',
         'clocks' => 'clocks',
         'entities' => 'entities',
+        'entity_templates' => 'entity_templates',
+        'entity_body_revisions' => 'entity_body_revisions',
         'game_sessions' => 'sessions',
         'encounters' => 'encounters',
         'random_tables' => 'random_tables',
@@ -140,12 +144,46 @@ class ExportCampaign
             'campaign' => $this->campaign($campaign),
             'members' => $this->members($campaign),
             'entities' => $this->entities($campaign),
+            'entity_templates' => $this->entityTemplates($campaign),
+            'entity_body_revisions' => $this->entityBodyRevisions($campaign),
             'sessions' => $this->sessions($campaign),
             'encounters' => $this->encounters($campaign),
             'random_tables' => $this->randomTables($campaign),
             'dice_rolls' => $this->diceRolls($campaign),
             'clocks' => $this->clocks($campaign),
         ];
+    }
+
+    /** @return iterable<int, array<string, mixed>> */
+    private function entityTemplates(Campaign $campaign): iterable
+    {
+        return EntityTemplate::withoutGlobalScopes()->where('campaign_id', $campaign->id)
+            ->orderBy('type')->orderBy('name')->orderBy('id')->cursor()
+            ->map(fn (EntityTemplate $template) => [
+                'id' => $template->id,
+                'type' => $template->type->value,
+                'name' => $template->name,
+                'body' => $template->body,
+                'created_at' => $template->created_at?->toIso8601String(),
+                'updated_at' => $template->updated_at?->toIso8601String(),
+            ]);
+    }
+
+    /** @return iterable<int, array<string, mixed>> */
+    private function entityBodyRevisions(Campaign $campaign): iterable
+    {
+        $entityIds = Entity::withoutGlobalScopes()->where('campaign_id', $campaign->id)
+            ->whereNull('deleted_at')->select('id');
+
+        return EntityBodyRevision::withoutGlobalScopes()->where('campaign_id', $campaign->id)
+            ->whereIn('entity_id', $entityIds)->orderBy('recorded_at')->orderBy('id')->cursor()
+            ->map(fn (EntityBodyRevision $revision) => [
+                'id' => $revision->id,
+                'entity_id' => $revision->entity_id,
+                'body' => $revision->body,
+                'replaced_by_name' => $revision->replaced_by_name,
+                'recorded_at' => $revision->recorded_at->toIso8601String(),
+            ]);
     }
 
     public function filename(Campaign $campaign): string

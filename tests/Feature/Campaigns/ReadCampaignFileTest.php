@@ -85,7 +85,7 @@ it('refuses a file past the size it reads in one piece', function () {
 
     expect($result->succeeded())->toBeFalse()
         ->and($result->errors[0])->toContain('25MB')
-        ->and($result->errors[0])->toContain('artisan command');
+        ->and($result->errors[0])->toContain('Both the browser and artisan importer have this limit.');
 });
 
 it('refuses an enum value it does not know rather than guessing one', function (string $key, string $value, string $needle) {
