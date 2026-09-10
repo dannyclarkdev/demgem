@@ -37,9 +37,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
             Route::get('/entities/{entityId}/body-revisions/{revisionId}', [EntityBodyRevisionController::class, 'show'])->name('api.body-revisions.show');
             Route::get('/search', SearchController::class)->name('api.search');
 
-            // The compendium. Read-only on purpose: these rows are shipped reference
-            // data with a checksum behind them, so no key writes them. By slug, because
-            // a stat block is not renamed the way an entity is.
+            // The compendium, both halves: the shipped reference data and the
+            // creatures this campaign wrote. By slug, and a slug here never moves —
+            // renaming a creature leaves it, which is the opposite call from an entity
+            // and is what makes a stored address keep working. Only a campaign's own
+            // rows are writable, below.
             Route::get('/compendium/stat-blocks', [StatBlockController::class, 'index'])->name('api.stat-blocks.index');
             Route::get('/compendium/stat-blocks/{slug}', [StatBlockController::class, 'show'])->name('api.stat-blocks.show');
 
@@ -55,6 +57,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
                 Route::post('/entities/{entityId}/body-revisions/{revisionId}/restore', [EntityBodyRevisionController::class, 'restore'])->name('api.body-revisions.restore');
                 Route::post('/entities', [EntityController::class, 'store'])->name('api.entities.store');
                 Route::patch('/entities/{entityId}', [EntityController::class, 'update'])->name('api.entities.update');
+                Route::post('/compendium/stat-blocks', [StatBlockController::class, 'store'])->name('api.stat-blocks.store');
+                Route::patch('/compendium/stat-blocks/{slug}', [StatBlockController::class, 'update'])->name('api.stat-blocks.update');
                 Route::patch('/sessions/{number}', [SessionController::class, 'update'])->whereNumber('number')->name('api.sessions.update');
                 Route::post('/sessions/{number}/publish-recap', [SessionController::class, 'publishRecap'])->whereNumber('number')->name('api.sessions.publish-recap');
             });

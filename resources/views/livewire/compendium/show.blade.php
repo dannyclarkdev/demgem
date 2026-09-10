@@ -1,5 +1,21 @@
 <div>
     <x-ui.page-header :title="$statBlock->name" :eyebrow="$statBlock->type_line">
+        @if ($canEdit)
+            <x-ui.button icon="edit" :href="route('compendium.edit', [$campaign, $statBlock->slug])" wire:navigate>Edit</x-ui.button>
+        @endif
+        @if ($canCopy)
+            <x-ui.button variant="secondary" icon="copy" wire:click="copyToCampaign">
+                {{ $isOwn ? 'Duplicate' : 'Copy to my campaign' }}
+            </x-ui.button>
+        @endif
+        @if ($canEdit)
+            <x-ui.button
+                variant="ghost"
+                icon="trash"
+                wire:click="deleteStatBlock"
+                wire:confirm="Delete {{ $statBlock->name }}? Any fight it is in keeps its numbers."
+            >Delete</x-ui.button>
+        @endif
         <x-ui.button
             variant="ghost"
             icon="arrow-left"
@@ -7,6 +23,13 @@
             wire:navigate
         >Compendium</x-ui.button>
     </x-ui.page-header>
+
+    @if ($isOwn)
+        <p class="mb-4 text-sm text-ink-muted">
+            <x-ui.badge variant="dm">Yours</x-ui.badge>
+            Written for this campaign. It travels in your export, prose and all.
+        </p>
+    @endif
 
     <div class="grid gap-4 lg:grid-cols-3">
         <x-ui.card class="lg:col-span-2">
@@ -131,7 +154,12 @@
                 @endif
             </x-ui.card>
 
-            <x-compendium.attribution />
+            {{-- Shipped prose only. A GM's own words are not SRD material, and printing
+                 the notice under them would credit the wrong author. A copy of a shipped
+                 creature keeps its source and licence, so it still shows one. --}}
+            @if ($statBlock->license === config('compendium.license'))
+                <x-compendium.attribution />
+            @endif
         </div>
     </div>
 </div>

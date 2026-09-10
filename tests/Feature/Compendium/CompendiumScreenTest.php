@@ -89,21 +89,25 @@ it('refuses a player', function () {
         ->assertForbidden();
 });
 
-it('refuses a GM whose campaign has no compendium', function () {
+it('gives a system-agnostic campaign the screen, holding only what it wrote', function () {
     $generic = Campaign::factory()->create(['ruleset' => Ruleset::Generic]);
 
+    // Slice 17 dropped the ruleset half of the gate. A campaign with no shipped book
+    // may still write its own creatures, and a screen that 404s on the only rows it
+    // would hold is a screen refusing a GM their own writing.
     Livewire::actingAs(ownerOf($generic))
         ->test(Index::class, ['campaign' => $generic])
-        ->assertForbidden();
+        ->assertOk()
+        ->assertDontSee('Goblin Warrior');
 });
 
-it('keeps the compendium out of a system-agnostic campaign\'s nav', function () {
+it('puts the compendium in every GM\'s nav, because every campaign can write one', function () {
     $generic = Campaign::factory()->create(['ruleset' => Ruleset::Generic]);
 
     $this->actingAs(ownerOf($generic))
         ->get(route('campaigns.show', $generic))
         ->assertOk()
-        ->assertDontSee('Compendium');
+        ->assertSee('Compendium');
 
     $this->actingAs($this->owner)
         ->get(route('campaigns.show', $this->campaign))

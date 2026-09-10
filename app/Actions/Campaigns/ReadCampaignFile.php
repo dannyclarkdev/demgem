@@ -72,11 +72,15 @@ class ReadCampaignFile
     /** @var array<string, true> */
     private array $slugs = [];
 
+    /** @var array<string, true> */
+    private array $statBlockIds = [];
+
     public function handle(string $json): ReadResult
     {
         $this->errors = [];
         $this->report = new ImportReport;
         $this->entityIds = $this->sessionIds = $this->tableIds = $this->combatantIds = $this->slugs = [];
+        $this->statBlockIds = [];
 
         if (strlen($json) > self::MAX_BYTES) {
             return ReadResult::failed([
@@ -107,8 +111,13 @@ class ReadCampaignFile
             ]);
         }
 
+        // Read before the sections that point at it, so a reference to a creature this
+        // campaign wrote can be checked against the rows the file actually carries.
+        $statBlocks = $this->statBlocks($this->list($decoded, 'stat_blocks'));
+
         $document = [
             'campaign' => $this->campaign($this->rows($decoded, 'campaign')),
+            'stat_blocks' => $statBlocks,
             'entities' => $this->entities($this->list($decoded, 'entities')),
             'entity_templates' => $this->entityTemplates($decoded),
             'entity_body_revisions' => $this->entityBodyRevisions($decoded),
@@ -396,6 +405,7 @@ class ReadCampaignFile
                 'level' => $this->integer($row, 'level'),
                 'sheet_url' => $this->url($row, 'sheet_url'),
                 'stat_block' => $this->statBlockReference($row),
+                'stat_block_id' => $this->ownStatBlockReference($row),
                 'quest_status' => $this->optionalEnum(QuestStatus::class, $row, 'quest_status', "entity {$id}"),
                 'giver_entity_id' => $this->reference($row, 'giver_entity_id'),
                 'happens_on' => $this->gameDate($row, 'happens_on'),
@@ -691,6 +701,7 @@ class ReadCampaignFile
                     'id' => $combatantId,
                     'entity_id' => $this->reference($combatant, 'entity_id'),
                     'stat_block' => $this->statBlockReference($combatant),
+                    'stat_block_id' => $this->ownStatBlockReference($combatant),
                     'name' => $this->text($combatant, 'name', 120) ?? 'Unnamed',
                     'initiative' => $this->integer($combatant, 'initiative'),
                     'initiative_bonus' => $this->integer($combatant, 'initiative_bonus'),
@@ -1048,6 +1059,197 @@ class ReadCampaignFile
      * the GM commits, how many links this install has no dataset for. A reference that
      * does not resolve is dropped rather than fatal: the campaign is the point, and the
      * combatant's own numbers came across with it.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array{ruleset: string, slug: string}|null
+     */
+    /**
+     * The creatures the campaign wrote, read the way an entity is.
+     *
+     * These are campaign rows, unlike the shipped ones: they carry their prose, their
+     * id is remapped like every other id, and nothing about them is checked against
+     * what this install happens to have loaded.
+     *
+     * A row with no id is dropped rather than repaired. Every reference to a creature
+     * points at one, and a row nothing can name is a row nothing can use.
+     *
+     * @param  list<mixed>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function statBlocks(array $rows): array
+    {
+        $statBlocks = [];
+
+        foreach ($rows as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $id = $this->id($row, 'stat_blocks', $index);
+
+            if ($id === null) {
+                continue;
+            }
+
+            $this->statBlockIds[$id] = true;
+
+            $statBlocks[] = [
+                'id' => $id,
+                'slug' => $this->text($row, 'slug', 160) ?? 'creature',
+                'source' => $this->text($row, 'source', 64) ?? 'Imported campaign',
+                'license' => $this->text($row, 'license', 32) ?? StatBlock::OWN_LICENSE,
+                'name' => $this->text($row, 'name', 160) ?? 'Unnamed creature',
+                'type_line' => $this->text($row, 'type_line', 160),
+                'is_swarm' => (bool) ($row['is_swarm'] ?? false),
+                'size' => $this->text($row, 'size', 32),
+                'creature_type' => $this->text($row, 'creature_type', 48),
+                'subtype' => $this->text($row, 'subtype', 64),
+                'alignment' => $this->text($row, 'alignment', 64),
+                'ac' => $this->clamped($row, 'ac', 999),
+                'initiative_bonus' => $this->integer($row, 'initiative_bonus'),
+                'hp' => $this->clamped($row, 'hp', 1_000_000),
+                'hit_dice' => $this->text($row, 'hit_dice', 64),
+                'speed' => $this->text($row, 'speed', 160),
+                'ability_scores' => $this->abilityScores($row),
+                'skills' => $this->text($row, 'skills', 255),
+                'senses' => $this->text($row, 'senses', 255),
+                'languages' => $this->text($row, 'languages', 255),
+                'gear' => $this->text($row, 'gear', 255),
+                'resistances' => $this->text($row, 'resistances', 255),
+                'immunities' => $this->text($row, 'immunities', 255),
+                'vulnerabilities' => $this->text($row, 'vulnerabilities', 255),
+                'cr' => $this->text($row, 'cr', 16),
+                'cr_value' => $this->decimal($row, 'cr_value'),
+                'xp' => $this->clamped($row, 'xp', 10_000_000),
+                'cr_note' => $this->text($row, 'cr_note', 64),
+                'traits' => $this->statBlockSection($row, 'traits'),
+                'actions' => $this->statBlockSection($row, 'actions'),
+                'bonus_actions' => $this->statBlockSection($row, 'bonus_actions'),
+                'reactions' => $this->statBlockSection($row, 'reactions'),
+                'legendary_actions' => $this->statBlockSection($row, 'legendary_actions'),
+                'legendary_action_uses' => $this->clamped($row, 'legendary_action_uses', Combatant::MAX_LEGENDARY_ACTIONS),
+            ];
+        }
+
+        $this->report->count('stat_blocks', count($statBlocks));
+
+        return $statBlocks;
+    }
+
+    /**
+     * The six scores as the page prints them. A key that is not one of the six is
+     * dropped, so a file cannot grow the shape the stat block page reads.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, array{score: int, mod: string, save: string}>|null
+     */
+    private function abilityScores(array $row): ?array
+    {
+        $scores = $row['ability_scores'] ?? null;
+
+        if (! is_array($scores)) {
+            return null;
+        }
+
+        $clean = [];
+
+        foreach (['str', 'dex', 'con', 'int', 'wis', 'cha'] as $ability) {
+            $entry = $scores[$ability] ?? null;
+
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $clean[$ability] = [
+                'score' => max(0, min(99, (int) ($entry['score'] ?? 0))),
+                'mod' => mb_substr(trim((string) ($entry['mod'] ?? '')), 0, 8),
+                'save' => mb_substr(trim((string) ($entry['save'] ?? '')), 0, 8),
+            ];
+        }
+
+        return $clean === [] ? null : $clean;
+    }
+
+    /**
+     * One list of named entries: a trait, an action, a reaction.
+     *
+     * The text is a GM's own Markdown and is not trimmed to a tweet, but it is capped:
+     * a file is not a place to accept unbounded prose into a column.
+     *
+     * @param  array<string, mixed>  $row
+     * @return list<array{name: string|null, text: string}>|null
+     */
+    private function statBlockSection(array $row, string $key): ?array
+    {
+        $entries = [];
+
+        foreach ($this->list($row, $key) as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $text = trim((string) ($entry['text'] ?? ''));
+
+            if ($text === '') {
+                continue;
+            }
+
+            $name = trim((string) ($entry['name'] ?? ''));
+
+            $entries[] = [
+                'name' => $name === '' ? null : mb_substr($name, 0, 120),
+                'text' => mb_substr($text, 0, 10_000),
+            ];
+
+            if (count($entries) >= 40) {
+                break;
+            }
+        }
+
+        return $entries === [] ? null : $entries;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function decimal(array $row, string $key): ?float
+    {
+        $value = $row[$key] ?? null;
+
+        return is_int($value) || is_float($value) || (is_string($value) && is_numeric($value))
+            ? (float) $value
+            : null;
+    }
+
+    /**
+     * A reference to a creature this campaign wrote, checked against the rows the file
+     * carries rather than against this install.
+     *
+     * A shipped reference is the other case and is resolved by (ruleset, slug) against
+     * what is loaded here; see statBlockReference(). This one is a plain campaign id and
+     * goes through IdMap like every other, which is rule one of .ai/rules/campaigns.md.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function ownStatBlockReference(array $row): ?string
+    {
+        $id = $this->reference($row, 'stat_block_id');
+
+        if ($id === null) {
+            return null;
+        }
+
+        if (! isset($this->statBlockIds[$id])) {
+            $this->errors[] = 'A row points at a creature this file does not carry.';
+
+            return null;
+        }
+
+        return $id;
+    }
+
+    /**
+     * A shipped creature, named by the pair the export writes.
      *
      * @param  array<string, mixed>  $row
      * @return array{ruleset: string, slug: string}|null

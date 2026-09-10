@@ -92,6 +92,7 @@ class ExportCampaign
         'entity_templates' => 'entity_templates',
         'entity_body_revisions' => 'entity_body_revisions',
         'game_sessions' => 'sessions',
+        'stat_blocks' => 'stat_blocks',
         'encounters' => 'encounters',
         'random_tables' => 'random_tables',
         'dice_rolls' => 'dice_rolls',
@@ -148,6 +149,7 @@ class ExportCampaign
             'entity_templates' => $this->entityTemplates($campaign),
             'entity_body_revisions' => $this->entityBodyRevisions($campaign),
             'sessions' => $this->sessions($campaign),
+            'stat_blocks' => $this->statBlocks($campaign),
             'encounters' => $this->encounters($campaign),
             'random_tables' => $this->randomTables($campaign),
             'dice_rolls' => $this->diceRolls($campaign),
@@ -271,13 +273,62 @@ class ExportCampaign
      *
      * @return array{ruleset: string, slug: string}|null
      */
+    /**
+     * A shipped creature, named the way the install that reads the file can find it.
+     *
+     * Null for a creature the campaign wrote: that one is a campaign row like any
+     * other, it travels in the stat_blocks section in full, and its id is remapped
+     * through IdMap. statBlockOwnId() is the other half.
+     *
+     * @return array{ruleset: string, slug: string}|null
+     */
     private function statBlockReference(?StatBlock $statBlock): ?array
     {
-        if ($statBlock === null) {
+        if ($statBlock === null || ! $statBlock->isShipped()) {
             return null;
         }
 
         return ['ruleset' => $statBlock->ruleset, 'slug' => $statBlock->slug];
+    }
+
+    /**
+     * The id of a creature this campaign wrote, or null for a shipped one.
+     */
+    private function statBlockOwnId(?StatBlock $statBlock): ?string
+    {
+        return $statBlock === null || $statBlock->isShipped() ? null : $statBlock->id;
+    }
+
+    /**
+     * The creatures this campaign wrote, in full, prose included.
+     *
+     * This is the opposite call from a shipped row and for the same reason. A shipped
+     * row's text is CC BY material that belongs to the install, so the export names it
+     * and carries none of it. These words are the GM's own, in the GM's own campaign,
+     * and an export that dropped them would be lossy for nothing.
+     *
+     * A copy of a shipped creature carries the source and licence it was copied from,
+     * so the attribution travels with the text rather than being lost in the copy.
+     *
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function statBlocks(Campaign $campaign): iterable
+    {
+        return StatBlock::query()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('name')
+            ->orderBy('id')
+            ->cursor()
+            ->map(fn (StatBlock $statBlock) => [
+                'id' => $statBlock->id,
+                'slug' => $statBlock->slug,
+                'ruleset' => $statBlock->ruleset,
+                'source' => $statBlock->source,
+                'license' => $statBlock->license,
+                ...collect(StatBlock::WRITABLE)
+                    ->mapWithKeys(fn (string $column) => [$column => $statBlock->{$column}])
+                    ->all(),
+            ]);
     }
 
     /**
@@ -308,6 +359,7 @@ class ExportCampaign
                 'level' => $entity->level,
                 'sheet_url' => $entity->sheet_url,
                 'stat_block' => $this->statBlockReference($entity->statBlock),
+                'stat_block_id' => $this->statBlockOwnId($entity->statBlock),
                 'quest_status' => $entity->quest_status?->value,
                 'giver_entity_id' => $entity->giver_entity_id,
                 'happens_on' => $entity->happens_on?->toArray(),
@@ -450,6 +502,7 @@ class ExportCampaign
                         'id' => $combatant->id,
                         'entity_id' => $combatant->entity_id,
                         'stat_block' => $this->statBlockReference($combatant->statBlock),
+                        'stat_block_id' => $this->statBlockOwnId($combatant->statBlock),
                         'name' => $combatant->name,
                         'initiative' => $combatant->initiative,
                         'initiative_bonus' => $combatant->initiative_bonus,

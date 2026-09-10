@@ -39,6 +39,11 @@ function comparable(mixed $value): mixed
         'id', 'parent_id', 'giver_entity_id', 'target_entity_id', 'entity_id',
         'game_session_id', 'revealed_in_session_id', 'completed_in_session_id',
         'active_combatant_id', 'nested_table_id',
+        // A creature the campaign wrote is a campaign row, so its id is remapped like
+        // the rest. This is not a new loss: the shipped reference beside it, the
+        // stat_block key, is compared in full and is what proves the link survived.
+        // HomebrewRoundTripTest holds the own-creature link itself.
+        'stat_block_id',
         // This install's clock, not the campaign's.
         'created_at', 'updated_at', 'generated_at',
         // Loss 1: the files are named, never carried.

@@ -67,8 +67,12 @@ it('binds the damage box on blur, never live, so a poll cannot clobber it', func
         ->call('openDamage', $combatant->id)
         ->html();
 
+    // Named, not bare. The compendium picker next to it IS live-bound on purpose, and
+    // since slice 17 it renders for every campaign rather than only one on a ruleset
+    // with a shipped book, so a bare "wire:model.live" now matches it.
     expect($html)->toContain('wire:model.blur="damage"')
-        ->and($html)->not->toContain('wire:model.live');
+        ->and($html)->not->toContain('wire:model.live="damage"')
+        ->and($html)->not->toContain('wire:model.live.debounce.300ms="damage"');
 });
 
 /**

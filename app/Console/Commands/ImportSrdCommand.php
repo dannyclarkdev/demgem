@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\DB;
 /**
  * The only writer of stat_blocks.
  *
- * It is idempotent on (ruleset, slug), so running it twice changes no ids and a
- * combatant that points at a stat block keeps pointing at the same one. It never
+ * It is idempotent on (ruleset, slug) among the shipped rows, so running it twice
+ * changes no ids and a combatant that points at a stat block keeps pointing at the same
+ * one. Every query here is scoped with shipped(): a campaign's own creatures share the
+ * table since slice 17 and are none of this command's business. It never
  * deletes: removing reference data under a live campaign's fight is a surprise, so a
  * row the new file no longer names is reported and left alone.
  *
@@ -84,7 +86,11 @@ class ImportSrdCommand extends Command
             return self::SUCCESS;
         }
 
+        // shipped(), not just the ruleset. Since slice 17 a campaign's own creatures
+        // live in this table too, and without this the loader would update one whose
+        // slug matched, or report it as a row the dataset no longer names.
         $existing = StatBlock::query()
+            ->shipped()
             ->forRuleset($ruleset)
             ->pluck('id', 'slug');
 
@@ -108,13 +114,13 @@ class ImportSrdCommand extends Command
                 $attributes['legendary_action_uses'] = $this->legendaryActionUses($creature);
 
                 if ($existing->has($slug)) {
-                    StatBlock::query()->whereKey($existing->get($slug))->update($attributes);
+                    StatBlock::query()->shipped()->whereKey($existing->get($slug))->update($attributes);
                     $updated++;
 
                     continue;
                 }
 
-                StatBlock::query()->create($attributes + ['slug' => $slug]);
+                StatBlock::query()->create($attributes + ['slug' => $slug, 'campaign_id' => null]);
                 $created++;
             }
         });

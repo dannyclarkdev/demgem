@@ -17,6 +17,7 @@ use App\Livewire\Campaigns\Members as CampaignsMembers;
 use App\Livewire\Campaigns\Settings as CampaignsSettings;
 use App\Livewire\Campaigns\Show as CampaignsShow;
 use App\Livewire\Clocks\Index as ClocksIndex;
+use App\Livewire\Compendium\Editor as CompendiumEditor;
 use App\Livewire\Compendium\Index as CompendiumIndex;
 use App\Livewire\Compendium\Show as CompendiumShow;
 use App\Livewire\Encounters\Index as EncountersIndex;
@@ -124,7 +125,10 @@ Route::middleware('auth')->group(function () {
             // never is. {statBlockSlug} rather than {statBlock} keeps route binding off
             // it, the same rule the encounter routes above are written to.
             Route::get('/compendium', CompendiumIndex::class)->name('compendium.index');
+            // Before the wildcard, or "new" is read as a slug and 404s.
+            Route::get('/compendium/new', CompendiumEditor::class)->name('compendium.create');
             Route::get('/compendium/{statBlockSlug}', CompendiumShow::class)->name('compendium.show');
+            Route::get('/compendium/{statBlockSlug}/edit', CompendiumEditor::class)->name('compendium.edit');
 
             // The world's own calendar. Singular, like /table: a campaign has one. No
             // parameter, so nothing for route binding to claim. calendar.feed, outside
