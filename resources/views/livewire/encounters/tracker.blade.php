@@ -52,9 +52,12 @@
                 moderate {{ number_format($budget->moderate) }},
                 high {{ number_format($budget->high) }}
             </span>
+            {{-- With rows the compendium cannot price, the band is a floor rather than a
+                 verdict, and it says so. A GM reading "Trivial" over a fight of five
+                 hand-typed monsters would be reading it wrong. --}}
             @if ($unpriced > 0)
                 <span class="text-ink-muted" title="A row typed by hand has no XP to read, and a guess would be a number with nothing behind it.">
-                    &middot; {{ $unpriced }} {{ Str::plural('row', $unpriced) }} not priced
+                    &middot; {{ $unpriced }} {{ Str::plural('row', $unpriced) }} not priced, so this is a floor
                 </span>
             @endif
             <span class="ml-auto text-xs text-ink-faint" title="{{ $difficulty->description() }}">demgem's own scale</span>

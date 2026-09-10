@@ -124,7 +124,23 @@ it('counts only what the compendium can price and says how much it could not', f
         ->test(Tracker::class, ['campaign' => $campaign, 'encounter' => $encounter])
         ->assertViewHas('spent', 200)
         ->assertViewHas('unpriced', 2)
-        ->assertSee('not priced');
+        ->assertSee('2 rows not priced, so this is a floor');
+});
+
+it('calls the band a verdict only when it priced the whole fight', function () {
+    $campaign = Campaign::factory()->create();
+    $encounter = Encounter::factory()->for($campaign)->create();
+
+    $statBlock = StatBlock::factory()->atChallenge('1', 1.0, 200)->create();
+    $pc = Entity::factory()->for($campaign)->create(['is_pc' => true, 'level' => 3]);
+
+    Combatant::factory()->inEncounter($encounter)->forEntity($pc)->create();
+    Combatant::factory()->inEncounter($encounter)->create(['stat_block_id' => $statBlock->id]);
+
+    Livewire::actingAs(ownerOf($campaign))
+        ->test(Tracker::class, ['campaign' => $campaign, 'encounter' => $encounter])
+        ->assertViewHas('unpriced', 0)
+        ->assertDontSee('so this is a floor');
 });
 
 it('does not charge the party for being in the fight', function () {

@@ -34,6 +34,10 @@ Slice 15 adds **the compendium**. A campaign on the SRD 5.2.1 ruleset gets all 3
 
 Slice 14 adds **entity templates and body history**. GMs keep named starting bodies per entity type in campaign settings, copy one into a new page, and edit the copy freely. Earlier bodies are kept whenever a form or API save replaces the text. GMs can inspect and restore them from the entity page; restoring preserves the displaced body too. Templates and history travel in campaign JSON and archives.
 
+Slice 16 adds **what a fight is worth, and the four rules the tracker used to make you keep on paper**. The turn order says what the creatures in it cost against what the party can afford, in five bands from Trivial to Deadly. A combatant holds one named effect, and damage prints the concentration DC rather than rolling it. A character on nought collects death saves, three of either ending the question, and the party's own screen carries the pips because the whole table is counting them out loud anyway. A creature from the book arrives with its legendary actions counted and gets them back when the turn marker reaches it. A lair action is the GM's own words on a count they choose, sitting in the turn order as a marker the party sees without the text. **Duplicate this fight** builds the whole thing again, at full health with nobody's initiative rolled.
+
+The budget numbers are demgem's own, and the read-out says so. The SRD prices every creature and that data ships with the app, but it publishes no encounter building budget. `config/encounters.php` states one rule instead and derives the rest from the ladder the dataset itself carries: a character of level N affords a quarter, a half and three quarters of the XP of a CR N creature. A fight holding rows the compendium cannot price says so, and calls its band a floor.
+
 ## Local setup
 
 Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.

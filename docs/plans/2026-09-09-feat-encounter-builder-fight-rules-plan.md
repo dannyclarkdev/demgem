@@ -2,7 +2,7 @@
 title: "feat: What a fight is worth, and the four rules the tracker learns"
 type: feat
 date: 2026-09-09
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-09-feat-srd-compendium-plan.md
 ---
@@ -142,3 +142,41 @@ Then the full suite, and a browser pass at a laptop width and a tablet width: th
 - `.ai/rules/events.md` — every event carries ids and nothing else; each screen re-renders under its own viewer's role.
 - `.ai/rules/actions-campaigns.md` — the export writes `{ruleset, slug}`, never an id and never the prose.
 - `.ai/rules/tests.md` — never assert a bare number against output carrying a ULID, which the death save pips will tempt.
+
+## Implementation Results — 2026-09-09
+
+Implemented in full. 50 new tests; the suite is 1271 tests, 1270 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### The ladder, and the fractions that turned out to be wrong once
+
+The plan's first rule put a character's Low fight at the XP of a CR N/4 creature, Moderate at CR N/2 and High at CR N. Checking it against real parties before writing the code showed the shape was wrong at the top: four level-20 characters would have needed 75,000 XP to reach Moderate and a High fight would have been past CR 24, while the bands sat at a ratio of about 1:2:7 rather than the 1:2:3 a GM can plan against.
+
+The shipped rule takes fractions of the XP rather than of the rating: a quarter, a half and three quarters of what a CR N creature is worth. That gives 1:2:3 by construction, needs the ladder only at whole ratings, and lands within about fifteen per cent of what a table expects at levels 1, 3 and 10, drifting to about twenty-five per cent by level 20. The rule and the check are both recorded in `config/encounters.php`.
+
+`Budget::xpForChallenge()` still interpolates, because the SRD names no creature at CR 18. Reading between CR 17 and CR 19 puts it at 20,000, which is where the ladder's own shape says it belongs.
+
+### Deviations from the plan
+
+| Planned | Shipped | Why |
+|---|---|---|
+| `build-dataset.php` writes the ladder into `config/encounters.php` | The ladder is committed, and a test asserts it still agrees with the dataset | A build script that rewrites a config file is a second writer for a file people edit. The guarantee the plan wanted is the test, and the test is what shipped. |
+| Open question 1: parse the legendary count if the data states it plainly | Parsed | All thirty creatures with legendary actions print `Legendary Action Uses: 3`, twenty-seven of them adding `(4 in Lair)`. `ImportSrdCommand` reads the first integer, so the data file and its checksum did not move. |
+| The band is the read-out | The band is a floor when rows are unpriced | The browser pass put five hand-typed monsters and one ogre in front of the read-out, which said "Trivial". True of the priced half and misleading about the fight. The line now ends "so this is a floor". |
+| Nothing about the demo world | The demo fight carries all four rules | A GM opening the seeded world reads the lair action, the Duke holding Hold Person with a legendary count, and a character partway through their death saves. A party row arrives with no hit points, so the seeder gives that one some to fall from. |
+
+### Where the exception ended up
+
+`Combatant::deathSavesVisibleToPlayers()` asks `player_visible` first and `isDown()` second, so the gate did not move — only what a passing row carries. `healthWord()` is untouched and a player still reads "Down" with the pips beside it. `DeathSaveVisibilityTest` asserts both halves, and neither assertion is against a bare number: the proof is the pips' `aria-label` and the faint span a maximum renders inside, which is the marker `CombatantVisibilityTest` worked out first.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px and at 834px, as the GM and as the player:
+
+- The budget read-out moved from 0 XP to 450 XP when an ogre was added from the compendium, with the character count and the three thresholds beside it.
+- 34 damage on the Duke printed "rolls a DC 17 save or loses it", and rolled nothing.
+- Three failures on a character on nought turned the strip's label to "Dead".
+- The Duke's legendary count went from 2/3 back to 3/3 when the turn marker reached him.
+- The player's screen carried the lair marker with no words on it, the death save pips beside "Down", and no hit points at all.
+- **Duplicate this fight** produced a Planning copy at full health, with no initiative, no conditions, no concentration, no death saves, and the lair action intact.
+
+At 834px the header buttons and the budget line wrap to two rows and each combatant's controls drop below its name. Nothing overflows.
