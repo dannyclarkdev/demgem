@@ -15,6 +15,7 @@ use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\EntityTemplate;
+use App\Models\StatBlock;
 use App\Models\User;
 use App\Rules\UniqueEntityName;
 use App\Support\Reckoning\Bounds;
@@ -90,6 +91,12 @@ class Form extends Component
 
     public string $giver_entity_id = '';
 
+    /**
+     * What an NPC fights as. A GM field, offered only when the campaign's ruleset has a
+     * compendium to name, and a reference: the entity's own page owns none of it.
+     */
+    public string $stat_block_id = '';
+
     public string $rewards = '';
 
     public string $tags = '';
@@ -143,6 +150,7 @@ class Form extends Component
             $this->character_class = $entity->character_class ?? '';
             $this->level = $entity->level;
             $this->sheet_url = $entity->sheet_url ?? '';
+            $this->stat_block_id = $entity->stat_block_id ?? '';
         }
 
         // DM-only fields never enter the component state for a player. Public properties ship in the Livewire snapshot.
@@ -290,6 +298,12 @@ class Form extends Component
                 'viewer_ids.*' => ['integer', Rule::exists('campaign_members', 'user_id')->where('campaign_id', $this->campaign->id)],
             ];
 
+            // Prohibited rather than ignored on a ruleset with no compendium, so a form
+            // that should not have offered the field says so instead of writing null.
+            $rules += $this->offersStatBlock()
+                ? ['stat_block_id' => ['nullable', Rule::exists('stat_blocks', 'id')->where('ruleset', $this->campaign->ruleset->value)]]
+                : ['stat_block_id' => ['prohibited']];
+
             // Quest fields exist on every entity row but mean something on one type only,
             // so they are prohibited elsewhere rather than quietly ignored.
             $rules += $this->isQuest()
@@ -367,6 +381,10 @@ class Form extends Component
                 'player_user_id' => $isCharacter && ($validated['player_user_id'] ?? '') !== '' ? (int) $validated['player_user_id'] : null,
                 'viewer_ids' => $visibility === Visibility::Selected ? array_map('intval', $validated['viewer_ids'] ?? []) : [],
             ];
+
+            if ($this->offersStatBlock()) {
+                $data['stat_block_id'] = ($validated['stat_block_id'] ?? '') !== '' ? $validated['stat_block_id'] : null;
+            }
 
             if ($this->isQuest()) {
                 $data += [
@@ -500,6 +518,12 @@ class Form extends Component
             : collect();
 
         return view('livewire.entities.form', [
+            'statBlockOptions' => $this->offersStatBlock()
+                ? StatBlock::query()
+                    ->forRuleset($this->campaign->ruleset->value)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'cr'])
+                : collect(),
             'templateOptions' => $this->entity === null && $canEditDmFields
                 ? EntityTemplate::query()->where('type', $this->entityType->value)->orderBy('name')->orderBy('id')->get(['id', 'name']) : collect(),
             'type' => $this->entityType,
@@ -575,6 +599,19 @@ class Form extends Component
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Whether the form shows the stat block picker at all.
+     *
+     * A GM field on a character in a campaign whose ruleset ships a compendium. A
+     * faction has nothing to fight as, and a system-agnostic campaign has no book.
+     */
+    private function offersStatBlock(): bool
+    {
+        return $this->canEditDmFields()
+            && $this->entityType === EntityType::Character
+            && $this->campaign->ruleset->hasCompendium();
     }
 
     private function canEditDmFields(): bool

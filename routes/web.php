@@ -17,6 +17,8 @@ use App\Livewire\Campaigns\Members as CampaignsMembers;
 use App\Livewire\Campaigns\Settings as CampaignsSettings;
 use App\Livewire\Campaigns\Show as CampaignsShow;
 use App\Livewire\Clocks\Index as ClocksIndex;
+use App\Livewire\Compendium\Index as CompendiumIndex;
+use App\Livewire\Compendium\Show as CompendiumShow;
 use App\Livewire\Encounters\Index as EncountersIndex;
 use App\Livewire\Encounters\Show as EncountersShow;
 use App\Livewire\Entities\Form as EntitiesForm;
@@ -116,6 +118,13 @@ Route::middleware('auth')->group(function () {
             // Clocks a GM turns. The segment is not an entity slug, and this sits above
             // the {type} routes, so nothing below can claim it.
             Route::get('/clocks', ClocksIndex::class)->name('clocks.index');
+
+            // The shipped reference data. Addressed by slug, unlike an entity: a stat
+            // block is not a GM's to rename, so the slug is stable in a way an entity's
+            // never is. {statBlockSlug} rather than {statBlock} keeps route binding off
+            // it, the same rule the encounter routes above are written to.
+            Route::get('/compendium', CompendiumIndex::class)->name('compendium.index');
+            Route::get('/compendium/{statBlockSlug}', CompendiumShow::class)->name('compendium.show');
 
             // The world's own calendar. Singular, like /table: a campaign has one. No
             // parameter, so nothing for route binding to claim. calendar.feed, outside

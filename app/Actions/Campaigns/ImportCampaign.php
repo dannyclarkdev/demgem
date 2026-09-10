@@ -13,6 +13,7 @@ use App\Models\EntityBodyRevision;
 use App\Models\EntityTemplate;
 use App\Models\GameSession;
 use App\Models\RandomTable;
+use App\Models\StatBlock;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -212,6 +213,28 @@ class ImportCampaign
     }
 
     /**
+     * A stat block reference from the file as an id on this install, or null.
+     *
+     * Never through IdMap. These rows are global and belong to the install rather than
+     * to the campaign, so there is nothing to remap: the pair either names a creature
+     * this install has or it does not. The reader has already counted the ones it does
+     * not, so the GM read the number before pressing the button.
+     *
+     * @param  array{ruleset: string, slug: string}|null  $reference
+     */
+    private function statBlockId(?array $reference): ?string
+    {
+        if ($reference === null) {
+            return null;
+        }
+
+        return StatBlock::query()
+            ->forRuleset($reference['ruleset'])
+            ->where('slug', $reference['slug'])
+            ->value('id');
+    }
+
+    /**
      * forceFill, not create.
      *
      * `id` is not in any model's Fillable list, and create() drops what it cannot
@@ -259,6 +282,7 @@ class ImportCampaign
                 'character_class' => $row['character_class'],
                 'level' => $row['level'],
                 'sheet_url' => $row['sheet_url'],
+                'stat_block_id' => $this->statBlockId($row['stat_block'] ?? null),
                 'quest_status' => $row['quest_status'],
                 'happens_on' => $row['happens_on'],
                 'created_by' => $importer->id,
@@ -447,6 +471,7 @@ class ImportCampaign
                     'campaign_id' => $campaign->id,
                     'encounter_id' => $encounter->id,
                     'entity_id' => $ids->newForNullable($combatant['entity_id']),
+                    'stat_block_id' => $this->statBlockId($combatant['stat_block'] ?? null),
                     'name' => $combatant['name'],
                     'initiative' => $combatant['initiative'],
                     'initiative_bonus' => $combatant['initiative_bonus'],

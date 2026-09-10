@@ -89,6 +89,13 @@
                     icon="list"
                     :count="$tableCount"
                 >Tables</x-ui.nav-link>
+                @if ($currentCampaign->ruleset->hasCompendium())
+                    <x-ui.nav-link
+                        :href="route('compendium.index', $currentCampaign)"
+                        :active="request()->routeIs('compendium.*')"
+                        icon="book-open"
+                    >Compendium</x-ui.nav-link>
+                @endif
             @endif
         </div>
         <div>

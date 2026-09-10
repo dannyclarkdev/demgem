@@ -30,6 +30,8 @@ Slice 12 is done: **the world's own calendar**. A GM names the months, sets the 
 
 Slice 13 is done: **a key, an API, and the party's channel**. A user mints a named API key from their profile, read-only or read and write, shown once and revoked with a click. `/api/v1` serves the campaigns that key belongs to, the entities and sessions its role may see, search, and the same writes a GM makes on screen, gated by the same scopes and policies as every page. A campaign can hold one Discord webhook, and when a recap is published or a reminder goes out the channel gets one line and a link, never the prose.
 
+Slice 15 adds **the compendium**. A campaign on the SRD 5.2.1 ruleset gets all 330 creatures of the System Reference Document as a searchable reference: filter by creature type and challenge band, read one stat block as the book prints it, and put it in the fight. Adding a creature brings its hit points, armour class and initiative bonus with it, optionally rolling each copy's hit dice so four goblins are four different totals. An NPC can name what it fights as, so a session's Monsters bucket fills the turn order with numbers. The data is shipped, global and read-only; the API serves it beside the rest; and a campaign export carries the reference rather than the licensed text.
+
 Slice 14 adds **entity templates and body history**. GMs keep named starting bodies per entity type in campaign settings, copy one into a new page, and edit the copy freely. Earlier bodies are kept whenever a form or API save replaces the text. GMs can inspect and restore them from the entity page; restoring preserves the displaced body too. Templates and history travel in campaign JSON and archives.
 
 ## Local setup
@@ -42,6 +44,7 @@ cp .env.example .env
 php artisan key:generate
 # Point DB_* at your Postgres, then:
 php artisan migrate
+php artisan demgem:import-srd   # the SRD compendium; skip it for system-agnostic campaigns
 php artisan storage:link
 npm install && npm run build
 ```
@@ -255,7 +258,17 @@ A campaign has one timezone, set in campaign settings. Session times are stored 
 
 ## Content licensing
 
-The first ruleset module will use the D&D System Reference Document 5.2, licensed CC-BY-4.0 by Wizards of the Coast. Attribution text ships with that module. No non-SRD content is imported.
+demgem's code is MIT. The creature data in `database/srd/` is not: it is System Reference Document 5.2.1 material, published by Wizards of the Coast LLC under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+
+> This work includes material taken from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC and is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
+
+That notice renders on every compendium screen and on every stat block the API returns. `database/srd/ATTRIBUTION.md` says where it has to appear; `database/srd/README.md` records the provenance and the checksum that pins the dataset.
+
+CC BY 4.0 licenses the text and grants no trademark rights. Dungeons & Dragons, D&D and their logos are trademarks of Wizards of the Coast LLC; demgem uses none of them, and nothing here implies endorsement. The ruleset is named "SRD 5.2.1 (2024 rules)" for that reason.
+
+Only SRD content is in the dataset. A campaign export carries a stat block as a `{ruleset, slug}` reference and never its prose, so an export redistributes nothing.
+
+`php artisan demgem:import-srd` loads the compendium. `php artisan db:seed` and the Docker entrypoint both run it, and it is idempotent.
 
 ## License
 

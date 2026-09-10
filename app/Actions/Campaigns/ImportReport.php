@@ -36,6 +36,12 @@ final class ImportReport
 
     public int $truncated = 0;
 
+    /**
+     * References to creatures this install has no dataset for. The campaign imports;
+     * the links are simply not made, and the combatants keep their own numbers.
+     */
+    public int $statBlocks = 0;
+
     public function count(string $section, int $rows): void
     {
         $this->counts[$section] = ($this->counts[$section] ?? 0) + $rows;
@@ -97,6 +103,13 @@ final class ImportReport
             $losses[] = [
                 'label' => $this->answers.' '.str('answer')->plural($this->answers).' about dates and attendance will be left behind',
                 'detail' => 'Who said yes, who turned up, and who could make which Thursday all name people this install does not have. The sessions come across; the answers about them do not.',
+            ];
+        }
+
+        if ($this->statBlocks > 0) {
+            $losses[] = [
+                'label' => $this->statBlocks.' '.str('link')->plural($this->statBlocks).' to the compendium cannot be made',
+                'detail' => 'The file names creatures this install has no dataset for. An export carries the reference, never the licensed text, so the pages and the fights come across with their own numbers and the links are simply not made.',
             ];
         }
 
