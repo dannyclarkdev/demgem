@@ -462,6 +462,8 @@ class ImportCampaign
                 'name' => $row['name'],
                 'status' => $row['status'],
                 'round' => $row['round'],
+                'lair_action_note' => $row['lair_action_note'] ?? null,
+                'lair_initiative' => $row['lair_initiative'] ?? null,
                 'created_by' => $importer->id,
             ]);
 
@@ -479,6 +481,11 @@ class ImportCampaign
                     'max_hp' => $combatant['max_hp'],
                     'ac' => $combatant['ac'],
                     'conditions' => $combatant['conditions'],
+                    'concentrating_on' => $combatant['concentrating_on'] ?? null,
+                    'death_save_successes' => $combatant['death_save_successes'] ?? 0,
+                    'death_save_failures' => $combatant['death_save_failures'] ?? 0,
+                    'legendary_actions_max' => $combatant['legendary_actions_max'] ?? null,
+                    'legendary_actions_left' => $combatant['legendary_actions_left'] ?? null,
                     'position' => $combatant['position'],
                     'player_visible' => $combatant['player_visible'],
                 ]);

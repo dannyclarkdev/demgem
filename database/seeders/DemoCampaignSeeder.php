@@ -12,10 +12,14 @@ use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
 use App\Actions\Encounters\CreateEncounter;
 use App\Actions\Encounters\NextTurn;
+use App\Actions\Encounters\RecordDeathSave;
 use App\Actions\Encounters\RollInitiative;
+use App\Actions\Encounters\SetConcentration;
 use App\Actions\Encounters\SetConditions;
+use App\Actions\Encounters\SetLairAction;
 use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
+use App\Actions\Encounters\SpendLegendaryAction;
 use App\Actions\Entities\CreateEntity;
 use App\Actions\Entities\CreateEntityTemplate;
 use App\Actions\Entities\RelateEntities;
@@ -36,11 +40,14 @@ use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
+use App\Models\Combatant;
+use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\User;
 use App\Support\Reckoning\GameDate;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -482,6 +489,60 @@ class DemoCampaignSeeder extends Seeder
         if ($thralls->isNotEmpty()) {
             app(ApplyDamage::class)->handle($thralls->first(), 18);
             app(SetConditions::class)->handle($thralls->first(), ['Prone']);
+        }
+
+        $this->seedFightRules($encounter, $thralls);
+    }
+
+    /**
+     * The four rules, showing on the demo fight rather than only in the tests.
+     *
+     * A GM opening the seeded world reads a lair action in the turn order, a boss
+     * holding a spell with a legendary count beside it, and a character on nought
+     * partway through their death saves, which is what the party's own screen shows
+     * them too.
+     *
+     * @param  Collection<int, Combatant>  $thralls
+     */
+    private function seedFightRules(Encounter $encounter, Collection $thralls): void
+    {
+        app(SetLairAction::class)->handle(
+            $encounter,
+            'The tide answers. Every creature on the stair makes a DC 14 Strength save or is dragged one step down.',
+            20,
+        );
+
+        $duke = $encounter->combatants()->where('name', 'The Drowned Duke')->first();
+
+        if ($duke !== null) {
+            app(SetConcentration::class)->handle($duke, 'Hold Person');
+            app(SpendLegendaryAction::class)->setMaximum($duke, 3);
+            app(SpendLegendaryAction::class)->spend($duke->refresh());
+        }
+
+        // One of the party is down and two saves into the question, which is the state
+        // the read-out on /table exists for.
+        //
+        // A party row arrives with no hit points, because a character's are on their
+        // own sheet and fromEntities() has nothing to copy. This one is given some so
+        // there is something to fall from: a GM who tracks a character's hit points in
+        // the fight is exactly who the death saves are for.
+        $fallen = $encounter->combatants()
+            ->whereNotNull('entity_id')
+            ->where('player_visible', true)
+            ->orderBy('position')
+            ->first();
+
+        if ($fallen !== null) {
+            $fallen->update(['hp' => 27, 'max_hp' => 27, 'ac' => 16]);
+
+            app(ApplyDamage::class)->handle($fallen, 27);
+            app(RecordDeathSave::class)->success($fallen->refresh());
+            app(RecordDeathSave::class)->failure($fallen->refresh());
+        }
+
+        if ($thralls->count() > 1) {
+            app(SetConcentration::class)->handle($thralls->get(1), 'Bane');
         }
     }
 

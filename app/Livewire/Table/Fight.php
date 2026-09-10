@@ -24,6 +24,12 @@ use Livewire\Component;
  * points, no armour class, no initiative. The filter is in the query, so absent from
  * the HTML means absent from everything the request produced.
  *
+ * Death saves are the single exception, and they are an exception to what a visible row
+ * carries rather than to the gate itself: a row the GM has not revealed still carries
+ * nothing. Combatant::deathSavesVisibleToPlayers() holds the argument. A lair action
+ * reaches the party as a marker with no words on it, the same way a hidden combatant's
+ * turn reaches them without a name.
+ *
  * It holds the encounter's id rather than the encounter, and reads the row each
  * render. A player leaves this page open for a whole game, and the GM may delete the
  * fight underneath them; a model property would fail to hydrate on the next round
@@ -85,6 +91,8 @@ class Fight extends Component
                 'isDm' => $this->isDm(),
                 'yours' => [],
                 'pollSeconds' => self::POLL_SECONDS,
+                'lairIndex' => null,
+                'deathSaves' => Combatant::DEATH_SAVES,
             ]);
         }
 
@@ -102,6 +110,8 @@ class Fight extends Component
             'isDm' => $this->isDm(),
             'yours' => $this->yourRows($combatants),
             'pollSeconds' => self::POLL_SECONDS,
+            'lairIndex' => $encounter->lairMarkerIndex($combatants),
+            'deathSaves' => Combatant::DEATH_SAVES,
         ]);
     }
 

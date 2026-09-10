@@ -31,6 +31,10 @@
         @else
             <ol class="divide-y divide-line">
                 @foreach ($combatants as $combatant)
+                    @if ($lairIndex === $loop->index)
+                        @include('livewire.encounters.partials.lair-marker', ['encounter' => $encounter, 'showNote' => $isDm])
+                    @endif
+
                     @php
                         $word = $combatant->healthWord();
                         $wordVariant = match ($word) {
@@ -66,6 +70,25 @@
                             @endif
                         </div>
 
+                        {{-- Death saves, in the open. A dying character's rolls are the one
+                             number the whole table already counts out loud, so hiding them
+                             would protect nothing. The row still had to pass the gate to be
+                             here at all. --}}
+                        @if ($combatant->deathSavesVisibleToPlayers())
+                            <span class="flex shrink-0 items-center gap-2" aria-label="Death saves: {{ $combatant->death_save_successes }} saved, {{ $combatant->death_save_failures }} failed">
+                                <span class="flex items-center gap-1">
+                                    @foreach (range(1, $deathSaves) as $pip)
+                                        <span class="size-3 rounded-full border {{ $combatant->death_save_successes >= $pip ? 'border-success bg-success' : 'border-line-strong' }}"></span>
+                                    @endforeach
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    @foreach (range(1, $deathSaves) as $pip)
+                                        <span class="size-3 rounded-full border {{ $combatant->death_save_failures >= $pip ? 'border-danger bg-danger' : 'border-line-strong' }}"></span>
+                                    @endforeach
+                                </span>
+                            </span>
+                        @endif
+
                         {{-- A word for the party, the number for the GM. "The ogre has 43
                              left" changes how a table plays; "badly hurt" does not. --}}
                         @if ($isDm)
@@ -79,6 +102,10 @@
                         @endif
                     </li>
                 @endforeach
+
+                @if ($lairIndex === $combatants->count())
+                    @include('livewire.encounters.partials.lair-marker', ['encounter' => $encounter, 'showNote' => $isDm])
+                @endif
             </ol>
         @endif
     @endif

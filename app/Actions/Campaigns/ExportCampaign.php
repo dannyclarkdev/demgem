@@ -442,6 +442,8 @@ class ExportCampaign
                 'name' => $encounter->name,
                 'status' => $encounter->status->value,
                 'round' => $encounter->round,
+                'lair_action_note' => $encounter->lair_action_note,
+                'lair_initiative' => $encounter->lair_initiative,
                 'active_combatant_id' => $encounter->active_combatant_id,
                 'combatants' => $encounter->combatants
                     ->map(fn (Combatant $combatant) => [
@@ -455,6 +457,11 @@ class ExportCampaign
                         'max_hp' => $combatant->max_hp,
                         'ac' => $combatant->ac,
                         'conditions' => $combatant->conditions,
+                        'concentrating_on' => $combatant->concentrating_on,
+                        'death_save_successes' => $combatant->death_save_successes,
+                        'death_save_failures' => $combatant->death_save_failures,
+                        'legendary_actions_max' => $combatant->legendary_actions_max,
+                        'legendary_actions_left' => $combatant->legendary_actions_left,
                         'position' => $combatant->position,
                         'player_visible' => $combatant->player_visible,
                     ])->values()->all(),

@@ -4,13 +4,18 @@ namespace App\Livewire\Encounters;
 
 use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
+use App\Actions\Encounters\DuplicateEncounter;
 use App\Actions\Encounters\NextTurn;
+use App\Actions\Encounters\RecordDeathSave;
 use App\Actions\Encounters\RemoveCombatant;
 use App\Actions\Encounters\ReorderCombatants;
 use App\Actions\Encounters\RollInitiative;
+use App\Actions\Encounters\SetConcentration;
 use App\Actions\Encounters\SetConditions;
+use App\Actions\Encounters\SetLairAction;
 use App\Actions\Encounters\SetPlayerVisibility;
 use App\Actions\Encounters\SortByInitiative;
+use App\Actions\Encounters\SpendLegendaryAction;
 use App\Enums\PrepRole;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
@@ -18,6 +23,7 @@ use App\Models\Combatant;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\StatBlock;
+use App\Support\Encounters\Budget;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
@@ -75,6 +81,29 @@ class Tracker extends Component
     public string $damage = '';
 
     public ?string $damageFor = null;
+
+    /**
+     * The concentration save the last damage asked for, and who owes it.
+     *
+     * Held for one render rather than stored: it is a prompt, not a fact about the
+     * fight, and a GM who has rolled it wants it gone rather than kept.
+     */
+    public ?int $concentrationDc = null;
+
+    public ?string $concentrationDcFor = null;
+
+    /** The per-row rules panel: what it is holding, and how many actions it gets. */
+    public ?string $editingRulesFor = null;
+
+    public string $newConcentration = '';
+
+    public ?int $newLegendaryMax = null;
+
+    public bool $editingLair = false;
+
+    public string $lairNote = '';
+
+    public ?int $lairInitiative = null;
 
     public const COMMON_CONDITIONS = [
         'Blinded', 'Charmed', 'Concentrating', 'Deafened', 'Frightened', 'Grappled',
@@ -229,9 +258,139 @@ class Tracker extends Component
             return;
         }
 
-        $applyDamage->handle($this->combatant($combatantId), $direction * abs($amount));
+        $combatant = $this->combatant($combatantId);
+        $dc = $applyDamage->handle($combatant, $direction * abs($amount));
 
         $this->closeDamage();
+
+        // The prompt, not a fact about the fight. The GM rolls it from the drawer that
+        // is already beside them and dismisses it.
+        $this->concentrationDc = $dc;
+        $this->concentrationDcFor = $dc === null ? null : $combatant->id;
+    }
+
+    public function dismissConcentrationSave(): void
+    {
+        $this->concentrationDc = null;
+        $this->concentrationDcFor = null;
+    }
+
+    /**
+     * The per-row rules panel: what this creature is holding, and how many legendary
+     * actions it gets. Two fields rather than two panels, because a GM opening either
+     * one is looking at the same row for the same reason.
+     */
+    public function openRules(string $combatantId): void
+    {
+        $combatant = $this->combatant($combatantId);
+
+        $this->editingRulesFor = $combatantId;
+        $this->newConcentration = $combatant->concentrating_on ?? '';
+        $this->newLegendaryMax = $combatant->legendary_actions_max;
+    }
+
+    public function closeRules(): void
+    {
+        $this->editingRulesFor = null;
+        $this->newConcentration = '';
+        $this->newLegendaryMax = null;
+    }
+
+    public function saveRules(string $combatantId, SetConcentration $setConcentration, SpendLegendaryAction $legendary): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $validated = $this->validate([
+            'newConcentration' => ['nullable', 'string', 'max:'.Combatant::MAX_CONCENTRATION_LENGTH],
+            'newLegendaryMax' => ['nullable', 'integer', 'min:0', 'max:'.Combatant::MAX_LEGENDARY_ACTIONS],
+        ]);
+
+        $combatant = $this->combatant($combatantId);
+
+        $setConcentration->handle($combatant, $validated['newConcentration']);
+
+        if ($validated['newLegendaryMax'] !== $combatant->legendary_actions_max) {
+            $legendary->setMaximum($combatant->refresh(), $validated['newLegendaryMax']);
+        }
+
+        $this->closeRules();
+    }
+
+    public function clearConcentration(string $combatantId, SetConcentration $setConcentration): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $setConcentration->clear($this->combatant($combatantId));
+    }
+
+    public function spendLegendaryAction(string $combatantId, SpendLegendaryAction $legendary): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $legendary->spend($this->combatant($combatantId));
+    }
+
+    public function deathSaveSuccess(string $combatantId, RecordDeathSave $deathSaves): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $deathSaves->success($this->combatant($combatantId));
+    }
+
+    public function deathSaveFailure(string $combatantId, RecordDeathSave $deathSaves): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $deathSaves->failure($this->combatant($combatantId));
+    }
+
+    public function clearDeathSaves(string $combatantId, RecordDeathSave $deathSaves): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $deathSaves->clear($this->combatant($combatantId));
+    }
+
+    public function openLair(): void
+    {
+        $this->editingLair = true;
+        $this->lairNote = $this->encounter->lair_action_note ?? '';
+        $this->lairInitiative = $this->encounter->lair_initiative ?? Encounter::DEFAULT_LAIR_INITIATIVE;
+    }
+
+    public function closeLair(): void
+    {
+        $this->editingLair = false;
+        $this->lairNote = '';
+        $this->lairInitiative = null;
+    }
+
+    public function saveLair(SetLairAction $setLairAction): void
+    {
+        $this->authorize('update', $this->encounter);
+
+        $validated = $this->validate([
+            'lairNote' => ['nullable', 'string', 'max:'.Encounter::MAX_LAIR_NOTE_LENGTH],
+            'lairInitiative' => ['nullable', 'integer', 'min:-99', 'max:999'],
+        ]);
+
+        $setLairAction->handle($this->encounter, $validated['lairNote'], $validated['lairInitiative']);
+
+        $this->closeLair();
+    }
+
+    /**
+     * The same fight again, ready to run. Lands the GM on the copy, because the reason
+     * to make one is to look at it.
+     */
+    public function duplicate(DuplicateEncounter $duplicate): void
+    {
+        $this->authorize('update', $this->encounter);
+        $this->authorize('create', [Encounter::class, $this->campaign]);
+
+        $copy = $duplicate->handle($this->encounter);
+
+        $this->redirect($copy->url(), navigate: true);
     }
 
     public function openConditions(string $combatantId): void
@@ -322,18 +481,80 @@ class Tracker extends Component
     {
         $this->encounter->refresh();
 
-        $combatants = $this->encounter->combatants()->with('entity')->get();
+        $combatants = $this->encounter->combatants()->with(['entity', 'statBlock'])->get();
+        $party = $this->party();
+        $budget = Budget::forParty($this->partyLevels($combatants, $party));
+        $spent = $this->spent($combatants);
 
         return view('livewire.encounters.tracker', [
             'combatants' => $combatants,
             'activeId' => $this->encounter->active_combatant_id,
-            'party' => $this->party(),
+            'party' => $party,
             'prepped' => $this->preppedMonsters(),
             'hasCompendium' => $this->campaign->ruleset->hasCompendium(),
             'compendiumResults' => $this->compendiumResults(),
             'commonConditions' => self::COMMON_CONDITIONS,
             'pollSeconds' => self::POLL_SECONDS,
+            'budget' => $budget,
+            'spent' => $spent,
+            'unpriced' => $this->unpriced($combatants),
+            'difficulty' => $budget->difficultyFor($spent),
+            'lairIndex' => $this->encounter->lairMarkerIndex($combatants),
+            'deathSaves' => Combatant::DEATH_SAVES,
         ]);
+    }
+
+    /**
+     * Whose levels the budget is built from.
+     *
+     * The characters in this fight, when there are any: that is the party that is
+     * actually here, and a GM running a splinter group gets the right number. A fight
+     * with nobody in it yet falls back to the campaign's own party, so the read-out
+     * says something while the GM is still building.
+     *
+     * @param  Collection<int, Combatant>  $combatants
+     * @param  Collection<int, Entity>  $party
+     * @return list<int|null>
+     */
+    private function partyLevels(Collection $combatants, Collection $party): array
+    {
+        $inTheFight = $combatants
+            ->filter(fn (Combatant $combatant) => $combatant->isPlayerCharacter())
+            ->map(fn (Combatant $combatant) => $combatant->entity?->level)
+            ->values();
+
+        if ($inTheFight->isNotEmpty()) {
+            return $inTheFight->all();
+        }
+
+        return $party->map(fn (Entity $entity) => $entity->level)->values()->all();
+    }
+
+    /**
+     * What the fight costs: the XP of every creature in it the compendium can price.
+     *
+     * A row the GM typed by hand has no XP to read, and guessing one from its hit
+     * points would be a number with nothing behind it. Those rows are counted instead,
+     * and the read-out says how many it could not price.
+     *
+     * @param  Collection<int, Combatant>  $combatants
+     */
+    private function spent(Collection $combatants): int
+    {
+        return (int) $combatants
+            ->reject(fn (Combatant $combatant) => $combatant->isPlayerCharacter())
+            ->sum(fn (Combatant $combatant) => $combatant->statBlock->xp ?? 0);
+    }
+
+    /**
+     * @param  Collection<int, Combatant>  $combatants
+     */
+    private function unpriced(Collection $combatants): int
+    {
+        return $combatants
+            ->reject(fn (Combatant $combatant) => $combatant->isPlayerCharacter())
+            ->filter(fn (Combatant $combatant) => $combatant->statBlock?->xp === null)
+            ->count();
     }
 
     /**

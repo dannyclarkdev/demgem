@@ -13,6 +13,8 @@ use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Calendar;
 use App\Models\Campaign;
+use App\Models\Combatant;
+use App\Models\Encounter;
 use App\Models\EntityRelation;
 use App\Models\StatBlock;
 use App\Support\Reckoning\Bounds;
@@ -696,6 +698,11 @@ class ReadCampaignFile
                     'max_hp' => $this->integer($combatant, 'max_hp'),
                     'ac' => $this->integer($combatant, 'ac'),
                     'conditions' => $this->strings($combatant, 'conditions', 40),
+                    'concentrating_on' => $this->text($combatant, 'concentrating_on', Combatant::MAX_CONCENTRATION_LENGTH),
+                    'death_save_successes' => $this->clamped($combatant, 'death_save_successes', Combatant::DEATH_SAVES),
+                    'death_save_failures' => $this->clamped($combatant, 'death_save_failures', Combatant::DEATH_SAVES),
+                    'legendary_actions_max' => $this->clamped($combatant, 'legendary_actions_max', Combatant::MAX_LEGENDARY_ACTIONS),
+                    'legendary_actions_left' => $this->clamped($combatant, 'legendary_actions_left', Combatant::MAX_LEGENDARY_ACTIONS),
                     'position' => $this->integer($combatant, 'position') ?? count($combatants),
                     'player_visible' => (bool) ($combatant['player_visible'] ?? false),
                 ];
@@ -707,6 +714,8 @@ class ReadCampaignFile
                 'name' => $this->text($row, 'name', 120) ?? 'Encounter',
                 'status' => $this->enum(EncounterStatus::class, $row, 'status', "encounter {$id}") ?? EncounterStatus::cases()[0],
                 'round' => $this->integer($row, 'round') ?? 1,
+                'lair_action_note' => $this->text($row, 'lair_action_note', Encounter::MAX_LAIR_NOTE_LENGTH),
+                'lair_initiative' => $this->integer($row, 'lair_initiative'),
                 'active_combatant_id' => $this->reference($row, 'active_combatant_id'),
                 'combatants' => $combatants,
             ];
@@ -1098,6 +1107,22 @@ class ReadCampaignFile
         $value = $row[$key] ?? null;
 
         return is_int($value) || (is_string($value) && ctype_digit($value)) ? (int) $value : null;
+    }
+
+    /**
+     * A count from a file, held inside the range the application allows.
+     *
+     * A death save count of nine or a legendary maximum of four hundred is not a
+     * campaign this install can run, and refusing the whole import over it would lose
+     * a GM's year of notes to a number nothing reads. It is clamped instead.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function clamped(array $row, string $key, int $max): ?int
+    {
+        $value = $this->integer($row, $key);
+
+        return $value === null ? null : max(0, min($max, $value));
     }
 
     /**

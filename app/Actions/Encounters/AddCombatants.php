@@ -87,6 +87,11 @@ class AddCombatants
                     'max_hp' => $hp,
                     'ac' => $ac,
                     'conditions' => [],
+                    // A creature the book gives legendary actions arrives with them
+                    // counted. Everything else is null, which is "never had any"
+                    // rather than "has spent them".
+                    'legendary_actions_max' => $statBlock?->legendary_action_uses,
+                    'legendary_actions_left' => $statBlock?->legendary_action_uses,
                     'position' => $position++,
                     // The party is already on the screen at the table, so a PC shows at
                     // once. Anything else the GM adds waits for the eye toggle, because

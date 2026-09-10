@@ -105,6 +105,7 @@ class ImportSrdCommand extends Command
                 $attributes['ruleset'] = $ruleset;
                 $attributes['source'] = $source;
                 $attributes['license'] = $license;
+                $attributes['legendary_action_uses'] = $this->legendaryActionUses($creature);
 
                 if ($existing->has($slug)) {
                     StatBlock::query()->whereKey($existing->get($slug))->update($attributes);
@@ -130,5 +131,43 @@ class ImportSrdCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * How many legendary actions a creature gets in a round.
+     *
+     * The dataset already ships the number inside the prose it prints above the list:
+     * "Legendary Action Uses: 3 (4 in Lair)". Reading it here rather than adding a
+     * field to the data file means the file and its checksum do not move, and the
+     * loader stays the only place that knows the document's shape.
+     *
+     * The lair number beside it is not stored. demgem has no concept of a lair, and a
+     * GM raises the count on the row when the fight is in one.
+     *
+     * Every one of the thirty creatures with legendary actions states this, so a null
+     * here means the parse missed rather than that the creature gets none. The tracker
+     * treats that the same way it treats a hand-typed row: the GM types the number.
+     *
+     * @param  array<string, mixed>  $creature
+     */
+    private function legendaryActionUses(array $creature): ?int
+    {
+        $actions = $creature['legendary_actions'] ?? null;
+
+        if (! is_array($actions)) {
+            return null;
+        }
+
+        foreach ($actions as $action) {
+            if (! is_array($action) || ! is_string($action['text'] ?? null)) {
+                continue;
+            }
+
+            if (preg_match('/Legendary Action Uses:\s*(\d+)/i', $action['text'], $matches) === 1) {
+                return (int) $matches[1];
+            }
+        }
+
+        return null;
     }
 }
