@@ -2,7 +2,7 @@
 title: "feat: The compendium, and the numbers it puts in the turn order"
 type: feat
 date: 2026-09-09
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-09-feat-entity-templates-body-history-plan.md
 ---
@@ -236,3 +236,35 @@ Then the full suite, and a browser pass at a laptop width and a tablet width: th
 - `.ai/rules/api.md` — the API is the screens in JSON.
 - `.ai/rules/tests.md` — never assert a bare number against output carrying a ULID.
 - https://www.dndbeyond.com/srd — the SRD releases and their licence.
+
+## Implementation Results — 2026-09-09
+
+Implemented in full. 40 new tests; the suite is 1221 tests, 1220 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### The dataset
+
+330 creatures, the whole SRD 5.2.1 bestiary: 235 from `monsters-A-Z.md` and 95 from `animals.md`. `database/srd/build-dataset.php` parses the transcription; `database/srd/README.md` records the chain from the official release, and `config/compendium.php` pins the SHA-256 that `CompendiumDatasetTest` compares against the file on disk.
+
+Two things the source needed handling for, both recorded in the parser:
+
+- The two files hang their headings at different levels. A creature in `animals.md` is an h2 with h3 sections; one in `monsters-A-Z.md` is an h3 under a group h2, with h4 sections. Reading both at one level silently produced 238 creatures instead of 330.
+- Four entries print `(700 XP; PB +2)` where the other 326 print `(XP 700; PB +2)`. The parser accepts both orders.
+
+### Deviations from the plan
+
+| Planned | Shipped | Why |
+|---|---|---|
+| `speed`, `skills`, `senses` and the rest as JSON | Plain string columns | The book prints them as one display line and nothing queries inside them. `ability_scores` stayed JSON, and the traits and actions lists stayed JSON, because those are read structurally. |
+| `ac_note` column | Dropped | No entry in the document has one. A column nothing fills is a column that misleads. |
+| Nothing about swarms | `type_line` and `is_swarm` | "Large Swarm of Tiny Beasts" is one line the page prints verbatim and two facts the filters need. Reading the last word as the type made "Beasts" a fifteenth creature type. |
+| Encounters exported through `cursor()` | `lazy(100)` | `combatants.statBlock` is a nested eager load, and `cursor()` loads one level. This is the trap `.ai/rules/campaigns.md` already records against the sessions section; it failed the same way here. |
+
+### Where the gates ended up
+
+`CampaignPolicy::viewCompendium()` holds both: a GM role, and `Ruleset::hasCompendium()`. The screens, the tracker picker, the entity form field and the two API endpoints all read it, and the nav link is a convenience rather than a guard. A player is 403 on every surface; a system-agnostic campaign is 403 for its own GM.
+
+`AddCombatants::fromStatBlock()` copies the numbers and the reference, never the prose, so a fight and its export carry no licensed text. A player's `/table` render is asserted not to contain a trait name.
+
+### Browser checks
+
+The compendium index, its filters, one stat block, the add to a fight, and the same fight on `/table` as a player, at a laptop width and a tablet width.
