@@ -55,11 +55,16 @@ it('reads a swarm as its own size and creature', function () {
 it('changes no ids when it runs twice', function () {
     $this->artisan('demgem:import-srd')->assertSuccessful();
 
-    $before = StatBlock::query()->pluck('id', 'slug');
+    // Ordered on purpose. An unordered pluck compares row order as well as ids, and
+    // Postgres rewrites a tuple's physical position on update, so the second read of
+    // the same rows comes back in a different order and a passing test turns red.
+    $ids = fn () => StatBlock::query()->orderBy('slug')->pluck('id', 'slug')->all();
+
+    $before = $ids();
 
     $this->artisan('demgem:import-srd')->assertSuccessful();
 
-    expect(StatBlock::query()->pluck('id', 'slug')->all())->toBe($before->all());
+    expect($ids())->toBe($before);
 });
 
 it('refuses a dataset that does not match its checksum', function () {
