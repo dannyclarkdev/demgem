@@ -26,6 +26,7 @@ use App\Models\StatBlock;
 use App\Support\Encounters\Budget;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -68,6 +69,9 @@ class Tracker extends Component
     /**
      * The compendium picker. It queries only once the GM types, so a fight that never
      * touches it costs the render exactly what it did before the compendium existed.
+     *
+     * It reads the campaign's whole book, which since slice 17 means the creatures the
+     * GM wrote as well as the shipped ones, own first.
      */
     public string $compendiumSearch = '';
 
@@ -156,7 +160,7 @@ class Tracker extends Component
         $this->authorize('viewCompendium', $this->campaign);
 
         $statBlock = StatBlock::query()
-            ->forRuleset($this->campaign->ruleset->value)
+            ->forCampaign($this->campaign)
             ->whereKey($statBlockId)
             ->firstOrFail();
 
@@ -491,7 +495,7 @@ class Tracker extends Component
             'activeId' => $this->encounter->active_combatant_id,
             'party' => $party,
             'prepped' => $this->preppedMonsters(),
-            'hasCompendium' => $this->campaign->ruleset->hasCompendium(),
+            'hasCompendium' => Gate::allows('viewCompendium', $this->campaign),
             'compendiumResults' => $this->compendiumResults(),
             'commonConditions' => self::COMMON_CONDITIONS,
             'pollSeconds' => self::POLL_SECONDS,
@@ -567,14 +571,14 @@ class Tracker extends Component
      */
     private function compendiumResults(): Collection
     {
-        if (trim($this->compendiumSearch) === '' || ! $this->campaign->ruleset->hasCompendium()) {
+        if (trim($this->compendiumSearch) === '' || ! Gate::allows('viewCompendium', $this->campaign)) {
             return new Collection;
         }
 
         return StatBlock::query()
-            ->forRuleset($this->campaign->ruleset->value)
+            ->forCampaign($this->campaign)
             ->matchingName($this->compendiumSearch)
-            ->inReadingOrder()
+            ->ownFirst()
             ->limit(8)
             ->get();
     }

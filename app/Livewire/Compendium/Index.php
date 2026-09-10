@@ -11,10 +11,13 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Every creature in the campaign's ruleset, weakest first.
+ * Every creature this campaign can look up: its own first, then the shipped set when
+ * its ruleset has one, each half weakest first.
  *
- * GM-only, and 404 for a system-agnostic campaign: both halves are in
- * CampaignPolicy::viewCompendium(), so neither is a nav condition or an @if.
+ * GM-only, in CampaignPolicy::viewCompendium(), so it is never a nav condition or an
+ *
+ * @if. Which rows are in the book is StatBlock::scopeForCampaign(), which is why a
+ * system-agnostic campaign reaches this screen and finds only what its GM wrote.
  *
  * The filters are in the query rather than in the Blade, which is the same rule the
  * table screens are written to. A row a viewer may not have is never loaded.
@@ -33,6 +36,10 @@ class Index extends Component
 
     #[Url(except: '')]
     public string $challenge = '';
+
+    /** Only the creatures this campaign wrote. */
+    #[Url(except: false)]
+    public bool $mine = false;
 
     public function mount(Campaign $campaign): void
     {
@@ -55,9 +62,14 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedMine(): void
+    {
+        $this->resetPage();
+    }
+
     public function clearFilters(): void
     {
-        $this->reset(['search', 'creatureType', 'challenge']);
+        $this->reset(['search', 'creatureType', 'challenge', 'mine']);
         $this->resetPage();
     }
 
@@ -83,19 +95,22 @@ class Index extends Component
         $band = $this->challengeBands()[$this->challenge] ?? null;
 
         $statBlocks = StatBlock::query()
-            ->forRuleset($this->campaign->ruleset->value)
+            ->forCampaign($this->campaign)
+            ->when($this->mine, fn ($query) => $query->ownedBy($this->campaign))
             ->matchingName($this->search)
             ->when(
                 $this->creatureType !== '',
                 fn ($query) => $query->where('creature_type', $this->creatureType)
             )
             ->inChallengeRange($band['min'] ?? null, $band['max'] ?? null)
-            ->inReadingOrder()
+            ->ownFirst()
             ->paginate(self::PER_PAGE);
 
         return view('livewire.compendium.index', [
             'statBlocks' => $statBlocks,
             'creatureTypes' => $this->creatureTypes(),
+            'ownCount' => StatBlock::query()->ownedBy($this->campaign)->count(),
+            'hasShipped' => $this->campaign->ruleset->hasCompendium(),
         ])->title('Compendium');
     }
 
@@ -105,7 +120,7 @@ class Index extends Component
     private function creatureTypes(): array
     {
         return StatBlock::query()
-            ->forRuleset($this->campaign->ruleset->value)
+            ->forCampaign($this->campaign)
             ->whereNotNull('creature_type')
             ->distinct()
             ->orderBy('creature_type')

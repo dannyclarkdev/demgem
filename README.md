@@ -38,6 +38,10 @@ Slice 16 adds **what a fight is worth, and the four rules the tracker used to ma
 
 The budget numbers are demgem's own, and the read-out says so. The SRD prices every creature and that data ships with the app, but it publishes no encounter building budget. `config/encounters.php` states one rule instead and derives the rest from the ladder the dataset itself carries: a character of level N affords a quarter, a half and three quarters of the XP of a CR N creature. A fight holding rows the compendium cannot price says so, and calls its band a floor.
 
+Slice 17 adds **the GM's own monsters**. A campaign writes its own creatures into the same compendium as the shipped ones: the numbers the tracker copies, six ability scores, and traits, actions, bonus actions, reactions and legendary actions as lists you can write in Markdown. Every field but the name is optional. **Copy to my campaign** takes any shipped creature and hands you an editable copy, which is the fastest way to a homebrew ogre. Your creatures come first in the book, in the tracker's picker, and on any NPC that names what it fights as, and they carry XP so the encounter budget prices them. The compendium is now open to every campaign, not only one on a ruleset with a shipped book: a system-agnostic table writes its own creatures and reads a compendium holding exactly those.
+
+Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
+
 ## Local setup
 
 Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.

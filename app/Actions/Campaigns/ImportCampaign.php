@@ -75,6 +75,8 @@ class ImportCampaign
             // Scout indexes on save, and a bulk import is the one time that is worth
             // deferring: one index at the end instead of a write per entity.
             Entity::withoutSyncingToSearch(function () use ($document, $importer, $campaign, $ids): void {
+                // Before entities and encounters, both of which point at one.
+                $this->statBlocks($document, $campaign, $ids);
                 $this->entities($document, $campaign, $importer, $ids);
                 $this->templatesAndHistory($document, $campaign, $ids);
                 $this->sessions($document, $campaign, $importer, $ids);
@@ -222,6 +224,42 @@ class ImportCampaign
      *
      * @param  array{ruleset: string, slug: string}|null  $reference
      */
+    /**
+     * The creatures the campaign wrote, before anything that points at one.
+     *
+     * Campaign rows in every sense: remapped through IdMap, written with forceFill, and
+     * carrying the prose the export put in the file. The slug is taken as written
+     * because it was already unique inside its own campaign and this is a new campaign,
+     * so nothing it could collide with is here yet.
+     *
+     * @param  array<string, mixed>  $document
+     */
+    private function statBlocks(array $document, Campaign $campaign, IdMap $ids): void
+    {
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $document['stat_blocks'] ?? [];
+
+        foreach ($rows as $row) {
+            $this->write(new StatBlock, [
+                ...array_diff_key($row, array_flip(['id', 'campaign_id', 'ruleset'])),
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                // The campaign's own ruleset, not the file's: a creature filed under
+                // another one would sit in a compendium its campaign cannot see.
+                'ruleset' => $campaign->ruleset->value,
+            ]);
+        }
+    }
+
+    /**
+     * A shipped creature, found by the natural key the export wrote.
+     *
+     * Never through IdMap: a global row's id means nothing on the install reading the
+     * file, and the pair either names a row this install has or it does not.
+     * ReadCampaignFile has already counted the misses for the GM to read.
+     *
+     * @param  array{ruleset: string, slug: string}|null  $reference
+     */
     private function statBlockId(?array $reference): ?string
     {
         if ($reference === null) {
@@ -229,9 +267,18 @@ class ImportCampaign
         }
 
         return StatBlock::query()
+            ->shipped()
             ->forRuleset($reference['ruleset'])
             ->where('slug', $reference['slug'])
             ->value('id');
+    }
+
+    /**
+     * A creature the campaign wrote, which the same import has just written.
+     */
+    private function ownStatBlockId(?string $id, IdMap $ids): ?string
+    {
+        return $id === null ? null : $ids->newFor($id);
     }
 
     /**
@@ -282,7 +329,8 @@ class ImportCampaign
                 'character_class' => $row['character_class'],
                 'level' => $row['level'],
                 'sheet_url' => $row['sheet_url'],
-                'stat_block_id' => $this->statBlockId($row['stat_block'] ?? null),
+                'stat_block_id' => $this->ownStatBlockId($row['stat_block_id'] ?? null, $ids)
+                    ?? $this->statBlockId($row['stat_block'] ?? null),
                 'quest_status' => $row['quest_status'],
                 'happens_on' => $row['happens_on'],
                 'created_by' => $importer->id,
@@ -473,7 +521,8 @@ class ImportCampaign
                     'campaign_id' => $campaign->id,
                     'encounter_id' => $encounter->id,
                     'entity_id' => $ids->newForNullable($combatant['entity_id']),
-                    'stat_block_id' => $this->statBlockId($combatant['stat_block'] ?? null),
+                    'stat_block_id' => $this->ownStatBlockId($combatant['stat_block_id'] ?? null, $ids)
+                        ?? $this->statBlockId($combatant['stat_block'] ?? null),
                     'name' => $combatant['name'],
                     'initiative' => $combatant['initiative'],
                     'initiative_bonus' => $combatant['initiative_bonus'],

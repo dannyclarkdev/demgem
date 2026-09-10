@@ -20,7 +20,7 @@ return [
 
     'dataset' => database_path('srd/srd-5.2.1-creatures.json'),
 
-    'dataset_sha256' => 'defc300d1048a5ab665605faa85631d869f72b5be760a131bb15b0953ce0455e',
+    'dataset_sha256' => '6ec28765f6babc5f25f71d96fc6bbae54e008d241b12457a68de48e07ea8d30a',
 
     /*
     |--------------------------------------------------------------------------

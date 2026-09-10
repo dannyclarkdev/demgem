@@ -46,3 +46,12 @@ is a slice of its own.
 
 Lair actions and regional effects are printed outside the stat block in the SRD and are
 not parsed. Habitat and treasure tables are likewise left behind.
+
+## Corrections
+
+**2026-09-09 — the group heading that ended 176 sections.** A creature's last section
+runs to the next group's heading, so that heading was read as a final entry: the Ogre's
+Actions ended with one reading `## Oni`, and 175 other creatures did the same. Every one
+was the last entry in its section, so removing them is exactly what the corrected parser
+produces. `parseSection()` now stops at a Markdown heading rather than reading past it,
+and the checksum in `config/compendium.php` moved with the data in the same commit.

@@ -7,6 +7,7 @@ use App\Actions\Campaigns\CreateCampaign;
 use App\Actions\Clocks\CreateClock;
 use App\Actions\Clocks\SetClockVisibility;
 use App\Actions\Clocks\TickClock;
+use App\Actions\Compendium\CreateStatBlock;
 use App\Actions\Dice\RollDice;
 use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
@@ -492,6 +493,58 @@ class DemoCampaignSeeder extends Seeder
         }
 
         $this->seedFightRules($encounter, $thralls);
+        $this->seedOwnCreature($campaign, $encounter);
+    }
+
+    /**
+     * One creature the duchy wrote itself, in the same book as the shipped ones.
+     *
+     * It is what the drowned thralls already are, which is the point: a GM types those
+     * numbers into the add form every session until the creature exists, and then never
+     * again. It carries XP, so the encounter budget can price the fight it is in.
+     */
+    private function seedOwnCreature(Campaign $campaign, Encounter $encounter): void
+    {
+        $thrall = app(CreateStatBlock::class)->handle($campaign, [
+            'name' => 'Drowned thrall',
+            'type_line' => 'Medium Undead, Neutral Evil',
+            'size' => 'Medium',
+            'creature_type' => 'Undead',
+            'alignment' => 'Neutral Evil',
+            'ac' => 12,
+            'hp' => 22,
+            'hit_dice' => '4d8 + 4',
+            'initiative_bonus' => 1,
+            'speed' => '20 ft., swim 30 ft.',
+            'ability_scores' => [
+                'str' => ['score' => 14, 'mod' => '+2', 'save' => '+2'],
+                'dex' => ['score' => 12, 'mod' => '+1', 'save' => '+1'],
+                'con' => ['score' => 13, 'mod' => '+1', 'save' => '+1'],
+                'int' => ['score' => 6, 'mod' => '-2', 'save' => '-2'],
+                'wis' => ['score' => 8, 'mod' => '-1', 'save' => '-1'],
+                'cha' => ['score' => 5, 'mod' => '-3', 'save' => '-3'],
+            ],
+            'senses' => 'Darkvision 60 ft., Passive Perception 9',
+            'languages' => 'Understands Common but cannot speak',
+            'immunities' => 'Poison',
+            'cr' => '1/2',
+            'cr_value' => 0.5,
+            'xp' => 100,
+            'traits' => [[
+                'name' => 'Tide-bound',
+                'text' => 'While standing in water, the thrall has advantage on saving throws against being moved.',
+            ]],
+            'actions' => [[
+                'name' => 'Grasping hands',
+                'text' => '_Melee Attack Roll:_ +4, reach 5 ft. _Hit:_ 6 (1d8 + 2) Bludgeoning damage, and the target is Grappled.',
+            ]],
+        ]);
+
+        // The rows already in the fight learn what they are, so the budget can price
+        // them and a GM can read the stat block from the turn order.
+        $encounter->combatants()
+            ->where('name', 'like', 'Drowned thrall%')
+            ->update(['stat_block_id' => $thrall->id]);
     }
 
     /**

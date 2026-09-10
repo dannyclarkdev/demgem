@@ -35,21 +35,21 @@ class CampaignPolicy
     }
 
     /**
-     * Reading the compendium: the stat block screens, the picker on the tracker, and
-     * the two API endpoints.
+     * The compendium: the campaign's own creatures, plus the shipped set when its
+     * ruleset has one.
      *
-     * Two gates, and both belong here rather than in a Blade or a nav condition. The
-     * ruleset gate is the one that is easy to forget: a system-agnostic campaign has no
-     * dataset to read, so the screen is a 404 for its GM as much as for its players.
+     * A GM role and nothing else. This used to require Ruleset::hasCompendium() as
+     * well, and slice 17 dropped that half: a system-agnostic campaign can now write
+     * its own creatures, and a screen that 404s on the only rows it would hold is a
+     * screen refusing a GM their own writing.
      *
-     * GM roles only. The prose is licensed material behind a GM's own tools, and a
-     * player who could page through every monster in the book has been handed the
-     * back half of the screen.
+     * What the ruleset still decides is what is IN the book, and that lives in
+     * StatBlock::scopeForCampaign() rather than here — in the query, the way every
+     * other visibility rule in this application is decided.
      */
     public function viewCompendium(User $user, Campaign $campaign): bool
     {
-        return $campaign->ruleset->hasCompendium()
-            && ($campaign->roleFor($user)?->isDm() ?? false);
+        return $campaign->roleFor($user)?->isDm() ?? false;
     }
 
     /**

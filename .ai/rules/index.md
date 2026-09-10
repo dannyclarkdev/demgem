@@ -13,7 +13,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Calendar/**, app/Http/Controllers/CalendarFeedController.php, app/Mail/** | .ai/rules/calendar.md |
 | app/Livewire/Calendars/** | .ai/rules/calendars.md |
 | app/Actions/Campaigns/**, app/Actions/Campaigns/ExportCampaign.php | .ai/rules/campaigns.md |
-| database/srd/**, app/Models/StatBlock.php, config/compendium.php, app/Console/Commands/ImportSrdCommand.php | .ai/rules/commands.md |
+| database/srd/**, app/Models/StatBlock.php, config/compendium.php, app/Console/Commands/ImportSrdCommand.php, app/Actions/Compendium/** | .ai/rules/commands.md |
 | config/broadcasting.php | .ai/rules/config.md |
 | resources/css/** | .ai/rules/css.md |
 | app/Support/Dice/** | .ai/rules/dice.md |

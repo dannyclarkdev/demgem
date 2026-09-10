@@ -22,6 +22,7 @@ use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -520,7 +521,7 @@ class Form extends Component
         return view('livewire.entities.form', [
             'statBlockOptions' => $this->offersStatBlock()
                 ? StatBlock::query()
-                    ->forRuleset($this->campaign->ruleset->value)
+                    ->forCampaign($this->campaign)
                     ->orderBy('name')
                     ->get(['id', 'name', 'cr'])
                 : collect(),
@@ -604,14 +605,16 @@ class Form extends Component
     /**
      * Whether the form shows the stat block picker at all.
      *
-     * A GM field on a character in a campaign whose ruleset ships a compendium. A
-     * faction has nothing to fight as, and a system-agnostic campaign has no book.
+     * A GM field on a character in a campaign with a compendium to pick from. A faction
+     * has nothing to fight as. A system-agnostic campaign has no shipped book but may
+     * have written its own creatures, so the gate is the compendium's own rather than
+     * the ruleset's.
      */
     private function offersStatBlock(): bool
     {
         return $this->canEditDmFields()
             && $this->entityType === EntityType::Character
-            && $this->campaign->ruleset->hasCompendium();
+            && Gate::allows('viewCompendium', $this->campaign);
     }
 
     private function canEditDmFields(): bool
