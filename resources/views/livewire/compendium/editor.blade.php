@@ -75,11 +75,14 @@
                 The modifier follows the score, so there is nothing to keep in step. A save is only worth filling when it is not the modifier.
             </p>
 
-            <div class="mt-3 grid gap-3 sm:grid-cols-3">
+            {{-- Two across at a tablet width, three at a laptop. At three the card is
+                 about 130px wide and a number input's spinner takes the whole field,
+                 so the score reads as blank. --}}
+            <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($abilityKeys as $ability)
                     <div class="rounded-md border border-line p-3">
                         <p class="eyebrow">{{ strtoupper($ability) }}</p>
-                        <div class="mt-2 flex gap-2">
+                        <div class="mt-2 flex flex-wrap gap-2 [&>*]:min-w-20 [&>*]:flex-1">
                             <x-ui.input
                                 type="number"
                                 label="Score"

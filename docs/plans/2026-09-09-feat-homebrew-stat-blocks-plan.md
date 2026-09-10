@@ -2,7 +2,7 @@
 title: "feat: The GM's own monsters, in the book beside the shipped ones"
 type: feat
 date: 2026-09-09
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-09-feat-encounter-builder-fight-rules-plan.md
 ---
@@ -119,3 +119,39 @@ Then the full suite, and a browser pass at a laptop width and a tablet width: cr
 - `.ai/rules/migrations.md` — never name a column `attributes`; searchable JSON lives in text.
 - `.ai/rules/actions.md` — portable SQL, because this project has been bitten twice.
 - `docs/plans/2026-09-09-feat-srd-compendium-plan.md` — where custom stat blocks were first deferred, and to this slice by name.
+
+## Implementation Results — 2026-09-09
+
+Implemented in full. 27 new tests; the suite is 1298 tests, 1297 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### The rule that was overturned, and what survived it
+
+`.ai/rules/commands.md` is rewritten rather than broken quietly. Both halves of slice 15's decision survive as conditions on `campaign_id` rather than as facts about the table: a null row is still global, still read-only, still written by one command, still absent from every export. Every query in `ImportSrdCommand` is now scoped with `shipped()`, without which the loader would update a GM's creature whose slug matched, or report it as one the dataset no longer names.
+
+`.ai/rules/actions-campaigns.md` needed the same treatment for the other direction. A `stat_block` reference is now one of two things, and the column says which: `{ruleset, slug}` for a shipped row, resolved against this install; `stat_block_id` for a campaign's own, remapped through IdMap like every other campaign id.
+
+### Deviations from the plan
+
+| Planned | Shipped | Why |
+|---|---|---|
+| A rename re-slugs | The slug is set once and never moves | Writing the plan's API section made the contradiction visible: `.ai/rules/api.md` says an entity is addressed by id precisely because a slug moves on rename, and everything here is addressed by slug. Making the slug permanent keeps one address for the life of the row and costs only a URL that still says `harbour-thug` after a rename. |
+| Open question 1, `copied_from_slug` | Left out, as recommended | A column nothing reads is what slice 15 already deleted once, when `ac_note` came out. |
+| Nothing about the ability grid | Two cards across at a tablet width | The browser pass at 834px found three cards across leaves each about 130px wide, where a number input's spinner takes the whole field and the score reads as blank. |
+
+### A shipped defect found on the way
+
+Copying an Ogre showed its Actions ending with an entry reading `## Oni`. A creature's last section runs to the next group's heading, so that heading was read as a final entry — on 176 of the 330 creatures, since slice 15, on every page and in every API document.
+
+`parseSection()` now stops at a heading rather than reading past one. All 176 were the last entry in their section, so cleaning the shipped file is exactly what the corrected parser produces: the diff is 704 deletions and no other change. The checksum moved with the data in the same commit and `database/srd/README.md` records the correction. It is its own commit, because it is a slice 15 bug rather than part of this slice.
+
+A creature copied before that fix keeps the stray entry, which is correct: a copy is a snapshot, and the GM can delete the line in the editor.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px and at 834px:
+
+- The index shows the campaign's own creature first, badged **Yours**, above the CR 0 shipped rows, with **New creature** and **Only mine**.
+- A GM's own creature shows Edit, Duplicate and Delete, and no SRD notice.
+- A shipped creature shows only **Copy to my campaign**, and copying one lands on the editor with every field filled and the slug suffixed to `ogre-2`.
+- A rename saved and the URL kept `ogre-2`, which is the slug decision working.
+- The copy keeps the CC BY notice, because it kept the licence it was copied from.
