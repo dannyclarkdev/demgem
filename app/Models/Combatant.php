@@ -21,7 +21,8 @@ use Illuminate\Support\Carbon;
  *
  * player_visible decides what the party sees of the row on /table, and healthWord()
  * decides how much of the number they get. Both answers are read on the server under
- * the viewer's own role, never sent over the wire.
+ * the viewer's own role, never sent over the wire. Death saves are the one exception,
+ * and deathSavesVisibleToPlayers() is where the argument for it lives.
  *
  * @property string $id
  * @property string $campaign_id
@@ -35,6 +36,11 @@ use Illuminate\Support\Carbon;
  * @property int|null $max_hp
  * @property int|null $ac
  * @property list<string>|null $conditions
+ * @property string|null $concentrating_on
+ * @property int $death_save_successes
+ * @property int $death_save_failures
+ * @property int|null $legendary_actions_max
+ * @property int|null $legendary_actions_left
  * @property int $position
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -45,8 +51,9 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'campaign_id', 'encounter_id', 'entity_id', 'stat_block_id', 'name', 'initiative',
-    'initiative_bonus', 'hp', 'max_hp', 'ac', 'conditions', 'position',
-    'player_visible',
+    'initiative_bonus', 'hp', 'max_hp', 'ac', 'conditions', 'concentrating_on',
+    'death_save_successes', 'death_save_failures', 'legendary_actions_max',
+    'legendary_actions_left', 'position', 'player_visible',
 ])]
 class Combatant extends Model
 {
@@ -58,6 +65,13 @@ class Combatant extends Model
     public const MAX_CONDITIONS = 12;
 
     public const MAX_CONDITION_LENGTH = 40;
+
+    /** Three of either ends the question, which is the whole mechanic. */
+    public const DEATH_SAVES = 3;
+
+    public const MAX_CONCENTRATION_LENGTH = 80;
+
+    public const MAX_LEGENDARY_ACTIONS = 10;
 
     /**
      * @return array<string, string>
@@ -72,6 +86,10 @@ class Combatant extends Model
             'ac' => 'integer',
             'position' => 'integer',
             'conditions' => 'array',
+            'death_save_successes' => 'integer',
+            'death_save_failures' => 'integer',
+            'legendary_actions_max' => 'integer',
+            'legendary_actions_left' => 'integer',
             'player_visible' => 'boolean',
         ];
     }
@@ -179,5 +197,68 @@ class Combatant extends Model
     public function conditionList(): array
     {
         return $this->conditions ?? [];
+    }
+
+    /**
+     * Whether this row is holding an effect that damage can break.
+     *
+     * Null in concentrating_on is the whole answer, so there is no boolean beside it
+     * that can come to disagree the first time somebody edits one and not the other.
+     */
+    public function isConcentrating(): bool
+    {
+        return filled($this->concentrating_on);
+    }
+
+    /**
+     * Whether death saves apply to this row at all. Only a row on nought has them, and
+     * only while it is on nought: healing above zero is what clears the marks.
+     */
+    public function isDying(): bool
+    {
+        return $this->isDown() && ! $this->isStable() && ! $this->isDeadOnSaves();
+    }
+
+    public function isStable(): bool
+    {
+        return $this->death_save_successes >= self::DEATH_SAVES;
+    }
+
+    public function isDeadOnSaves(): bool
+    {
+        return $this->death_save_failures >= self::DEATH_SAVES;
+    }
+
+    public function hasDeathSaves(): bool
+    {
+        return $this->death_save_successes > 0 || $this->death_save_failures > 0;
+    }
+
+    /**
+     * Whether the party's screen carries this row's death saves.
+     *
+     * This is a deliberate exception to the rule that a player gets a word and never a
+     * number, and the reason is what happens at a real table. Hit points are the GM's
+     * information: a player who knows the ogre has 43 left plays differently, which is
+     * the whole argument for healthWord(). Death saves are the opposite. A dying
+     * character's rolls happen in the open, the table counts them out loud, and the
+     * tension of the third one is the point of the mechanic. Hiding them would protect
+     * nothing, because the party already knows.
+     *
+     * The gate itself does not move. A row the GM has not revealed carries nothing,
+     * exactly as its hit points do not, so this asks player_visible first.
+     */
+    public function deathSavesVisibleToPlayers(): bool
+    {
+        return $this->player_visible && $this->isDown();
+    }
+
+    /**
+     * Whether this creature has legendary actions to spend. Null is a creature that
+     * never had any; zero left is one that has spent them this round.
+     */
+    public function hasLegendaryActions(): bool
+    {
+        return $this->legendary_actions_max !== null && $this->legendary_actions_max > 0;
     }
 }

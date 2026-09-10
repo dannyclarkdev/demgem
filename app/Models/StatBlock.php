@@ -54,6 +54,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property list<array{name: string|null, text: string}>|null $bonus_actions
  * @property list<array{name: string|null, text: string}>|null $reactions
  * @property list<array{name: string|null, text: string}>|null $legendary_actions
+ * @property int|null $legendary_action_uses
  */
 #[Fillable([
     'ruleset', 'slug', 'name', 'source', 'license', 'type_line', 'is_swarm', 'size',
@@ -61,6 +62,7 @@ use Illuminate\Database\Eloquent\Model;
     'speed', 'ability_scores', 'skills', 'senses', 'languages', 'gear', 'resistances',
     'immunities', 'vulnerabilities', 'cr', 'cr_value', 'xp', 'cr_note', 'traits',
     'actions', 'bonus_actions', 'reactions', 'legendary_actions',
+    'legendary_action_uses',
 ])]
 class StatBlock extends Model
 {

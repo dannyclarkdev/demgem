@@ -25,6 +25,8 @@ use Illuminate\Support\Collection;
  * @property string $name
  * @property EncounterStatus $status
  * @property int $round
+ * @property string|null $lair_action_note
+ * @property int|null $lair_initiative
  * @property string|null $active_combatant_id
  * @property int|null $created_by
  * @property Carbon|null $created_at
@@ -35,7 +37,7 @@ use Illuminate\Support\Collection;
  */
 #[Fillable([
     'campaign_id', 'game_session_id', 'name', 'status', 'round',
-    'active_combatant_id', 'created_by',
+    'lair_action_note', 'lair_initiative', 'active_combatant_id', 'created_by',
 ])]
 class Encounter extends Model
 {
@@ -45,6 +47,14 @@ class Encounter extends Model
     use HasFactory, HasUlids;
 
     /**
+     * Where a lair action goes in the order when the GM does not say. Twenty is the
+     * count the rules put it on, and a GM who wants it elsewhere types a number.
+     */
+    public const DEFAULT_LAIR_INITIATIVE = 20;
+
+    public const MAX_LAIR_NOTE_LENGTH = 2000;
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -52,6 +62,7 @@ class Encounter extends Model
         return [
             'status' => EncounterStatus::class,
             'round' => 'integer',
+            'lair_initiative' => 'integer',
         ];
     }
 
@@ -99,6 +110,54 @@ class Encounter extends Model
     public function scopeForSession(Builder $query, GameSession $session): Builder
     {
         return $query->where($query->qualifyColumn('game_session_id'), $session->id);
+    }
+
+    /**
+     * Whether this fight has a lair action at all. The note is the switch: a lair
+     * action with nothing written on it is nothing to show.
+     *
+     * Lair actions are the GM's own words rather than dataset content. The 2024
+     * document does not print one in a shape the tracker could use, and a half-parsed
+     * rule is worse than a reminder written by the person running the fight.
+     */
+    public function hasLairAction(): bool
+    {
+        return filled($this->lair_action_note);
+    }
+
+    public function lairInitiative(): int
+    {
+        return $this->lair_initiative ?? self::DEFAULT_LAIR_INITIATIVE;
+    }
+
+    /**
+     * Which row the lair marker is rendered above, as an index into the turn order.
+     *
+     * The order is by position and not by initiative, so the marker cannot simply be
+     * sorted in. It goes above the first combatant whose initiative is below the lair's
+     * count, which is where it would fall if the two were sorted together. A fight
+     * nobody has rolled for puts it at the top; a fight where everybody beat it puts it
+     * at the end.
+     *
+     * Null when there is no lair action to place.
+     *
+     * @param  Collection<int, Combatant>  $combatants
+     */
+    public function lairMarkerIndex(Collection $combatants): ?int
+    {
+        if (! $this->hasLairAction()) {
+            return null;
+        }
+
+        $count = $this->lairInitiative();
+
+        foreach ($combatants->values() as $index => $combatant) {
+            if (($combatant->initiative ?? PHP_INT_MIN) < $count) {
+                return $index;
+            }
+        }
+
+        return $combatants->count();
     }
 
     public function url(): string

@@ -25,17 +25,73 @@
             @else
                 <x-ui.button variant="ghost" size="sm" wire:click="endEncounter">End</x-ui.button>
             @endif
+            <x-ui.button variant="ghost" size="icon" wire:click="openLair" :title="$encounter->hasLairAction() ? 'Edit the lair action' : 'Add a lair action'" aria-label="Lair action">
+                <x-ui.icon name="flag" class="size-4 {{ $encounter->hasLairAction() ? 'text-ember' : '' }}" />
+            </x-ui.button>
+            <x-ui.button variant="ghost" size="icon" wire:click="duplicate" title="Build this fight again, ready to run" aria-label="Duplicate this fight">
+                <x-ui.icon name="copy" class="size-4" />
+            </x-ui.button>
             <x-ui.button variant="ghost" size="icon" wire:click="resetEncounter" wire:confirm="Clear the round count and the turn marker?" aria-label="Reset the fight">
                 <x-ui.icon name="refresh" class="size-4" />
             </x-ui.button>
         </div>
     </div>
 
+    {{-- What the fight costs, against what this party can afford.
+
+         The numbers are demgem's own and the line says so: the SRD prices a creature
+         but publishes no encounter budget, and the book that does is not ours to copy.
+         config/encounters.php holds the rule the read-out is named after. --}}
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-canvas px-5 py-2 text-sm">
+        @if ($budget->hasParty())
+            <x-ui.badge :variant="$difficulty->badgeVariant()">{{ $difficulty->label() }}</x-ui.badge>
+            <span class="font-mono tabular-nums text-ink">{{ number_format($spent) }} XP</span>
+            <span class="text-ink-faint">
+                &middot; {{ $budget->characters }} {{ Str::plural('character', $budget->characters) }}:
+                low {{ number_format($budget->low) }},
+                moderate {{ number_format($budget->moderate) }},
+                high {{ number_format($budget->high) }}
+            </span>
+            @if ($unpriced > 0)
+                <span class="text-ink-muted" title="A row typed by hand has no XP to read, and a guess would be a number with nothing behind it.">
+                    &middot; {{ $unpriced }} {{ Str::plural('row', $unpriced) }} not priced
+                </span>
+            @endif
+            <span class="ml-auto text-xs text-ink-faint" title="{{ $difficulty->description() }}">demgem's own scale</span>
+        @else
+            <span class="text-ink-faint">Add the party to see what this fight is worth to them.</span>
+        @endif
+    </div>
+
+    @if ($editingLair)
+        <form wire:submit="saveLair" class="space-y-2 border-b border-line bg-canvas px-5 py-4">
+            <x-ui.textarea
+                label="Lair action"
+                name="lairNote"
+                wire:model="lairNote"
+                rows="3"
+                placeholder="The cavern floor buckles. Every creature on it makes a DC 14 Dexterity save."
+                hint="Your own words. It sits in the turn order at the count below, and the party sees the marker without the text."
+            />
+            <div class="flex flex-wrap items-end gap-2">
+                <div class="w-28">
+                    <x-ui.input type="number" label="On initiative" name="lairInitiative" wire:model="lairInitiative" min="-99" max="999" />
+                </div>
+                <x-ui.button type="submit" size="sm" icon="check">Save</x-ui.button>
+                <x-ui.button type="button" variant="ghost" size="sm" wire:click="closeLair">Cancel</x-ui.button>
+            </div>
+        </form>
+    @endif
+
     @if ($combatants->isEmpty())
         <p class="px-5 py-6 text-sm text-ink-faint">Nobody in the fight yet. Add the party, drop in a prepped monster, or type a name below.</p>
     @else
         <ul wire:sort="reorder" class="divide-y divide-line">
             @foreach ($combatants as $combatant)
+                @if ($lairIndex === $loop->index)
+                    @include('livewire.encounters.partials.lair-marker', ['encounter' => $encounter, 'showNote' => true])
+                @endif
+
                 <li
                     wire:key="combatant-{{ $combatant->id }}"
                     wire:sort:item="{{ $combatant->id }}"
@@ -61,13 +117,32 @@
                                     <span class="text-xs font-normal text-ink-faint">PC</span>
                                 @endif
                             </p>
-                            @if ($combatant->conditionList() !== [])
-                                <div class="mt-1 flex flex-wrap gap-1">
+                            @if ($combatant->conditionList() !== [] || $combatant->isConcentrating() || $combatant->hasLegendaryActions())
+                                <div class="mt-1 flex flex-wrap items-center gap-1">
                                     @foreach ($combatant->conditionList() as $condition)
                                         <button type="button" wire:click="removeCondition('{{ $combatant->id }}', @js($condition))" aria-label="Remove {{ $condition }}">
                                             <x-ui.badge variant="danger">{{ $condition }} <x-ui.icon name="x" class="size-2.5" /></x-ui.badge>
                                         </button>
                                     @endforeach
+
+                                    @if ($combatant->isConcentrating())
+                                        <button type="button" wire:click="clearConcentration('{{ $combatant->id }}')" aria-label="{{ $combatant->name }} stops concentrating">
+                                            <x-ui.badge variant="accent" icon="target">{{ $combatant->concentrating_on }} <x-ui.icon name="x" class="size-2.5" /></x-ui.badge>
+                                        </button>
+                                    @endif
+
+                                    {{-- One click spends a use. They come back on this creature's own
+                                         turn, which NextTurn does when the marker reaches it. --}}
+                                    @if ($combatant->hasLegendaryActions())
+                                        <button
+                                            type="button"
+                                            wire:click="spendLegendaryAction('{{ $combatant->id }}')"
+                                            title="Spend a legendary action"
+                                            aria-label="Spend a legendary action for {{ $combatant->name }}"
+                                        >
+                                            <x-ui.badge :variant="($combatant->legendary_actions_left ?? 0) > 0 ? 'dm' : 'neutral'" icon="zap">{{ $combatant->legendary_actions_left ?? 0 }}/{{ $combatant->legendary_actions_max }}</x-ui.badge>
+                                        </button>
+                                    @endif
                                 </div>
                             @endif
                         </div>
@@ -107,6 +182,9 @@
                             <x-ui.button variant="ghost" size="icon" wire:click="openConditions('{{ $combatant->id }}')" aria-label="Conditions">
                                 <x-ui.icon name="alert" class="size-4" />
                             </x-ui.button>
+                            <x-ui.button variant="ghost" size="icon" wire:click="openRules('{{ $combatant->id }}')" title="Concentration and legendary actions" aria-label="Concentration and legendary actions">
+                                <x-ui.icon name="target" class="size-4 {{ $combatant->isConcentrating() ? 'text-ember' : '' }}" />
+                            </x-ui.button>
                             <x-ui.button variant="ghost" size="icon" wire:click="move('{{ $combatant->id }}', -1)" :disabled="$loop->first" aria-label="Move up">
                                 <x-ui.icon name="arrow-up" class="size-4" />
                             </x-ui.button>
@@ -118,6 +196,76 @@
                             </x-ui.button>
                         </div>
                     </div>
+
+                    {{-- Death saves. Only a row on nought has them, and the whole table
+                         is watching them anyway, which is why the party's screen carries
+                         them too. See Combatant::deathSavesVisibleToPlayers(). --}}
+                    @if ($combatant->isDown())
+                        <div class="mt-2 flex flex-wrap items-center gap-3 rounded-md border border-line bg-canvas px-3 py-2">
+                            @if ($combatant->isDeadOnSaves())
+                                <span class="text-sm font-medium text-danger">Dead</span>
+                            @elseif ($combatant->isStable())
+                                <span class="text-sm font-medium text-success">Stable</span>
+                            @else
+                                <span class="text-sm text-ink-muted">Death saves</span>
+                            @endif
+
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-ink-faint">saved</span>
+                                @foreach (range(1, $deathSaves) as $pip)
+                                    <button
+                                        type="button"
+                                        wire:click="deathSaveSuccess('{{ $combatant->id }}')"
+                                        class="size-4 rounded-full border {{ $combatant->death_save_successes >= $pip ? 'border-success bg-success' : 'border-line-strong' }}"
+                                        aria-label="Record a successful death save for {{ $combatant->name }}"
+                                    ></button>
+                                @endforeach
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-ink-faint">failed</span>
+                                @foreach (range(1, $deathSaves) as $pip)
+                                    <button
+                                        type="button"
+                                        wire:click="deathSaveFailure('{{ $combatant->id }}')"
+                                        class="size-4 rounded-full border {{ $combatant->death_save_failures >= $pip ? 'border-danger bg-danger' : 'border-line-strong' }}"
+                                        aria-label="Record a failed death save for {{ $combatant->name }}"
+                                    ></button>
+                                @endforeach
+                            </div>
+
+                            @if ($combatant->hasDeathSaves())
+                                <button type="button" wire:click="clearDeathSaves('{{ $combatant->id }}')" class="text-xs text-ink-faint hover:text-ember">Clear</button>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if ($concentrationDcFor === $combatant->id && $concentrationDc !== null)
+                        <div class="mt-2 flex flex-wrap items-center gap-3 rounded-md border border-ember bg-ember/5 px-3 py-2">
+                            <span class="text-sm text-ink">{{ $combatant->name }} rolls a DC {{ $concentrationDc }} save or loses it.</span>
+                            <button type="button" wire:click="dismissConcentrationSave" class="ml-auto text-xs text-ink-faint hover:text-ember">Dismiss</button>
+                        </div>
+                    @endif
+
+                    @if ($editingRulesFor === $combatant->id)
+                        <form wire:submit="saveRules('{{ $combatant->id }}')" class="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-line bg-canvas p-3">
+                            <div class="min-w-44 flex-1">
+                                <x-ui.input
+                                    label="Concentrating on"
+                                    name="newConcentration"
+                                    wire:model="newConcentration"
+                                    placeholder="Hold Person"
+                                    hint="Damage prompts the save. Dropping to nought ends it."
+                                    autofocus
+                                />
+                            </div>
+                            <div class="w-28">
+                                <x-ui.input type="number" label="Legendary" name="newLegendaryMax" wire:model="newLegendaryMax" min="0" max="{{ \App\Models\Combatant::MAX_LEGENDARY_ACTIONS }}" />
+                            </div>
+                            <x-ui.button type="submit" size="sm" icon="check">Save</x-ui.button>
+                            <x-ui.button type="button" variant="ghost" size="sm" wire:click="closeRules">Cancel</x-ui.button>
+                        </form>
+                    @endif
 
                     @if ($damageFor === $combatant->id)
                         <form wire:submit="applyDamage('{{ $combatant->id }}', 1)" class="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-line bg-canvas p-3">
@@ -146,6 +294,10 @@
                     @endif
                 </li>
             @endforeach
+
+            @if ($lairIndex === $combatants->count())
+                @include('livewire.encounters.partials.lair-marker', ['encounter' => $encounter, 'showNote' => true])
+            @endif
         </ul>
     @endif
 

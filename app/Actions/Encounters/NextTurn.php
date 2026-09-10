@@ -8,6 +8,8 @@ use App\Models\Encounter;
 
 class NextTurn
 {
+    public function __construct(private readonly SpendLegendaryAction $legendary) {}
+
     /**
      * Advances the turn marker by position. A wrap past the end starts a new round.
      *
@@ -15,6 +17,10 @@ class NextTurn
      * rewritten on every reorder and an index would silently point at somebody else.
      * An id that no longer resolves means the active combatant was removed, so the
      * order starts again from the top.
+     *
+     * A creature with legendary actions gets them back when the marker reaches it,
+     * which is where the refill belongs: it is the turn arriving that returns them,
+     * not a button somebody at the table has to remember to press.
      */
     public function handle(Encounter $encounter): void
     {
@@ -35,6 +41,8 @@ class NextTurn
                 'round' => max(1, $encounter->round),
             ]);
 
+            $this->refillLegendaryActions($encounter, $ids[0]);
+
             EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
 
             return;
@@ -43,13 +51,34 @@ class NextTurn
         $next = $current + 1;
         $wrapped = $next >= count($ids);
 
+        $active = $wrapped ? $ids[0] : $ids[$next];
+
         $encounter->update([
-            'active_combatant_id' => $wrapped ? $ids[0] : $ids[$next],
+            'active_combatant_id' => $active,
             'status' => EncounterStatus::Active,
             'round' => $wrapped ? $encounter->round + 1 : max(1, $encounter->round),
         ]);
 
+        $this->refillLegendaryActions($encounter, $active);
+
         EncounterChanged::dispatch($encounter->campaign_id, $encounter->id);
+    }
+
+    /**
+     * The row whose turn it now is gets its legendary actions back, if it has any.
+     * Almost no row does, so this costs one query on a fight with no legendary
+     * creature in it and writes nothing.
+     */
+    private function refillLegendaryActions(Encounter $encounter, string $combatantId): void
+    {
+        $combatant = $encounter->combatants()
+            ->whereKey($combatantId)
+            ->whereNotNull('legendary_actions_max')
+            ->first();
+
+        if ($combatant !== null) {
+            $this->legendary->refill($combatant);
+        }
     }
 
     /**

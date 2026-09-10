@@ -30,6 +30,11 @@ class CombatantFactory extends Factory
             'max_hp' => null,
             'ac' => null,
             'conditions' => [],
+            'concentrating_on' => null,
+            'death_save_successes' => 0,
+            'death_save_failures' => 0,
+            'legendary_actions_max' => null,
+            'legendary_actions_left' => null,
             'position' => 0,
             'player_visible' => false,
         ];
@@ -61,6 +66,28 @@ class CombatantFactory extends Factory
     public function withHealth(int $hp, ?int $maxHp = null): static
     {
         return $this->state(['hp' => $hp, 'max_hp' => $maxHp ?? $hp]);
+    }
+
+    public function concentratingOn(string $effect): static
+    {
+        return $this->state(['concentrating_on' => $effect]);
+    }
+
+    public function withLegendaryActions(int $uses = 3): static
+    {
+        return $this->state([
+            'legendary_actions_max' => $uses,
+            'legendary_actions_left' => $uses,
+        ]);
+    }
+
+    /**
+     * On nought, with a maximum to have fallen from. Death saves need both: a row with
+     * no hit points at all is one the GM is not tracking.
+     */
+    public function down(int $maxHp = 30): static
+    {
+        return $this->state(['hp' => 0, 'max_hp' => $maxHp]);
     }
 
     /**

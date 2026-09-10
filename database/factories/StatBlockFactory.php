@@ -60,7 +60,31 @@ class StatBlockFactory extends Factory
             'bonus_actions' => null,
             'reactions' => null,
             'legendary_actions' => null,
+            'legendary_action_uses' => null,
         ];
+    }
+
+    /**
+     * A creature the book gives legendary actions, priced the way the dataset prints
+     * it: the count in the prose, and the number the loader reads out of it.
+     */
+    public function withLegendaryActions(int $uses = 3): static
+    {
+        return $this->state([
+            'legendary_actions' => [
+                ['name' => null, 'text' => "_Legendary Action Uses: {$uses}._"],
+                ['name' => 'Lash', 'text' => 'It makes one attack.'],
+            ],
+            'legendary_action_uses' => $uses,
+        ]);
+    }
+
+    /**
+     * A creature at a challenge rating, with the XP the ladder gives that rating.
+     */
+    public function atChallenge(string $cr, float $value, int $xp): static
+    {
+        return $this->state(['cr' => $cr, 'cr_value' => $value, 'xp' => $xp]);
     }
 
     /**
