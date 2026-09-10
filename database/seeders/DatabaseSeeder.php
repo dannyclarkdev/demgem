@@ -15,7 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // The shipped SRD creatures. Idempotent on (ruleset, slug), so seeding twice
+        // changes no ids and nothing that points at a stat block is disturbed.
+        $this->call(StatBlockSeeder::class);
 
         User::factory()->create([
             'name' => 'Test User',

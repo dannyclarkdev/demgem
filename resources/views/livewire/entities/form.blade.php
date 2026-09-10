@@ -37,6 +37,21 @@
                         <div class="sm:col-span-2">
                             <x-ui.input label="Character sheet" name="sheet_url" type="url" wire:model="sheet_url" placeholder="https://www.dndbeyond.com/characters/..." hint="A link to the sheet you play from. Opens in a new tab." />
                         </div>
+                        @if ($statBlockOptions->isNotEmpty())
+                            <div class="sm:col-span-2">
+                                <x-ui.select
+                                    label="Fights as"
+                                    name="stat_block_id"
+                                    wire:model="stat_block_id"
+                                    hint="A creature from the compendium. Adding this NPC to a fight brings its numbers along. GMs only."
+                                >
+                                    <option value="">Nothing in particular</option>
+                                    @foreach ($statBlockOptions as $option)
+                                        <option value="{{ $option->id }}">{{ $option->name }} (CR {{ $option->cr }})</option>
+                                    @endforeach
+                                </x-ui.select>
+                            </div>
+                        @endif
                     </div>
                 </x-ui.card>
             @endif

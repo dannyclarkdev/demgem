@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\EntityTemplateController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SessionController;
+use App\Http\Controllers\Api\V1\StatBlockController;
 use App\Http\Middleware\EnsureCampaignMember;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,12 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
             Route::get('/entities/{entityId}/body-revisions', [EntityBodyRevisionController::class, 'index'])->name('api.body-revisions.index');
             Route::get('/entities/{entityId}/body-revisions/{revisionId}', [EntityBodyRevisionController::class, 'show'])->name('api.body-revisions.show');
             Route::get('/search', SearchController::class)->name('api.search');
+
+            // The compendium. Read-only on purpose: these rows are shipped reference
+            // data with a checksum behind them, so no key writes them. By slug, because
+            // a stat block is not renamed the way an entity is.
+            Route::get('/compendium/stat-blocks', [StatBlockController::class, 'index'])->name('api.stat-blocks.index');
+            Route::get('/compendium/stat-blocks/{slug}', [StatBlockController::class, 'show'])->name('api.stat-blocks.show');
 
             Route::get('/sessions', [SessionController::class, 'index'])->name('api.sessions.index');
             Route::get('/sessions/{number}', [SessionController::class, 'show'])->whereNumber('number')->name('api.sessions.show');

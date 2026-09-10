@@ -23,6 +23,7 @@ use App\Models\Secret;
 use App\Models\SessionDateOption;
 use App\Models\SessionDateVote;
 use App\Models\SessionRsvp;
+use App\Models\StatBlock;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
@@ -261,6 +262,25 @@ class ExportCampaign
     }
 
     /**
+     * A stat block as a reference, never as its prose.
+     *
+     * The rows are global and licensed: an id means nothing on the install that reads
+     * the file, and copying the text would put CC BY material into every GM's export
+     * with no notice attached to it. The importer resolves the pair or leaves it null,
+     * which is the same shape as an RSVP exported by member name.
+     *
+     * @return array{ruleset: string, slug: string}|null
+     */
+    private function statBlockReference(?StatBlock $statBlock): ?array
+    {
+        if ($statBlock === null) {
+            return null;
+        }
+
+        return ['ruleset' => $statBlock->ruleset, 'slug' => $statBlock->slug];
+    }
+
+    /**
      * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
      */
     private function entities(Campaign $campaign): iterable
@@ -269,7 +289,7 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'viewers', 'media', 'objectives', 'markers', 'relations'])
+            ->with(['tags', 'viewers', 'media', 'objectives', 'markers', 'relations', 'statBlock'])
             ->orderBy('created_at')
             ->cursor()
             ->map(fn (Entity $entity) => [
@@ -287,6 +307,7 @@ class ExportCampaign
                 'character_class' => $entity->character_class,
                 'level' => $entity->level,
                 'sheet_url' => $entity->sheet_url,
+                'stat_block' => $this->statBlockReference($entity->statBlock),
                 'quest_status' => $entity->quest_status?->value,
                 'giver_entity_id' => $entity->giver_entity_id,
                 'happens_on' => $entity->happens_on?->toArray(),
@@ -409,9 +430,12 @@ class ExportCampaign
         return Encounter::query()
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
-            ->with('combatants')
+            ->with('combatants.statBlock')
             ->orderBy('created_at')
-            ->cursor()
+            // lazy(), not cursor(): cursor() eager-loads one level only and would leave
+            // combatants.statBlock unloaded, which strict mode refuses. The sessions
+            // section learned this first; see .ai/rules/campaigns.md.
+            ->lazy(100)
             ->map(fn (Encounter $encounter) => [
                 'id' => $encounter->id,
                 'game_session_id' => $encounter->game_session_id,
@@ -423,6 +447,7 @@ class ExportCampaign
                     ->map(fn (Combatant $combatant) => [
                         'id' => $combatant->id,
                         'entity_id' => $combatant->entity_id,
+                        'stat_block' => $this->statBlockReference($combatant->statBlock),
                         'name' => $combatant->name,
                         'initiative' => $combatant->initiative,
                         'initiative_bonus' => $combatant->initiative_bonus,

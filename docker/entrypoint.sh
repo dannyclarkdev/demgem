@@ -69,6 +69,11 @@ if [ "${AUTO_MIGRATE}" = "true" ]; then
     fi
 
     php artisan migrate --force --no-interaction
+
+    # The compendium is shipped reference data, not a campaign's rows. Loading it here
+    # means a self-hoster gets it from the same one command that starts the app, and
+    # the loader is idempotent, so a restart changes nothing.
+    php artisan demgem:import-srd --no-interaction
 fi
 
 php artisan storage:link --force --quiet || true

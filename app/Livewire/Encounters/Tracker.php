@@ -17,6 +17,7 @@ use App\Models\Campaign;
 use App\Models\Combatant;
 use App\Models\Encounter;
 use App\Models\Entity;
+use App\Models\StatBlock;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
@@ -57,6 +58,14 @@ class Tracker extends Component
     public ?int $newAc = null;
 
     public ?int $newInitiativeBonus = null;
+
+    /**
+     * The compendium picker. It queries only once the GM types, so a fight that never
+     * touches it costs the render exactly what it did before the compendium existed.
+     */
+    public string $compendiumSearch = '';
+
+    public bool $rollHitPoints = false;
 
     public ?string $editingConditionsFor = null;
 
@@ -103,6 +112,30 @@ class Tracker extends Component
         );
 
         $this->reset(['newName', 'newQuantity', 'newHp', 'newAc', 'newInitiativeBonus']);
+        $this->newQuantity = 1;
+    }
+
+    /**
+     * A creature from the compendium, with the book's numbers already on it.
+     *
+     * The stat block is resolved inside the campaign's own ruleset, so an id from
+     * another ruleset is a 404 rather than a row.
+     */
+    public function addFromCompendium(string $statBlockId, AddCombatants $addCombatants): void
+    {
+        $this->authorize('update', $this->encounter);
+        $this->authorize('viewCompendium', $this->campaign);
+
+        $statBlock = StatBlock::query()
+            ->forRuleset($this->campaign->ruleset->value)
+            ->whereKey($statBlockId)
+            ->firstOrFail();
+
+        $quantity = max(1, min($this->newQuantity, AddCombatants::MAX_QUANTITY));
+
+        $addCombatants->fromStatBlock($this->encounter, $statBlock, $quantity, $this->rollHitPoints);
+
+        $this->reset(['compendiumSearch', 'newQuantity']);
         $this->newQuantity = 1;
     }
 
@@ -296,9 +329,33 @@ class Tracker extends Component
             'activeId' => $this->encounter->active_combatant_id,
             'party' => $this->party(),
             'prepped' => $this->preppedMonsters(),
+            'hasCompendium' => $this->campaign->ruleset->hasCompendium(),
+            'compendiumResults' => $this->compendiumResults(),
             'commonConditions' => self::COMMON_CONDITIONS,
             'pollSeconds' => self::POLL_SECONDS,
         ]);
+    }
+
+    /**
+     * What the GM typed, or nothing at all.
+     *
+     * An empty box runs no query: the picker is for finding one creature by name, not
+     * for paging through the book, and that is what the compendium screen is for.
+     *
+     * @return Collection<int, StatBlock>
+     */
+    private function compendiumResults(): Collection
+    {
+        if (trim($this->compendiumSearch) === '' || ! $this->campaign->ruleset->hasCompendium()) {
+            return new Collection;
+        }
+
+        return StatBlock::query()
+            ->forRuleset($this->campaign->ruleset->value)
+            ->matchingName($this->compendiumSearch)
+            ->inReadingOrder()
+            ->limit(8)
+            ->get();
     }
 
     /**

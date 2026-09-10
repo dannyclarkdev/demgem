@@ -35,6 +35,24 @@ class CampaignPolicy
     }
 
     /**
+     * Reading the compendium: the stat block screens, the picker on the tracker, and
+     * the two API endpoints.
+     *
+     * Two gates, and both belong here rather than in a Blade or a nav condition. The
+     * ruleset gate is the one that is easy to forget: a system-agnostic campaign has no
+     * dataset to read, so the screen is a 404 for its GM as much as for its players.
+     *
+     * GM roles only. The prose is licensed material behind a GM's own tools, and a
+     * player who could page through every monster in the book has been handed the
+     * back half of the screen.
+     */
+    public function viewCompendium(User $user, Campaign $campaign): bool
+    {
+        return $campaign->ruleset->hasCompendium()
+            && ($campaign->roleFor($user)?->isDm() ?? false);
+    }
+
+    /**
      * The GM's table tools: the encounter tracker and the random tables. The dice tray
      * left this ability in slice 5, when the log became shared; see rollDice().
      */

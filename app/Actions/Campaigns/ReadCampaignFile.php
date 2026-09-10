@@ -14,6 +14,7 @@ use App\Enums\Visibility;
 use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\EntityRelation;
+use App\Models\StatBlock;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use App\Support\Reckoning\Reckoning;
@@ -392,6 +393,7 @@ class ReadCampaignFile
                 'character_class' => $this->text($row, 'character_class', 60),
                 'level' => $this->integer($row, 'level'),
                 'sheet_url' => $this->url($row, 'sheet_url'),
+                'stat_block' => $this->statBlockReference($row),
                 'quest_status' => $this->optionalEnum(QuestStatus::class, $row, 'quest_status', "entity {$id}"),
                 'giver_entity_id' => $this->reference($row, 'giver_entity_id'),
                 'happens_on' => $this->gameDate($row, 'happens_on'),
@@ -686,6 +688,7 @@ class ReadCampaignFile
                 $combatants[] = [
                     'id' => $combatantId,
                     'entity_id' => $this->reference($combatant, 'entity_id'),
+                    'stat_block' => $this->statBlockReference($combatant),
                     'name' => $this->text($combatant, 'name', 120) ?? 'Unnamed',
                     'initiative' => $this->integer($combatant, 'initiative'),
                     'initiative_bonus' => $this->integer($combatant, 'initiative_bonus'),
@@ -1026,6 +1029,47 @@ class ReadCampaignFile
         }
 
         return $value;
+    }
+
+    /**
+     * A reference to a creature in this install's compendium, or nothing.
+     *
+     * The file names a ruleset and a slug because a stat block id belongs to the
+     * install that wrote the file. Resolving happens here so the report can say, before
+     * the GM commits, how many links this install has no dataset for. A reference that
+     * does not resolve is dropped rather than fatal: the campaign is the point, and the
+     * combatant's own numbers came across with it.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array{ruleset: string, slug: string}|null
+     */
+    private function statBlockReference(array $row): ?array
+    {
+        $reference = $row['stat_block'] ?? null;
+
+        if (! is_array($reference)) {
+            return null;
+        }
+
+        $ruleset = $this->text($reference, 'ruleset', 32);
+        $slug = $this->text($reference, 'slug', 160);
+
+        if ($ruleset === null || $slug === null) {
+            return null;
+        }
+
+        $exists = StatBlock::query()
+            ->forRuleset($ruleset)
+            ->where('slug', $slug)
+            ->exists();
+
+        if (! $exists) {
+            $this->report->statBlocks++;
+
+            return null;
+        }
+
+        return ['ruleset' => $ruleset, 'slug' => $slug];
     }
 
     /**

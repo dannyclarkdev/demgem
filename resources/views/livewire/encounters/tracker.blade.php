@@ -159,6 +159,53 @@
             @endforeach
         </div>
 
+        @if ($hasCompendium)
+            <div class="rounded-md border border-line bg-canvas p-3">
+                <div class="flex flex-wrap items-end gap-2">
+                    <div class="min-w-44 flex-1">
+                        <x-ui.input
+                            label="From the compendium"
+                            name="compendiumSearch"
+                            wire:model.live.debounce.300ms="compendiumSearch"
+                            placeholder="goblin"
+                            autocomplete="off"
+                        />
+                    </div>
+                    <div class="w-20">
+                        <x-ui.input type="number" label="How many" name="newQuantity" wire:model="newQuantity" min="1" max="20" />
+                    </div>
+                    <x-ui.checkbox label="Roll HP" name="rollHitPoints" wire:model="rollHitPoints" />
+                </div>
+
+                @if ($compendiumResults->isNotEmpty())
+                    <ul class="mt-2 divide-y divide-line rounded-md border border-line">
+                        @foreach ($compendiumResults as $statBlock)
+                            <li wire:key="compendium-{{ $statBlock->id }}" class="flex flex-wrap items-center gap-2 px-3 py-2">
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-sm text-ink">{{ $statBlock->name }}</span>
+                                    <span class="block truncate text-xs text-ink-faint">
+                                        CR {{ $statBlock->cr }} &middot; AC {{ $statBlock->ac }} &middot; HP {{ $statBlock->hp }}
+                                    </span>
+                                </span>
+                                <a
+                                    href="{{ route('compendium.show', [$campaign, $statBlock->slug]) }}"
+                                    wire:navigate
+                                    class="shrink-0 text-xs text-ink-faint hover:text-ember"
+                                >Read</a>
+                                <x-ui.button
+                                    size="sm"
+                                    icon="plus"
+                                    wire:click="addFromCompendium('{{ $statBlock->id }}')"
+                                >Add</x-ui.button>
+                            </li>
+                        @endforeach
+                    </ul>
+                @elseif (trim($compendiumSearch) !== '')
+                    <p class="mt-2 text-xs text-ink-faint">Nothing by that name.</p>
+                @endif
+            </div>
+        @endif
+
         <form wire:submit="addCombatant" class="flex flex-wrap items-end gap-2">
             <div class="min-w-40 flex-1">
                 <x-ui.input label="Add a combatant" name="newName" wire:model="newName" placeholder="Goblin" />

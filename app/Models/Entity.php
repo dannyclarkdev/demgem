@@ -76,7 +76,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[Fillable([
     'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility',
     'parent_id', 'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
-    'quest_status', 'giver_entity_id', 'happens_on',
+    'quest_status', 'giver_entity_id', 'happens_on', 'stat_block_id',
     'created_by', 'updated_by',
 ])]
 class Entity extends Model implements HasMedia
@@ -188,6 +188,20 @@ class Entity extends Model implements HasMedia
     public function giver(): BelongsTo
     {
         return $this->belongsTo(Entity::class, 'giver_entity_id');
+    }
+
+    /**
+     * What this NPC fights as, when the GM named a creature from the compendium.
+     *
+     * A scalar, one-to-one with the row, so it is a column rather than a child table.
+     * It is a GM field and a reference only: nothing about the entity's own page comes
+     * from it, and AddCombatants reads it when the Monsters bucket fills a fight.
+     *
+     * @return BelongsTo<StatBlock, $this>
+     */
+    public function statBlock(): BelongsTo
+    {
+        return $this->belongsTo(StatBlock::class);
     }
 
     /**

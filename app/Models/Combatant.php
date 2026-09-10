@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property string $campaign_id
  * @property string $encounter_id
  * @property string|null $entity_id
+ * @property string|null $stat_block_id
  * @property string $name
  * @property int|null $initiative
  * @property int|null $initiative_bonus
@@ -40,9 +41,10 @@ use Illuminate\Support\Carbon;
  * @property-read Campaign $campaign
  * @property-read Encounter $encounter
  * @property-read Entity|null $entity
+ * @property-read StatBlock|null $statBlock
  */
 #[Fillable([
-    'campaign_id', 'encounter_id', 'entity_id', 'name', 'initiative',
+    'campaign_id', 'encounter_id', 'entity_id', 'stat_block_id', 'name', 'initiative',
     'initiative_bonus', 'hp', 'max_hp', 'ac', 'conditions', 'position',
     'player_visible',
 ])]
@@ -80,6 +82,20 @@ class Combatant extends Model
     public function encounter(): BelongsTo
     {
         return $this->belongsTo(Encounter::class);
+    }
+
+    /**
+     * The creature from the compendium this row was built from, when it was.
+     *
+     * The numbers on the row are the ones that were copied at the time, so this is only
+     * the way back to the prose. A dataset that no longer names the creature leaves the
+     * fight intact and the link null.
+     *
+     * @return BelongsTo<StatBlock, $this>
+     */
+    public function statBlock(): BelongsTo
+    {
+        return $this->belongsTo(StatBlock::class);
     }
 
     /**
