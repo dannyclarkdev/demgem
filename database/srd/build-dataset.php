@@ -71,6 +71,14 @@ function parseSection(string $body): array
             continue;
         }
 
+        // A creature's last section runs to the next group's heading, so that heading
+        // lands in this body. It belongs to the next creature and everything after it
+        // does too, so the section stops here rather than skipping one paragraph.
+        // Without this, 176 creatures ended a section with an entry reading "## Oni".
+        if (preg_match('/^#{1,6}\s/', $text) === 1) {
+            break;
+        }
+
         if (preg_match('/^\*\*_(.+?)\.?_\*\*\s*(.*)$/s', $text, $m) === 1) {
             $entries[] = ['name' => trim($m[1]), 'text' => trim($m[2])];
 
