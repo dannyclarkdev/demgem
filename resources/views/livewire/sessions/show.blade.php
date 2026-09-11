@@ -99,6 +99,12 @@
                 @endif
             </x-ui.card>
 
+            {{-- What the party chose that night. The same component as /decisions, scoped
+                 to this session; a player sees only the rows the GM revealed. --}}
+            <x-ui.card title="Decisions">
+                <livewire:decisions.log :campaign="$campaign" :session="$session" :wire:key="'decisions-'.$session->id" />
+            </x-ui.card>
+
             {{-- A poll is names against dates and needs the width; an RSVP list does not. --}}
             @if ($session->isPolling())
                 <livewire:sessions.attendance :campaign="$campaign" :session="$session" :wire:key="'attendance-'.$session->id" />

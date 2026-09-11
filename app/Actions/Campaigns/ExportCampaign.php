@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\CampaignMember;
 use App\Models\Clock;
 use App\Models\Combatant;
+use App\Models\Decision;
 use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
@@ -92,6 +93,7 @@ class ExportCampaign
         'entity_templates' => 'entity_templates',
         'entity_body_revisions' => 'entity_body_revisions',
         'game_sessions' => 'sessions',
+        'decisions' => 'decisions',
         'stat_blocks' => 'stat_blocks',
         'encounters' => 'encounters',
         'random_tables' => 'random_tables',
@@ -154,6 +156,7 @@ class ExportCampaign
             'random_tables' => $this->randomTables($campaign),
             'dice_rolls' => $this->diceRolls($campaign),
             'clocks' => $this->clocks($campaign),
+            'decisions' => $this->decisions($campaign),
         ];
     }
 
@@ -573,6 +576,28 @@ class ExportCampaign
                 'detail' => $roll->detail,
                 'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
+            ]);
+    }
+
+    /**
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function decisions(Campaign $campaign): iterable
+    {
+        return Decision::query()
+            ->withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->cursor()
+            ->map(fn (Decision $decision) => [
+                'id' => $decision->id,
+                'game_session_id' => $decision->game_session_id,
+                'choice' => $decision->choice,
+                'consequence' => $decision->consequence,
+                'player_visible' => $decision->player_visible,
+                'created_at' => $decision->created_at?->toIso8601String(),
+                'updated_at' => $decision->updated_at?->toIso8601String(),
             ]);
     }
 

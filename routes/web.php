@@ -20,6 +20,7 @@ use App\Livewire\Clocks\Index as ClocksIndex;
 use App\Livewire\Compendium\Editor as CompendiumEditor;
 use App\Livewire\Compendium\Index as CompendiumIndex;
 use App\Livewire\Compendium\Show as CompendiumShow;
+use App\Livewire\Decisions\Index as DecisionsIndex;
 use App\Livewire\Encounters\Index as EncountersIndex;
 use App\Livewire\Encounters\Show as EncountersShow;
 use App\Livewire\Entities\Form as EntitiesForm;
@@ -119,6 +120,10 @@ Route::middleware('auth')->group(function () {
             // Clocks a GM turns. The segment is not an entity slug, and this sits above
             // the {type} routes, so nothing below can claim it.
             Route::get('/clocks', ClocksIndex::class)->name('clocks.index');
+
+            // The choices the party made and what came of them. Every member; what a
+            // player reads is the log's own query.
+            Route::get('/decisions', DecisionsIndex::class)->name('decisions.index');
 
             // The shipped reference data. Addressed by slug, unlike an entity: a stat
             // block is not a GM's to rename, so the slug is stable in a way an entity's

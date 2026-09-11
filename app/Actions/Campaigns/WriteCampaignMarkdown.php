@@ -3,6 +3,7 @@
 namespace App\Actions\Campaigns;
 
 use App\Models\Campaign;
+use App\Models\Decision;
 use App\Models\Entity;
 use App\Models\EntityRelation;
 use App\Models\GameSession;
@@ -13,6 +14,7 @@ use App\Models\Scene;
 use App\Models\Secret;
 use App\Models\SessionRsvp;
 use App\Support\Reckoning\Reckoning;
+use Illuminate\Support\Collection;
 
 /**
  * The campaign as a folder of Markdown, for Obsidian and for reading.
@@ -80,7 +82,43 @@ class WriteCampaignMarkdown
             $files['markdown/tables/'.($slug !== '' ? $slug : 'table').'.md'] = $this->table($table);
         }
 
+        $decisions = Decision::withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->with('gameSession')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        // One page for the whole log rather than a file per row: a decision is a
+        // sentence or two, and the log reads as a list. Hidden rows are written too,
+        // as everywhere in the vault, and each says so.
+        if ($decisions->isNotEmpty()) {
+            $files['markdown/decisions.md'] = $this->decisions($decisions);
+        }
+
         return $files;
+    }
+
+    /**
+     * @param  Collection<int, Decision>  $decisions
+     */
+    private function decisions(Collection $decisions): string
+    {
+        $matter = ['name' => 'Decisions', 'type' => 'decisions', 'demgem' => 'decisions'];
+
+        $rows = $decisions->map(function (Decision $decision): string {
+            $where = $decision->gameSession !== null ? ' *('.$decision->gameSession->label().')*' : '';
+            $eye = $decision->player_visible ? '' : ' *(GM only)*';
+            $line = '- '.$decision->choice.$where.$eye;
+
+            if ($decision->hasConsequence()) {
+                $line .= "\n  - ".$decision->consequence;
+            }
+
+            return $line;
+        })->implode("\n");
+
+        return $this->frontMatter($matter, [])."\n".$this->body([$rows]);
     }
 
     private function entity(Entity $entity): string

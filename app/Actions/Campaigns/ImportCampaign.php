@@ -7,6 +7,7 @@ use App\Actions\Entities\SyncTags;
 use App\Models\Campaign;
 use App\Models\Clock;
 use App\Models\Combatant;
+use App\Models\Decision;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\EntityBodyRevision;
@@ -86,6 +87,7 @@ class ImportCampaign
                 $this->encounters($document, $campaign, $importer, $ids);
                 $this->randomTables($document, $campaign, $importer, $ids);
                 $this->clocks($document, $campaign, $ids);
+                $this->decisions($document, $campaign, $importer, $ids);
             });
 
             // One index at the end rather than a write per entity. Chunked, so a
@@ -581,6 +583,27 @@ class ImportCampaign
                     'nested_table_id' => $ids->newForNullable($entry['nested_table_id']),
                 ]);
             }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     */
+    private function decisions(array $document, Campaign $campaign, User $importer, IdMap $ids): void
+    {
+        foreach ($document['decisions'] as $row) {
+            $this->write(new Decision, [
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                'game_session_id' => $ids->newForNullable($row['game_session_id']),
+                'choice' => $row['choice'],
+                'consequence' => $row['consequence'],
+                'player_visible' => $row['player_visible'],
+                // The order of the log is the order they were made in, so the stamp
+                // travels; the importer is the author, because the file cannot say who was.
+                'created_at' => $row['created_at'],
+                'created_by' => $importer->id,
+            ]);
         }
     }
 

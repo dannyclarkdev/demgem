@@ -70,6 +70,11 @@
                 :active="request()->routeIs('timeline')"
                 icon="activity"
             >Timeline</x-ui.nav-link>
+            <x-ui.nav-link
+                :href="route('decisions.index', $currentCampaign)"
+                :active="request()->routeIs('decisions.*')"
+                icon="flag"
+            >Decisions</x-ui.nav-link>
             @if ($currentRole?->isDm())
                 <x-ui.nav-link
                     :href="route('encounters.index', $currentCampaign)"

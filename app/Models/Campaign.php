@@ -132,6 +132,16 @@ class Campaign extends Model implements HasMedia
     }
 
     /**
+     * The choices the party made, oldest first.
+     *
+     * @return HasMany<Decision, $this>
+     */
+    public function decisions(): HasMany
+    {
+        return $this->hasMany(Decision::class)->orderBy('created_at');
+    }
+
+    /**
      * The world's calendar, or null while the GM has not defined one.
      *
      * @return HasOne<Calendar, $this>
