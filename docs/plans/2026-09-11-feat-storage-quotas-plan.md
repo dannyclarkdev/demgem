@@ -2,7 +2,7 @@
 title: "feat: A ceiling on a campaign's files, and a bar that shows it"
 type: feat
 date: 2026-09-11
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-11-feat-discord-login-plan.md
 ---
@@ -103,3 +103,29 @@ Then the full suite with `memory_limit=1G`. The browser tool was failing at the 
 - `.ai/rules/campaigns.md` — the three risks in an archive have numbers; this adds a fourth.
 - `.ai/rules/models.md` — every media conversion names its collection, which is why conversions are easy to leave out of the count.
 - `docs/plans/2026-09-04-feat-campaign-archive-plan.md` — the unpack pass this slice trims after.
+
+## Implementation Results — 2026-09-11
+
+Implemented in full. 6 new tests; the suite is 1394 tests, 1393 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `config/campaigns.php` with the ceiling | As planned, and the value is a float so a test can set a ceiling near a fake image's size. The env examples carry `CAMPAIGN_STORAGE_MB=500`. |
+| `CampaignStorage` | The limit, the use, the free space, the check, the refusal sentence, and a formatter. The use is one query over `media` with the campaign's own row and its entities' rows. |
+| The refusals on both forms | Before any write, summing the image and the handout files on the entity form. |
+| The import trim | `ReadCampaignArchive::trimToQuota()` after the unpack pass, in document order, counted into `ImportReport::$filesOverQuota` with a line in the losses list. |
+| The bar | Under the reminder setting, above the cover. Red past ninety percent. |
+
+### Deviations
+
+None from the plan.
+
+### Seen on the way
+
+`ImportArchiveScreenTest` cannot run on its own: it calls a helper defined in `ImportScreenTest`, so the two files must run together. Not this slice's, and left as found.
+
+### Browser checks
+
+The browser tool came back for one run. At 1280px as the GM, campaign settings reads "71.4 KB of 500 MB" with the bar under it, between the reminder setting and the cover.
