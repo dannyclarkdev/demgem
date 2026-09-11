@@ -20,10 +20,12 @@ use App\Models\Encounter;
 use App\Models\EntityRelation;
 use App\Models\GameSession;
 use App\Models\LedgerEntry;
+use App\Models\ReputationChange;
 use App\Models\StatBlock;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use App\Support\Reckoning\Reckoning;
+use App\Support\Reputation\Standing;
 use BackedEnum;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -131,6 +133,7 @@ class ReadCampaignFile
             'clocks' => $this->clocks($this->list($decoded, 'clocks')),
             'decisions' => $this->decisions($this->list($decoded, 'decisions')),
             'ledger' => $this->ledger($this->list($decoded, 'ledger')),
+            'reputation' => $this->reputation($this->list($decoded, 'reputation')),
         ];
 
         $this->countTheUncarried($decoded);
@@ -823,6 +826,47 @@ class ReadCampaignFile
     }
 
     /**
+     * A moment with no delta, or a delta of zero, is a row nothing can show.
+     *
+     * @param  list<mixed>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function reputation(array $rows): array
+    {
+        $changes = [];
+        $max = Standing::maxDelta();
+
+        foreach ($rows as $index => $row) {
+            $id = $this->id($row, 'reputation', $index);
+
+            if ($id === null) {
+                continue;
+            }
+
+            $delta = $this->signedInteger($row, 'delta');
+            $faction = $this->reference($row, 'entity_id');
+
+            if ($delta === null || $delta === 0 || $faction === null) {
+                continue;
+            }
+
+            $changes[] = [
+                'id' => $id,
+                'entity_id' => $faction,
+                'game_session_id' => $this->reference($row, 'game_session_id'),
+                'delta' => max(-$max, min($max, $delta)),
+                'reason' => $this->text($row, 'reason', ReputationChange::MAX_REASON_LENGTH),
+                'player_visible' => (bool) ($row['player_visible'] ?? false),
+                'created_at' => $this->text($row, 'created_at', 40),
+            ];
+        }
+
+        $this->report->count('reputation', count($changes));
+
+        return $changes;
+    }
+
+    /**
      * A row that is neither a coin movement with an amount nor an item with a name
      * is a row nothing can show, and it is dropped.
      *
@@ -977,6 +1021,8 @@ class ReadCampaignFile
         $decisions = $document['decisions'];
         /** @var list<array<string, mixed>> $ledger */
         $ledger = $document['ledger'];
+        /** @var list<array<string, mixed>> $reputation */
+        $reputation = $document['reputation'];
 
         // An arc is an entity of one type, so the reference is checked against the
         // arcs the file carries rather than every page in it.
@@ -1044,6 +1090,11 @@ class ReadCampaignFile
         foreach ($ledger as $entry) {
             $this->mustResolve($entry['game_session_id'], $this->sessionIds, 'session', 'a ledger row');
             $this->mustResolve($entry['entity_id'], $this->entityIds, 'entity', 'a ledger row');
+        }
+
+        foreach ($reputation as $change) {
+            $this->mustResolve($change['entity_id'], $this->entityIds, 'entity', 'a reputation change');
+            $this->mustResolve($change['game_session_id'], $this->sessionIds, 'session', 'a reputation change');
         }
 
         $this->checkCycles($entities, 'parent_id', 'The pages in that file nest inside each other in a loop');

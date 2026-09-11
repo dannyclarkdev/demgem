@@ -11,10 +11,12 @@ use App\Models\LedgerEntry;
 use App\Models\QuestObjective;
 use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
+use App\Models\ReputationChange;
 use App\Models\Scene;
 use App\Models\Secret;
 use App\Models\SessionRsvp;
 use App\Support\Reckoning\Reckoning;
+use App\Support\Reputation\Standing;
 use Illuminate\Support\Collection;
 
 /**
@@ -49,7 +51,7 @@ class WriteCampaignMarkdown
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source'])
+            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source', 'reputationChanges.gameSession'])
             ->orderBy('name')
             ->get();
 
@@ -191,6 +193,10 @@ class WriteCampaignMarkdown
             $matter['author'] = $entity->player->name;
         }
 
+        if ($entity->isFaction() && $entity->reputationChanges->isNotEmpty()) {
+            $matter['standing'] = (new Standing((int) $entity->reputationChanges->sum('delta')))->signed();
+        }
+
         if (filled($entity->character_class)) {
             $matter['class'] = (string) $entity->character_class;
         }
@@ -223,6 +229,17 @@ class WriteCampaignMarkdown
 
         if ($relationships !== '') {
             $body[] = "## Relationships\n\n".$relationships;
+        }
+
+        // The moments, oldest first. Hidden rows are written too, and each says so.
+        if ($entity->isFaction() && $entity->reputationChanges->isNotEmpty()) {
+            $body[] = "## Standing with the party\n\n".$entity->reputationChanges
+                ->sortBy('created_at')
+                ->map(fn (ReputationChange $change) => '- '.$change->signedDelta()
+                    .(filled($change->reason) ? ' '.$change->reason : '')
+                    .($change->gameSession !== null ? ' *('.$change->gameSession->label().')*' : '')
+                    .($change->player_visible ? '' : ' *(GM only)*'))
+                ->implode("\n");
         }
 
         $body[] = $this->section('Rewards', $entity->rewards);

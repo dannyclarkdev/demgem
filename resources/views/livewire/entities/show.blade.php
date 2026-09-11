@@ -218,6 +218,16 @@
                 </x-ui.card>
             @endif
 
+            @if ($showReputation)
+                <x-ui.card title="Standing with the party">
+                    <livewire:factions.reputation
+                        :campaign="$campaign"
+                        :faction="$entity"
+                        :wire:key="'reputation-'.$entity->id"
+                    />
+                </x-ui.card>
+            @endif
+
             <livewire:entities.relations :campaign="$campaign" :entity="$entity" :wire:key="'relations-'.$entity->id" />
             @if ($role->isDm())
                 <livewire:entities.history :campaign="$campaign" :entity="$entity" :key="'history-'.$entity->id" />

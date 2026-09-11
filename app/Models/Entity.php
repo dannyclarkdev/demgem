@@ -7,6 +7,7 @@ use App\Enums\CampaignRole;
 use App\Enums\EntityType;
 use App\Enums\QuestStatus;
 use App\Enums\Visibility;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Models\Concerns\BelongsToCampaign;
 use App\Observers\EntityObserver;
 use App\Support\Reckoning\GameDate;
@@ -72,6 +73,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read Collection<int, GameSession> $sessionsInArc
  * @property-read Collection<int, QuestObjective> $objectives
  * @property-read Collection<int, Clock> $clocks
+ * @property-read Collection<int, ReputationChange> $reputationChanges
  * @property-read Collection<int, EntityRelation> $relations
  * @property-read Collection<int, EntityRelation> $incomingRelations
  * @property-read Pivot|null $pivot Set when the row was loaded through GameSession::entities()
@@ -228,6 +230,22 @@ class Entity extends Model implements HasMedia
     public function isArc(): bool
     {
         return $this->type === EntityType::Arc;
+    }
+
+    public function isFaction(): bool
+    {
+        return $this->type === EntityType::Faction;
+    }
+
+    /**
+     * The moments that changed how this faction feels about the party. Every reader
+     * goes through ReputationChange::visibleTo() on it.
+     *
+     * @return HasMany<ReputationChange, $this>
+     */
+    public function reputationChanges(): HasMany
+    {
+        return $this->hasMany(ReputationChange::class, 'entity_id');
     }
 
     /**
@@ -387,6 +405,31 @@ class Entity extends Model implements HasMedia
         }
 
         return $this->quest_status ?? QuestStatus::Available;
+    }
+
+    /**
+     * Whether a search term appears in what a player may read of this row: the name,
+     * the body with its :::secret fences stripped, the rewards, the class, and the
+     * custom fields. The search engine matched the stored column; this is the same
+     * question asked of the player's copy.
+     */
+    public function matchesOutsideSecrets(string $term): bool
+    {
+        $needle = mb_strtolower($term);
+
+        foreach ([
+            $this->name,
+            SecretBlocks::strip($this->body),
+            SecretBlocks::strip($this->rewards),
+            $this->character_class,
+            $this->getRawOriginal('custom_fields'),
+        ] as $haystack) {
+            if (is_string($haystack) && $haystack !== '' && str_contains(mb_strtolower($haystack), $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Enums\PrepRole;
 use App\Enums\Rsvp;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Models\Concerns\BelongsToCampaign;
 use App\Observers\GameSessionObserver;
 use App\Support\Reckoning\GameDate;
@@ -349,7 +350,7 @@ class GameSession extends Model
         $text = (string) preg_replace_callback(
             '/\[\[(?:[a-z]+:)?([^\]|]+)(?:\|([^\]]+))?\]\]/iu',
             fn (array $match) => trim($match[2] ?? $match[1]),
-            (string) $this->recap,
+            (string) SecretBlocks::strip($this->recap),
         );
 
         return Str::limit(trim(strip_tags($text)), $limit);

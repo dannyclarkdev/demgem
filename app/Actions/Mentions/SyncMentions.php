@@ -3,6 +3,7 @@
 namespace App\Actions\Mentions;
 
 use App\Markdown\LinkResolver;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Markdown\WikiLinkScanner;
 use App\Models\Mention;
 use Illuminate\Database\Eloquent\Model;
@@ -52,7 +53,20 @@ class SyncMentions
         $rows = [];
         $seen = [];
 
+        // A link inside a :::secret fence is indexed under "field:secret", a name no
+        // player-visible list carries, so a GM's backlinks include it and a player's
+        // never do. The split is here, once, rather than in each observer's map.
+        $halves = [];
+
         foreach ($fields as $field => $markdown) {
+            $halves[$field] = SecretBlocks::strip($markdown);
+
+            if (($secret = SecretBlocks::only($markdown)) !== null) {
+                $halves[$field.':secret'] = $secret;
+            }
+        }
+
+        foreach ($halves as $field => $markdown) {
             $tokens = $this->scanner->scan($markdown);
             $resolver->preload($tokens);
 

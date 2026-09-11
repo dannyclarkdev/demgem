@@ -22,9 +22,11 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Support/Encounters/** | .ai/rules/encounters.md |
 | app/Livewire/Entities/** | .ai/rules/entities.md |
 | app/Events/** | .ai/rules/events.md |
+| app/Livewire/Factions/** | .ai/rules/factions.md |
 | tests/Feature/Api/** | .ai/rules/feature-api.md |
 | tests/Feature/Campaigns/** | .ai/rules/feature-campaigns.md |
 | app/Livewire/** | .ai/rules/livewire.md |
+| app/Markdown/** | .ai/rules/markdown.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Models/**, app/Models/MapMarker.php, app/Models/Clock.php, app/Models/Entity.php, app/Models/LedgerEntry.php | .ai/rules/models.md |
 | app/Observers/** | .ai/rules/observers.md |
