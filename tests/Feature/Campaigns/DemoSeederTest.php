@@ -10,6 +10,7 @@ use App\Models\GameSession;
 use App\Models\LedgerEntry;
 use App\Models\MapMarker;
 use App\Models\RandomTable;
+use App\Models\ReputationChange;
 use App\Models\User;
 use App\Support\CurrentCampaign;
 use Database\Seeders\DemoCampaignSeeder;
@@ -77,6 +78,13 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and($journals->where('visibility', 'dm')->count())->toBe(1)
         ->and((float) LedgerEntry::query()->coin()->sum('amount'))->toBe(110.0)
         ->and(collect(LedgerEntry::inventory(LedgerEntry::query()->items()->get()))->pluck('quantity', 'name')->all())->toBe(['Tidewarden Signet' => 1, 'Torch' => 4]);
+
+    // Slice 20: a fence on the Abbess, and a standing the party reads differently.
+    $abbess = Entity::query()->where('name', 'Abbess Corvane')->firstOrFail();
+
+    expect($abbess->body)->toContain(':::secret')
+        ->and((int) ReputationChange::query()->sum('delta'))->toBe(0)
+        ->and((int) ReputationChange::query()->where('player_visible', true)->sum('delta'))->toBe(2);
 });
 
 it('renders every demo screen for the GM it seeds', function () {
@@ -103,6 +111,9 @@ it('renders every demo screen for the GM it seeds', function () {
         route('ledger.index', $campaign),
         route('entities.index', [$campaign, 'journals']),
         route('entities.show', [$campaign, 'journals', 'after-the-fire']),
+        route('entities.index', [$campaign, 'factions']),
+        route('entities.show', [$campaign, 'factions', 'tidewardens']),
+        route('entities.show', [$campaign, 'characters', 'abbess-corvane']),
         route('sessions.show', [$campaign, 1]),
         route('sessions.run', [$campaign, 3]),
         route('calendar.show', $campaign),

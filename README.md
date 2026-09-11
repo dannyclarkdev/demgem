@@ -44,6 +44,8 @@ Slice 18 adds **story arcs, and the log of what the party earned and chose**. An
 
 Slice 19 adds **the players' own pages, and the party's purse**. A journal is the one entity a player creates: they write it, keep it between them and the GM or share it with the party, and it gets wiki links, backlinks, search, the export, and the vault like everything else. The ledger is one list of coin and item movements any member writes to, summed into a balance and a pack on every read, in the one currency the campaign names in settings. Both travel in the export and the Markdown vault.
 
+Slice 20 adds **what the party may not read, and how the factions feel about them**. A `:::secret` fence inside any Markdown body is a paragraph the GM reads as a marked aside and a player never receives: not on the page, not in the API, not in a backlink, not in a search hit, not in their own editor. A faction carries a log of the moments that changed its standing with the party, each with a reason, a session, and an eye; the party reads the sum of the moments the GM revealed, and the GM reads that number beside the true one.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup

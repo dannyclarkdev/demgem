@@ -27,6 +27,8 @@ use App\Actions\Entities\CreateEntity;
 use App\Actions\Entities\CreateEntityTemplate;
 use App\Actions\Entities\RelateEntities;
 use App\Actions\Entities\UpdateEntity;
+use App\Actions\Factions\AdjustReputation;
+use App\Actions\Factions\SetReputationVisibility;
 use App\Actions\Ledger\RecordLedgerEntry;
 use App\Actions\Maps\PlaceMarker;
 use App\Actions\Maps\SetMarkerVisibility;
@@ -130,7 +132,7 @@ class DemoCampaignSeeder extends Seeder
             'tags' => ['ally', 'npc'],
         ]);
         $make(EntityType::Character, 'Abbess Corvane', [
-            'body' => 'Voice of the [[Salt Cathedral]]. Calm. Never blinks.',
+            'body' => "Voice of the [[Salt Cathedral]]. Calm. Never blinks.\n\n:::secret\nShe serves [[The Drowned Duke]] and has since the flood. The crypt door answers to her voice.\n:::\n\nShe preaches that the flood was a mercy.",
             'tags' => ['npc', 'religion'],
         ]);
         $make(EntityType::Character, 'The Drowned Duke', [
@@ -199,6 +201,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedQuestDetails($campaign);
         $this->seedDecisions($campaign, $dm);
         $this->seedJournals($campaign, $dm, $player);
+        $this->seedReputation($campaign, $dm);
         $this->seedLedger($campaign, $dm, $player);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
@@ -431,6 +434,28 @@ class DemoCampaignSeeder extends Seeder
      * The active quest gets a giver and five objectives, two of them already ticked in
      * the first session, so the quest log and the Run screen both have something in them.
      */
+    /**
+     * How the Tidewardens feel about the party: two moments the party noticed and
+     * one they have not, so the GM's card reads two numbers.
+     */
+    private function seedReputation(Campaign $campaign, User $dm): void
+    {
+        $faction = $campaign->entities()->where('name', 'Tidewardens')->first();
+
+        if ($faction === null) {
+            return;
+        }
+
+        $adjust = app(AdjustReputation::class);
+        $reveal = app(SetReputationVisibility::class);
+        $first = $campaign->gameSessions()->where('number', 1)->first();
+        $second = $campaign->gameSessions()->where('number', 2)->first();
+
+        $reveal->handle($adjust->handle($faction, $dm, 1, 'Pulled two of them out of the water.', $first), true);
+        $reveal->handle($adjust->handle($faction, $dm, 1, 'Kept the signet safe, so far.', $second), true);
+        $adjust->handle($faction, $dm, -2, 'Mara knows about the ledger. The party does not know she knows.', $second);
+    }
+
     /**
      * Two pages by the player: one shared with the party, one kept between them and
      * the GM. The author's own gate, player_user_id, is what makes the second work.

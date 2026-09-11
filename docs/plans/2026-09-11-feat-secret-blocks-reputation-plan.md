@@ -2,7 +2,7 @@
 title: "feat: What the party may not read, and how the factions feel about them"
 type: feat
 date: 2026-09-11
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-11-feat-journals-party-ledger-plan.md
 ---
@@ -146,3 +146,38 @@ Then the full suite with `memory_limit=1G`, and a browser pass: write a fence on
 - `.ai/rules/entities.md` — `sheet_url` is the one user URL outside the renderer; a secret block is the one piece of prose the renderer must not see.
 - `.ai/rules/api.md` — keys dropped, not nulled; here a paragraph is dropped from a key.
 - `.ai/rules/table.md` — filter in the query, never in the Blade; the search filter is the one place this slice filters in PHP, and the plan says why.
+
+## Implementation Results — 2026-09-11
+
+Implemented in full. 21 new tests; the suite is 1370 tests, 1369 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `SecretBlocks::strip()` as the one function | As planned, under `App\Markdown\Secrets`, with `only()` for the mention scanner and `merge()` for a player's save. An unclosed fence runs to the end of the text, and `merge()` closes one it puts back. |
+| The GM's aside | A CommonMark block extension, `SecretBlockExtension`, registered only when `WikiLinkRenderer::revealsSecrets()`. With no renderer at all the text is stripped, which is the safe reading. |
+| The six readers | The renderer, the recap excerpt, both API resources, the search, the mention scanner, and the form and API update for a non-DM. The mention split lives in `SyncMentions`, once, so the observers' maps stayed derived from `mentionableFields()`. |
+| `reputation_changes` and the card | As planned. The delta is clamped to the configured range and refused at zero in the form and in the action. |
+| The factions index badge | One grouped query over the page's factions, through the viewer's scope. |
+| The round trip and the vault | `reputation` is a new top-level section with both links remapped. A faction's front matter gains `standing` and its body a section of the rows. |
+
+### Deviations
+
+| Planned | Shipped | Why |
+|---|---|---|
+| An "Unfriendly" badge in a warning colour | The danger colour | The badge component has no warning variant, and the bands are config, so a GM who wants one adds it there. |
+| The standing card below the page's other cards | Directly under the body | The browser pass found it under Relationships and Body history, the same finding as the arc's lists in slice 18. |
+| The card hidden from a GM until a row exists | Always shown to a GM | A GM needs the form to write the first row, and "The party has no read on them yet" is the honest first state. |
+
+### A flake seen on the way
+
+`CustomFieldsTest` failed once in a batch of 263 and passed on every rerun, alone and in the batch. It asserts `assertDontSee('Coll')` on a search page, a bare four-letter word, which is the class of assertion `.ai/rules/tests.md` warns about. It is not this slice's, and it is left as found.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px as the GM and 834px as the player:
+
+- The Abbess's page shows the GM a purple "GM only" aside between two paragraphs, and the player the two paragraphs with nothing between them.
+- The player's search for "crypt door", words inside the fence, finds nothing.
+- The Tidewardens' page shows the GM "+2 Friendly" as the party sees it beside "0 Neutral" in truth, with three rows and the eye on each; the player reads "+2 Friendly" and the two revealed rows.
