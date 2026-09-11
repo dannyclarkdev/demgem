@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // Continue with Discord. An empty client id means no button and no route: the
+    // install has no Discord app, and nothing pretends otherwise.
+    'discord' => [
+        'client_id' => env('DISCORD_CLIENT_ID'),
+        'client_secret' => env('DISCORD_CLIENT_SECRET'),
+        'redirect' => env('DISCORD_REDIRECT_URI', '/auth/discord/callback'),
+    ],
+
 ];

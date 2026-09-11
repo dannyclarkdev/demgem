@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Profile;
 
+use App\Actions\Auth\UnlinkSocialAccount;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Http\Controllers\Auth\DiscordAuthController;
+use App\Models\SocialAccount;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Title;
@@ -46,6 +49,19 @@ class Edit extends Component
         ]);
 
         session()->flash('status', 'Profile updated.');
+
+        $this->redirectRoute('profile.edit');
+    }
+
+    /**
+     * Unlinking is allowed always; the card says the reset link is the way back in
+     * for somebody who never set a password.
+     */
+    public function unlinkDiscord(UnlinkSocialAccount $unlink): void
+    {
+        $unlink->handle($this->user(), SocialAccount::DISCORD);
+
+        session()->flash('status', 'Discord is no longer linked to your account.');
 
         $this->redirectRoute('profile.edit');
     }
@@ -111,6 +127,8 @@ class Edit extends Component
         $token = User::query()->whereKey($this->user()->id)->value('calendar_token');
 
         return view('livewire.profile.edit', [
+            'discordConfigured' => DiscordAuthController::isConfigured(),
+            'discord' => $this->user()->socialAccount(SocialAccount::DISCORD),
             'calendarUrl' => $token === null ? null : route('calendar.feed', ['token' => $token]),
             'tokens' => $this->user()->tokens()->orderByDesc('created_at')->get(),
         ]);

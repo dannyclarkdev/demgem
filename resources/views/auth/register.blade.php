@@ -2,7 +2,11 @@
     <h1 class="font-display text-xl font-semibold">Create your account</h1>
     <p class="mt-1 text-sm text-ink-muted">One account for every table you run or play at.</p>
 
-    <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-4">
+    <div class="mt-6">
+        <x-auth.discord-button label="Sign up with Discord" />
+    </div>
+
+    <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
         <x-ui.input label="Name" name="name" :value="old('name')" required autofocus autocomplete="name" />
         <x-ui.input label="Email" name="email" type="email" :value="old('email')" required autocomplete="email" />

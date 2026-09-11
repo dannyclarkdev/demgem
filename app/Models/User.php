@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,11 +17,27 @@ use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property string|null $calendar_token
+ * @property-read Collection<int, SocialAccount> $socialAccounts
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token', 'calendar_token'])]
 class User extends Authenticatable
 {
+    /**
+     * The identities from other services linked to this account.
+     *
+     * @return HasMany<SocialAccount, $this>
+     */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
+    public function socialAccount(string $provider): ?SocialAccount
+    {
+        return $this->socialAccounts()->where('provider', $provider)->first();
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 

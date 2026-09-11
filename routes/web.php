@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\EntityType;
+use App\Http\Controllers\Auth\DiscordAuthController;
 use App\Http\Controllers\AutocompleteController;
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\CampaignArchiveController;
@@ -51,6 +52,15 @@ Route::get('/calendar/{token}.ics', CalendarFeedController::class)
     ->where('token', '[A-Za-z0-9]+')
     ->middleware('throttle:30,1')
     ->name('calendar.feed');
+
+// Continue with Discord. Outside the auth group: a guest signs in through it, and a
+// signed-in user links through it. Both routes 404 on an install with no Discord app.
+Route::get('/auth/discord/redirect', [DiscordAuthController::class, 'redirect'])
+    ->middleware('throttle:20,1')
+    ->name('auth.discord.redirect');
+Route::get('/auth/discord/callback', [DiscordAuthController::class, 'callback'])
+    ->middleware('throttle:20,1')
+    ->name('auth.discord.callback');
 
 Route::middleware('auth')->group(function () {
     Route::get('/campaigns', CampaignsIndex::class)->name('campaigns.index');
