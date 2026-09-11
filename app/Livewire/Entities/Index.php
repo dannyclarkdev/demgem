@@ -8,8 +8,10 @@ use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Models\Entity;
+use App\Models\ReputationChange;
 use App\Models\Tag;
 use App\Models\User;
+use App\Support\Reputation\Standing;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -80,6 +82,7 @@ class Index extends Component
         $isQuest = $this->entityType === EntityType::Quest;
         $isCharacter = $this->entityType === EntityType::Character;
         $isJournal = $this->entityType === EntityType::Journal;
+        $isFaction = $this->entityType === EntityType::Faction;
         $statusFilter = $isQuest ? QuestStatus::tryFrom($this->questStatus) : null;
         $partyFilter = $isCharacter && $this->partyOnly !== '';
 
@@ -108,7 +111,21 @@ class Index extends Component
             ->orderBy('name')
             ->get();
 
+        // One grouped query for the page's factions: the sum of the rows this viewer
+        // may see, keyed by faction. A faction with no visible row gets no badge.
+        $standings = $isFaction
+            ? ReputationChange::query()
+                ->visibleTo($role)
+                ->whereIn('entity_id', collect($entities->items())->pluck('id')->all())
+                ->toBase()
+                ->selectRaw('entity_id, sum(delta) as total')
+                ->groupBy('entity_id')
+                ->pluck('total', 'entity_id')
+                ->map(fn ($total) => new Standing((int) $total))
+            : collect();
+
         return view('livewire.entities.index', [
+            'standings' => $standings,
             'type' => $this->entityType,
             'entities' => $entities,
             'tags' => $tags,

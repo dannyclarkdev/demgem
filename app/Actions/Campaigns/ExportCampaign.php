@@ -20,6 +20,7 @@ use App\Models\MapMarker;
 use App\Models\QuestObjective;
 use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
+use App\Models\ReputationChange;
 use App\Models\Scene;
 use App\Models\Secret;
 use App\Models\SessionDateOption;
@@ -96,6 +97,7 @@ class ExportCampaign
         'game_sessions' => 'sessions',
         'decisions' => 'decisions',
         'ledger_entries' => 'ledger',
+        'reputation_changes' => 'reputation',
         'stat_blocks' => 'stat_blocks',
         'encounters' => 'encounters',
         'random_tables' => 'random_tables',
@@ -160,6 +162,7 @@ class ExportCampaign
             'clocks' => $this->clocks($campaign),
             'decisions' => $this->decisions($campaign),
             'ledger' => $this->ledger($campaign),
+            'reputation' => $this->reputation($campaign),
         ];
     }
 
@@ -580,6 +583,29 @@ class ExportCampaign
                 'detail' => $roll->detail,
                 'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
+            ]);
+    }
+
+    /**
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function reputation(Campaign $campaign): iterable
+    {
+        return ReputationChange::query()
+            ->withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->cursor()
+            ->map(fn (ReputationChange $change) => [
+                'id' => $change->id,
+                'entity_id' => $change->entity_id,
+                'game_session_id' => $change->game_session_id,
+                'delta' => $change->delta,
+                'reason' => $change->reason,
+                'player_visible' => $change->player_visible,
+                'created_at' => $change->created_at?->toIso8601String(),
+                'updated_at' => $change->updated_at?->toIso8601String(),
             ]);
     }
 

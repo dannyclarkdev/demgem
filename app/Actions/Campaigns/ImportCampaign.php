@@ -15,6 +15,7 @@ use App\Models\EntityTemplate;
 use App\Models\GameSession;
 use App\Models\LedgerEntry;
 use App\Models\RandomTable;
+use App\Models\ReputationChange;
 use App\Models\StatBlock;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -91,6 +92,7 @@ class ImportCampaign
                 $this->clocks($document, $campaign, $ids);
                 $this->decisions($document, $campaign, $importer, $ids);
                 $this->ledger($document, $campaign, $importer, $ids);
+                $this->reputation($document, $campaign, $importer, $ids);
             });
 
             // One index at the end rather than a write per entity. Chunked, so a
@@ -586,6 +588,26 @@ class ImportCampaign
                     'nested_table_id' => $ids->newForNullable($entry['nested_table_id']),
                 ]);
             }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     */
+    private function reputation(array $document, Campaign $campaign, User $importer, IdMap $ids): void
+    {
+        foreach ($document['reputation'] as $row) {
+            $this->write(new ReputationChange, [
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                'entity_id' => $ids->newFor($row['entity_id']),
+                'game_session_id' => $ids->newForNullable($row['game_session_id']),
+                'delta' => $row['delta'],
+                'reason' => $row['reason'],
+                'player_visible' => $row['player_visible'],
+                'created_at' => $row['created_at'],
+                'created_by' => $importer->id,
+            ]);
         }
     }
 

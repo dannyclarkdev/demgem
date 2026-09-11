@@ -253,6 +253,16 @@
                 @endif
             @endif
 
+            @if ($showReputation)
+                <x-ui.card title="Standing with the party">
+                    <livewire:factions.reputation
+                        :campaign="$campaign"
+                        :faction="$entity"
+                        :wire:key="'reputation-'.$entity->id"
+                    />
+                </x-ui.card>
+            @endif
+
             @if ($showClocks)
                 <x-ui.card title="What is coming">
                     <livewire:clocks.panel

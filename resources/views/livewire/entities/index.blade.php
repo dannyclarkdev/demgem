@@ -121,6 +121,9 @@
                                     <x-ui.badge :variant="$entity->questStatus()->badgeVariant()" :icon="$entity->questStatus()->icon()">{{ $entity->questStatus()->label() }}</x-ui.badge>
                                 @endif
                             @else
+                                @if (isset($standings[$entity->id]))
+                                    <x-ui.badge :variant="$standings[$entity->id]->badgeVariant()">{{ $standings[$entity->id]->label() }} · {{ $standings[$entity->id]->signed() }}</x-ui.badge>
+                                @endif
                                 <div class="hidden items-center gap-1.5 sm:flex">
                                     @foreach ($entity->tags->take(3) as $entityTag)
                                         <x-ui.badge>{{ $entityTag->name }}</x-ui.badge>

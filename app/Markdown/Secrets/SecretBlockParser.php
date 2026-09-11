@@ -37,7 +37,7 @@ final class SecretBlockParser extends AbstractBlockContinueParser
         return true;
     }
 
-    public function tryContinue(Cursor $cursor, BlockContinueParserInterface $activeBlockParser): ?BlockContinue
+    public function tryContinue(Cursor $cursor, BlockContinueParserInterface $activeBlockParser): BlockContinue
     {
         if (! $cursor->isIndented() && $cursor->match('/^[ \t]{0,3}:::[ \t]*$/') !== null) {
             return BlockContinue::finished();

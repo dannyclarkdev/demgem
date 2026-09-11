@@ -73,6 +73,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read Collection<int, GameSession> $sessionsInArc
  * @property-read Collection<int, QuestObjective> $objectives
  * @property-read Collection<int, Clock> $clocks
+ * @property-read Collection<int, ReputationChange> $reputationChanges
  * @property-read Collection<int, EntityRelation> $relations
  * @property-read Collection<int, EntityRelation> $incomingRelations
  * @property-read Pivot|null $pivot Set when the row was loaded through GameSession::entities()
@@ -229,6 +230,22 @@ class Entity extends Model implements HasMedia
     public function isArc(): bool
     {
         return $this->type === EntityType::Arc;
+    }
+
+    public function isFaction(): bool
+    {
+        return $this->type === EntityType::Faction;
+    }
+
+    /**
+     * The moments that changed how this faction feels about the party. Every reader
+     * goes through ReputationChange::visibleTo() on it.
+     *
+     * @return HasMany<ReputationChange, $this>
+     */
+    public function reputationChanges(): HasMany
+    {
+        return $this->hasMany(ReputationChange::class, 'entity_id');
     }
 
     /**

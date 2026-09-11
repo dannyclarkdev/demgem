@@ -17,6 +17,7 @@ use App\Models\Clock;
 use App\Models\Entity;
 use App\Models\MapMarker;
 use App\Models\Mention;
+use App\Models\ReputationChange;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -140,6 +141,10 @@ class Show extends Component
             // are already reading. A player gets it only when there is a dial on it.
             'showClocks' => $role->isDm()
                 || Clock::query()->about($this->entity)->visibleTo($role)->exists(),
+            // A GM always gets the standing card on a faction. A player gets it only
+            // when the GM has revealed at least one moment.
+            'showReputation' => $this->entity->isFaction() && ($role->isDm()
+                || ReputationChange::query()->about($this->entity)->visibleTo($role)->exists()),
         ])->title($this->entity->name);
     }
 
