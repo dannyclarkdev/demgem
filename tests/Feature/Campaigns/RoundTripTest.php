@@ -36,7 +36,7 @@ function comparable(mixed $value): mixed
 
     $dropped = [
         // Remapped by design: an imported campaign shares no id with its source.
-        'id', 'parent_id', 'giver_entity_id', 'target_entity_id', 'entity_id',
+        'id', 'parent_id', 'giver_entity_id', 'arc_id', 'target_entity_id', 'entity_id',
         'game_session_id', 'revealed_in_session_id', 'completed_in_session_id',
         'active_combatant_id', 'nested_table_id',
         // A creature the campaign wrote is a campaign row, so its id is remapped like

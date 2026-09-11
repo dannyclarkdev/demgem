@@ -160,3 +160,18 @@ it('writes relationships as wiki links from both sides', function () {
         ->and($files['markdown/characters/mara-voss.md'])->toContain("## Relationships\n\n- works for [[The Drowned Duke]]")
         ->and($files['markdown/characters/living-twin.md'])->toContain('- [[The Drowned Duke]] · twin of');
 });
+
+it('carries the arc and the reward into the front matter', function () {
+    $campaign = Campaign::factory()->create();
+    $arc = Entity::factory()->for($campaign)->arc()->forPlayers()->create(['name' => 'The Drowned Duke', 'slug' => 'the-drowned-duke']);
+    Entity::factory()->for($campaign)->quest()->inArc($arc)->create(['name' => 'The Ledger', 'slug' => 'the-ledger']);
+    GameSession::factory()->for($campaign)->number(4)->played()->inArc($arc)->rewarded(450, 'Reached the Drowned Court')->create(['title' => 'The Court']);
+
+    $files = app(WriteCampaignMarkdown::class)->handle($campaign);
+
+    expect($files['markdown/quests/the-ledger.md'])->toContain('arc: "The Drowned Duke"')
+        ->and($files['markdown/sessions/04-the-court.md'])
+        ->toContain('arc: "The Drowned Duke"')
+        ->toContain('xp_awarded: "450"')
+        ->toContain('milestone: "Reached the Drowned Court"');
+});

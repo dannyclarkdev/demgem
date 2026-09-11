@@ -66,8 +66,24 @@ class Story extends Component
                 $session->id => $renderer->render($session->recap, $wikiLinks),
             ]);
 
+        // The reward log is this page: the award beside each recap, and the total over
+        // the sessions this viewer may see. A player's total never counts a GM-only
+        // session, because the scope never loaded it.
+        $rewarded = GameSession::query()
+            ->visibleTo($role)
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('xp_awarded')->orWhereNotNull('milestone');
+            });
+
+        $rewards = [
+            'xp' => (int) (clone $rewarded)->sum('xp_awarded'),
+            'sessions' => (clone $rewarded)->whereNotNull('xp_awarded')->count(),
+            'milestones' => (clone $rewarded)->whereNotNull('milestone')->count(),
+        ];
+
         return view('livewire.sessions.story', [
             'role' => $role,
+            'rewards' => $rewards,
             'timezone' => $this->campaign->timezone,
             'reckoning' => Calendar::query()->first()?->reckoning(),
             'sessions' => $sessions,

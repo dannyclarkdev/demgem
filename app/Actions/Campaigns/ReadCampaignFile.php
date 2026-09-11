@@ -14,8 +14,10 @@ use App\Enums\Visibility;
 use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Combatant;
+use App\Models\Decision;
 use App\Models\Encounter;
 use App\Models\EntityRelation;
+use App\Models\GameSession;
 use App\Models\StatBlock;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
@@ -125,6 +127,7 @@ class ReadCampaignFile
             'encounters' => $this->encounters($this->list($decoded, 'encounters')),
             'random_tables' => $this->randomTables($this->list($decoded, 'random_tables')),
             'clocks' => $this->clocks($this->list($decoded, 'clocks')),
+            'decisions' => $this->decisions($this->list($decoded, 'decisions')),
         ];
 
         $this->countTheUncarried($decoded);
@@ -408,6 +411,7 @@ class ReadCampaignFile
                 'stat_block_id' => $this->ownStatBlockReference($row),
                 'quest_status' => $this->optionalEnum(QuestStatus::class, $row, 'quest_status', "entity {$id}"),
                 'giver_entity_id' => $this->reference($row, 'giver_entity_id'),
+                'arc_id' => $this->reference($row, 'arc_id'),
                 'happens_on' => $this->gameDate($row, 'happens_on'),
                 'tags' => $this->strings($row, 'tags', 60),
                 'objectives' => $this->objectives($row),
@@ -542,6 +546,9 @@ class ReadCampaignFile
                 'scheduled_at' => $this->text($row, 'scheduled_at', 40),
                 'in_game_start' => $this->gameDate($row, 'in_game_start'),
                 'in_game_end' => $this->gameDate($row, 'in_game_end'),
+                'arc_id' => $this->reference($row, 'arc_id'),
+                'xp_awarded' => $this->clamped($row, 'xp_awarded', GameSession::MAX_XP),
+                'milestone' => $this->text($row, 'milestone', GameSession::MAX_MILESTONE_LENGTH),
                 'reminder_sent_at' => $this->text($row, 'reminder_sent_at', 40),
                 'status' => $this->enum(SessionStatus::class, $row, 'status', "session {$number}") ?? SessionStatus::cases()[0],
                 'visibility' => $this->sessionVisibility($row, $number),
@@ -812,6 +819,43 @@ class ReadCampaignFile
     }
 
     /**
+     * @param  list<mixed>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function decisions(array $rows): array
+    {
+        $decisions = [];
+
+        foreach ($rows as $index => $row) {
+            $id = $this->id($row, 'decisions', $index);
+
+            if ($id === null) {
+                continue;
+            }
+
+            $choice = $this->text($row, 'choice', Decision::MAX_LENGTH);
+
+            // A decision is its choice. A row with none is a row nothing can show.
+            if ($choice === null) {
+                continue;
+            }
+
+            $decisions[] = [
+                'id' => $id,
+                'game_session_id' => $this->reference($row, 'game_session_id'),
+                'choice' => $choice,
+                'consequence' => $this->text($row, 'consequence', Decision::MAX_LENGTH),
+                'player_visible' => (bool) ($row['player_visible'] ?? false),
+                'created_at' => $this->text($row, 'created_at', 40),
+            ];
+        }
+
+        $this->report->count('decisions', count($decisions));
+
+        return $decisions;
+    }
+
+    /**
      * The three sections that are counted and left behind, plus the images already
      * counted while the entities were read.
      *
@@ -860,10 +904,23 @@ class ReadCampaignFile
         $tables = $document['random_tables'];
         /** @var list<array<string, mixed>> $clocks */
         $clocks = $document['clocks'];
+        /** @var list<array<string, mixed>> $decisions */
+        $decisions = $document['decisions'];
+
+        // An arc is an entity of one type, so the reference is checked against the
+        // arcs the file carries rather than every page in it.
+        $arcIds = [];
+
+        foreach ($entities as $entity) {
+            if ($entity['type'] === EntityType::Arc) {
+                $arcIds[$entity['id']] = true;
+            }
+        }
 
         foreach ($entities as $entity) {
             $this->mustResolve($entity['parent_id'], $this->entityIds, 'entity', "the parent of \"{$entity['name']}\"");
             $this->mustResolve($entity['giver_entity_id'], $this->entityIds, 'entity', "the giver of \"{$entity['name']}\"");
+            $this->mustResolve($entity['arc_id'], $arcIds, 'arc', "the arc of \"{$entity['name']}\"");
 
             foreach ($entity['objectives'] as $objective) {
                 $this->mustResolve($objective['completed_in_session_id'], $this->sessionIds, 'session', 'a completed objective');
@@ -879,6 +936,8 @@ class ReadCampaignFile
         }
 
         foreach ($sessions as $session) {
+            $this->mustResolve($session['arc_id'], $arcIds, 'arc', "the arc of session {$session['number']}");
+
             foreach ($session['secrets'] as $secret) {
                 $this->mustResolve($secret['revealed_in_session_id'], $this->sessionIds, 'session', 'a revealed secret');
             }
@@ -905,6 +964,10 @@ class ReadCampaignFile
 
         foreach ($clocks as $clock) {
             $this->mustResolve($clock['entity_id'], $this->entityIds, 'entity', "the clock \"{$clock['name']}\"");
+        }
+
+        foreach ($decisions as $decision) {
+            $this->mustResolve($decision['game_session_id'], $this->sessionIds, 'session', 'a decision');
         }
 
         $this->checkCycles($entities, 'parent_id', 'The pages in that file nest inside each other in a loop');

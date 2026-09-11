@@ -8,6 +8,8 @@ use App\Actions\Clocks\CreateClock;
 use App\Actions\Clocks\SetClockVisibility;
 use App\Actions\Clocks\TickClock;
 use App\Actions\Compendium\CreateStatBlock;
+use App\Actions\Decisions\RecordDecision;
+use App\Actions\Decisions\SetDecisionVisibility;
 use App\Actions\Dice\RollDice;
 use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
@@ -163,7 +165,12 @@ class DemoCampaignSeeder extends Seeder
         $make(EntityType::Item, 'Tidewarden Signet', [
             'body' => 'Opens the sea-wall gates. [[Mara Voss]] lent it to the party. She wants it back.',
         ]);
+        $drownedDuke = $make(EntityType::Arc, 'The Duke Beneath', [
+            'body' => "Something under [[Harrowgate]] is awake, and the tide has started answering to it. Everything the party has done since the harbor fire belongs to this chapter.\n\nIt ends when the [[Ember Throne]] is empty, or when it is not.",
+            'tags' => ['chapter'],
+        ]);
         $make(EntityType::Quest, 'Seal the Undercity', [
+            'arc_id' => $drownedDuke->id,
             'quest_status' => QuestStatus::Active,
             'body' => '[[Mara Voss]] asks the party to collapse the tunnels under [[Harrowgate]] before the spring tide.',
             'rewards' => 'The [[Tidewarden Signet]], permanently, and a berth in the harbour for as long as the duchy stands.',
@@ -189,6 +196,7 @@ class DemoCampaignSeeder extends Seeder
         // Sessions first: the ticked objectives record the night they were finished.
         $this->seedSessions($campaign, $dm);
         $this->seedQuestDetails($campaign);
+        $this->seedDecisions($campaign, $dm);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
@@ -319,7 +327,12 @@ class DemoCampaignSeeder extends Seeder
             'scheduled_at' => now()->subWeeks(3)->setTime(19, 0),
             'status' => SessionStatus::Played,
         ]);
+        $arc = $campaign->entities()->where('type', EntityType::Arc->value)->first();
+
         $first->update([
+            'arc_id' => $arc?->id,
+            'xp_awarded' => 900,
+            'milestone' => 'Owed a favour by the Tidewardens',
             'in_game_start' => new GameDate(312, 2, 20),
             'in_game_end' => new GameDate(312, 2, 21),
             'recap' => "The warehouse went up at dusk and took half the north quay with it. [[Mara Voss]] pulled two of you out of the water and asked no questions, which was itself a question.\n\nBy morning the party held the [[Tidewarden Signet]] and a debt nobody has named a price for yet.",
@@ -333,6 +346,8 @@ class DemoCampaignSeeder extends Seeder
             'status' => SessionStatus::Played,
         ]);
         $second->update([
+            'arc_id' => $arc?->id,
+            'xp_awarded' => 550,
             'in_game_start' => new GameDate(312, 3, 2),
             'in_game_end' => new GameDate(312, 3, 3),
             'recap' => 'They went down at low tide and found the customs house dry inside, which nobody has explained yet.',
@@ -346,6 +361,7 @@ class DemoCampaignSeeder extends Seeder
             'status' => SessionStatus::Planned,
         ]);
         $third->update([
+            'arc_id' => $arc?->id,
             'in_game_start' => new GameDate(312, 3, 4),
             'strong_start' => 'The water in the corridor stops rising. Then it starts moving the wrong way, back down the stairs, as if something below is drinking.',
             'dm_notes' => 'Keep [[The Drowned Duke]] off screen. He is a rumour tonight, nothing more.',
@@ -412,6 +428,43 @@ class DemoCampaignSeeder extends Seeder
      * The active quest gets a giver and five objectives, two of them already ticked in
      * the first session, so the quest log and the Run screen both have something in them.
      */
+    /**
+     * Three choices the party made: two revealed, one the GM is keeping to see how it
+     * lands, and one consequence already written in.
+     */
+    private function seedDecisions(Campaign $campaign, User $dm): void
+    {
+        $record = app(RecordDecision::class);
+        $reveal = app(SetDecisionVisibility::class);
+
+        $first = $campaign->gameSessions()->where('number', 1)->first();
+        $second = $campaign->gameSessions()->where('number', 2)->first();
+
+        $reveal->handle($record->handle(
+            $campaign,
+            $dm,
+            'Took the [[Tidewarden Signet]] from [[Mara Voss]] instead of refusing it.',
+            'She can call the favour in whenever she likes, and she has started to.',
+            $first,
+        ), true);
+
+        $reveal->handle($record->handle(
+            $campaign,
+            $dm,
+            'Paid the gate sergeant 40 gold rather than fighting through.',
+            null,
+            $second,
+        ), true);
+
+        $record->handle(
+            $campaign,
+            $dm,
+            'Wren kept quiet about the door knocker. The party let it go.',
+            'The sister is closer than anyone at the table knows.',
+            $second,
+        );
+    }
+
     private function seedQuestDetails(Campaign $campaign): void
     {
         $quest = $campaign->entities()->where('name', 'Seal the Undercity')->first();

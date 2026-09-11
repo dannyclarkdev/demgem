@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Sessions\PublishRecap;
 use App\Actions\Sessions\UpdateSession;
+use App\Enums\EntityType;
 use App\Enums\SessionStatus;
 use App\Http\Resources\Api\V1\SessionResource;
 use App\Models\Campaign;
@@ -53,6 +54,15 @@ class SessionController extends ApiController
         $validated = $request->validate([
             'title' => ['nullable', 'string', 'max:120'],
             'status' => ['string', Rule::enum(SessionStatus::class)],
+            'arc_id' => [
+                'nullable', 'string',
+                Rule::exists('entities', 'id')
+                    ->where('campaign_id', $campaign->id)
+                    ->where('type', EntityType::Arc->value)
+                    ->whereNull('deleted_at'),
+            ],
+            'xp_awarded' => ['nullable', 'integer', 'min:0', 'max:'.GameSession::MAX_XP],
+            'milestone' => ['nullable', 'string', 'max:'.GameSession::MAX_MILESTONE_LENGTH],
             'strong_start' => ['nullable', 'string', 'max:100000'],
             'live_notes' => ['nullable', 'string', 'max:100000'],
             'recap' => ['nullable', 'string', 'max:100000'],
@@ -61,10 +71,14 @@ class SessionController extends ApiController
 
         $data = [];
 
-        foreach (['title', 'strong_start', 'live_notes', 'recap', 'dm_notes'] as $key) {
+        foreach (['title', 'strong_start', 'live_notes', 'recap', 'dm_notes', 'arc_id', 'milestone'] as $key) {
             if (array_key_exists($key, $validated)) {
                 $data[$key] = filled($validated[$key]) ? trim((string) $validated[$key]) : null;
             }
+        }
+
+        if (array_key_exists('xp_awarded', $validated)) {
+            $data['xp_awarded'] = $validated['xp_awarded'] === null ? null : (int) $validated['xp_awarded'];
         }
 
         if (array_key_exists('status', $validated)) {

@@ -9,6 +9,25 @@
         <x-ui.button :href="route('sessions.index', $campaign)" variant="secondary" size="sm" icon="calendar">Sessions</x-ui.button>
     </x-ui.page-header>
 
+    @if ($rewards['sessions'] > 0 || $rewards['milestones'] > 0)
+        <div class="mb-6 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-lg border border-line bg-panel px-5 py-4">
+            @if ($rewards['sessions'] > 0)
+                <div>
+                    <p class="eyebrow">XP earned</p>
+                    <p class="mt-0.5 font-display text-xl font-semibold text-ink">{{ number_format($rewards['xp']) }}</p>
+                    <p class="text-xs text-ink-faint">over {{ $rewards['sessions'] }} {{ Str::plural('session', $rewards['sessions']) }}</p>
+                </div>
+            @endif
+            @if ($rewards['milestones'] > 0)
+                <div>
+                    <p class="eyebrow">Milestones</p>
+                    <p class="mt-0.5 font-display text-xl font-semibold text-ink">{{ $rewards['milestones'] }}</p>
+                    <p class="text-xs text-ink-faint">reached so far</p>
+                </div>
+            @endif
+        </div>
+    @endif
+
     @if ($sessions->isEmpty())
         <x-ui.empty-state
             title="No story yet"
@@ -39,6 +58,12 @@
                             </h2>
                             @if ($reckoning !== null && $session->in_game_start !== null)
                                 <p class="mt-1 text-sm text-ink-muted">In the world: {{ $reckoning->formatRange($session->in_game_start, $session->in_game_end) }}</p>
+                            @endif
+                            @if ($session->hasReward())
+                                <p class="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
+                                    <x-ui.icon name="zap" class="size-3.5 text-ink-faint" />
+                                    <span>{{ $session->rewardLine() }}</span>
+                                </p>
                             @endif
                         </div>
 

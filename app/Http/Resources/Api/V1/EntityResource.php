@@ -55,6 +55,7 @@ class EntityResource extends JsonResource
                 'status' => $this->questStatus()?->value,
                 'rewards' => $this->rewards,
                 'giver' => $this->whenLoaded('giver', fn () => $this->giver === null ? null : self::link($this->giver)),
+                'arc' => $this->whenLoaded('arc', fn () => $this->arc === null ? null : self::link($this->arc)),
                 'objectives' => $this->whenLoaded('objectives', fn () => $this->objectives
                     ->map(fn (QuestObjective $objective) => [
                         'id' => $objective->id,

@@ -25,11 +25,27 @@
         @endcan
     </x-ui.page-header>
 
-    @if ($inWorld !== null)
-        <p class="-mt-4 mb-6 flex items-center gap-2 text-sm text-ink-muted">
-            <x-ui.icon name="sun" class="size-4 text-ink-faint" />
-            <span>In the world: {{ $inWorld }}</span>
-        </p>
+    @if ($inWorld !== null || $arc !== null || $session->hasReward())
+        <div class="-mt-4 mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-muted">
+            @if ($inWorld !== null)
+                <p class="flex items-center gap-2">
+                    <x-ui.icon name="sun" class="size-4 text-ink-faint" />
+                    <span>In the world: {{ $inWorld }}</span>
+                </p>
+            @endif
+            @if ($arc !== null)
+                <a href="{{ $arc->url() }}" class="flex items-center gap-2 hover:text-ink">
+                    <x-ui.icon name="bookmark" class="size-4 text-ink-faint" />
+                    <span>Part of {{ $arc->name }}</span>
+                </a>
+            @endif
+            @if ($session->hasReward())
+                <p class="flex items-center gap-2">
+                    <x-ui.icon name="zap" class="size-4 text-ink-faint" />
+                    <span>{{ $session->rewardLine() }}</span>
+                </p>
+            @endif
+        </div>
     @endif
 
     {{-- minmax(0,1fr) at every width: an auto column grows to fit the poll grid's
@@ -81,6 +97,12 @@
                 @else
                     <div class="prose-entity">{!! $recapHtml !!}</div>
                 @endif
+            </x-ui.card>
+
+            {{-- What the party chose that night. The same component as /decisions, scoped
+                 to this session; a player sees only the rows the GM revealed. --}}
+            <x-ui.card title="Decisions">
+                <livewire:decisions.log :campaign="$campaign" :session="$session" :wire:key="'decisions-'.$session->id" />
             </x-ui.card>
 
             {{-- A poll is names against dates and needs the width; an RSVP list does not. --}}

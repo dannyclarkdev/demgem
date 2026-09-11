@@ -2,6 +2,7 @@
 
 use App\Enums\CampaignRole;
 use App\Models\Campaign;
+use App\Models\Decision;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\EntityTemplate;
@@ -55,6 +56,17 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and($sessions[1]->hasPublishedRecap())->toBeFalse()
         ->and(filled($sessions[1]->recap))->toBeTrue()
         ->and($sessions[1]->needsRecap())->toBeTrue();
+
+    // Slice 18: a chapter with quests and sessions in it, a reward, and a decision
+    // the party can read beside one they cannot.
+    $arc = Entity::query()->where('type', 'arc')->firstOrFail();
+
+    expect(Entity::query()->where('arc_id', $arc->id)->count())->toBeGreaterThan(0)
+        ->and(GameSession::query()->where('arc_id', $arc->id)->count())->toBe(3)
+        ->and($sessions[0]->rewardLine())->toBe('900 XP · Owed a favour by the Tidewardens')
+        ->and(Decision::query()->count())->toBe(3)
+        ->and(Decision::query()->where('player_visible', true)->count())->toBe(2)
+        ->and(Decision::query()->whereNotNull('consequence')->count())->toBe(2);
 });
 
 it('renders every demo screen for the GM it seeds', function () {
@@ -75,6 +87,11 @@ it('renders every demo screen for the GM it seeds', function () {
         route('entities.show', [$campaign, 'maps', 'the-duchy-of-vell']),
         route('entities.index', [$campaign, 'events']),
         route('entities.show', [$campaign, 'events', 'the-harbor-fire']),
+        route('entities.index', [$campaign, 'arcs']),
+        route('entities.show', [$campaign, 'arcs', 'the-duke-beneath']),
+        route('decisions.index', $campaign),
+        route('sessions.show', [$campaign, 1]),
+        route('sessions.run', [$campaign, 3]),
         route('calendar.show', $campaign),
         route('calendar.edit', $campaign),
         route('timeline', $campaign),

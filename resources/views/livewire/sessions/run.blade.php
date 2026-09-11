@@ -107,6 +107,12 @@
                 <livewire:clocks.panel :campaign="$campaign" :wire:key="'run-clocks-'.$session->id" />
             </x-ui.card>
 
+            {{-- The choice the party just made, written down while it is fresh. The
+                 consequence comes later, on the same row. --}}
+            <x-ui.card title="Decisions">
+                <livewire:decisions.log :campaign="$campaign" :session="$session" :wire:key="'run-decisions-'.$session->id" />
+            </x-ui.card>
+
             {{-- What the party can be handed tonight, and one press to hand it over. --}}
             <x-ui.card title="Handouts">
                 <livewire:handouts.panel :campaign="$campaign" :wire:key="'run-handouts-'.$session->id" />

@@ -36,6 +36,20 @@
                 </div>
             @endif
 
+            <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                <x-ui.select label="Part of" name="arc_id" wire:model="arc_id" hint="The arc the party spent this session on.">
+                    <option value="">No arc</option>
+                    @foreach ($arcOptions as $option)
+                        <option value="{{ $option->id }}">{{ $option->name }}</option>
+                    @endforeach
+                </x-ui.select>
+            </div>
+
+            <div class="mt-5 grid gap-5 sm:grid-cols-[10rem_1fr]">
+                <x-ui.input label="XP awarded" name="xp_awarded" type="number" min="0" max="1000000" wire:model="xp_awarded" placeholder="450" hint="What the party earned." />
+                <x-ui.input label="Milestone" name="milestone" wire:model="milestone" placeholder="Reached the Drowned Court" hint="For a table that levels by milestone. The party reads both." />
+            </div>
+
             <div class="mt-5">
                 <x-ui.select label="Who can see this session" name="visibility" wire:model.live="visibility">
                     @foreach ($visibilities as $option)

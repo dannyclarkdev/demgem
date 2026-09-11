@@ -41,7 +41,7 @@ class UpdateEntity
                 ->only([
                     'name', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility', 'parent_id',
                     'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
-                    'quest_status', 'giver_entity_id', 'happens_on',
+                    'quest_status', 'giver_entity_id', 'arc_id', 'happens_on',
                 ])
                 ->all();
 

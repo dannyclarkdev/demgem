@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\CampaignMember;
 use App\Models\Clock;
 use App\Models\Combatant;
+use App\Models\Decision;
 use App\Models\DiceRoll;
 use App\Models\Encounter;
 use App\Models\Entity;
@@ -92,6 +93,7 @@ class ExportCampaign
         'entity_templates' => 'entity_templates',
         'entity_body_revisions' => 'entity_body_revisions',
         'game_sessions' => 'sessions',
+        'decisions' => 'decisions',
         'stat_blocks' => 'stat_blocks',
         'encounters' => 'encounters',
         'random_tables' => 'random_tables',
@@ -154,6 +156,7 @@ class ExportCampaign
             'random_tables' => $this->randomTables($campaign),
             'dice_rolls' => $this->diceRolls($campaign),
             'clocks' => $this->clocks($campaign),
+            'decisions' => $this->decisions($campaign),
         ];
     }
 
@@ -362,6 +365,7 @@ class ExportCampaign
                 'stat_block_id' => $this->statBlockOwnId($entity->statBlock),
                 'quest_status' => $entity->quest_status?->value,
                 'giver_entity_id' => $entity->giver_entity_id,
+                'arc_id' => $entity->arc_id,
                 'happens_on' => $entity->happens_on?->toArray(),
                 'tags' => $entity->tags->pluck('name')->values()->all(),
                 'viewer_user_ids' => $entity->viewers->pluck('id')->values()->all(),
@@ -425,6 +429,9 @@ class ExportCampaign
                 'scheduled_at' => $session->scheduled_at?->toIso8601String(),
                 'in_game_start' => $session->in_game_start?->toArray(),
                 'in_game_end' => $session->in_game_end?->toArray(),
+                'arc_id' => $session->arc_id,
+                'xp_awarded' => $session->xp_awarded,
+                'milestone' => $session->milestone,
                 'reminder_sent_at' => $session->reminder_sent_at?->toIso8601String(),
                 'status' => $session->status->value,
                 'visibility' => $session->visibility->value,
@@ -569,6 +576,28 @@ class ExportCampaign
                 'detail' => $roll->detail,
                 'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
+            ]);
+    }
+
+    /**
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function decisions(Campaign $campaign): iterable
+    {
+        return Decision::query()
+            ->withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->cursor()
+            ->map(fn (Decision $decision) => [
+                'id' => $decision->id,
+                'game_session_id' => $decision->game_session_id,
+                'choice' => $decision->choice,
+                'consequence' => $decision->consequence,
+                'player_visible' => $decision->player_visible,
+                'created_at' => $decision->created_at?->toIso8601String(),
+                'updated_at' => $decision->updated_at?->toIso8601String(),
             ]);
     }
 

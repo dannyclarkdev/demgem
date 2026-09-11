@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -39,6 +40,9 @@ use Illuminate\Support\Str;
  * @property Carbon|null $scheduled_at
  * @property GameDate|null $in_game_start
  * @property GameDate|null $in_game_end
+ * @property string|null $arc_id
+ * @property int|null $xp_awarded
+ * @property string|null $milestone
  * @property Carbon|null $reminder_sent_at
  * @property SessionStatus $status
  * @property Visibility $visibility
@@ -53,6 +57,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Campaign $campaign
+ * @property-read Entity|null $arc
  * @property-read Collection<int, Scene> $scenes
  * @property-read Collection<int, Secret> $secrets
  * @property-read Collection<int, SessionRsvp> $rsvps
@@ -61,7 +66,8 @@ use Illuminate\Support\Str;
  */
 #[ObservedBy([GameSessionObserver::class])]
 #[Fillable([
-    'campaign_id', 'number', 'title', 'scheduled_at', 'in_game_start', 'in_game_end', 'reminder_sent_at', 'status', 'visibility',
+    'campaign_id', 'number', 'title', 'scheduled_at', 'in_game_start', 'in_game_end', 'arc_id', 'xp_awarded', 'milestone',
+    'reminder_sent_at', 'status', 'visibility',
     'strong_start', 'live_notes', 'recap', 'recap_published_at', 'dm_notes',
     'created_by', 'updated_by',
 ])]
@@ -82,11 +88,53 @@ class GameSession extends Model
             'scheduled_at' => 'datetime',
             'in_game_start' => GameDateCast::class.':in_game_start',
             'in_game_end' => GameDateCast::class.':in_game_end',
+            'xp_awarded' => 'integer',
             'reminder_sent_at' => 'datetime',
             'recap_published_at' => 'datetime',
             'status' => SessionStatus::class,
             'visibility' => Visibility::class,
         ];
+    }
+
+    public const MAX_XP = 1_000_000;
+
+    public const MAX_MILESTONE_LENGTH = 120;
+
+    /**
+     * The chapter this session was spent on, when the GM filed it under one.
+     *
+     * @return BelongsTo<Entity, $this>
+     */
+    public function arc(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class, 'arc_id');
+    }
+
+    /**
+     * Whether there is a reward line to print at all. A session with neither number
+     * nor milestone prints no line rather than an empty one.
+     */
+    public function hasReward(): bool
+    {
+        return $this->xp_awarded !== null || filled($this->milestone);
+    }
+
+    /**
+     * "450 XP · Reached the Drowned Court", or either half alone. Empty when neither.
+     */
+    public function rewardLine(): string
+    {
+        $parts = [];
+
+        if ($this->xp_awarded !== null) {
+            $parts[] = number_format($this->xp_awarded).' XP';
+        }
+
+        if (filled($this->milestone)) {
+            $parts[] = (string) $this->milestone;
+        }
+
+        return implode(' · ', $parts);
     }
 
     /**
