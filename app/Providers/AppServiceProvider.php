@@ -8,6 +8,7 @@ use App\Models\GameSession;
 use App\Models\Scene;
 use App\Models\User;
 use App\Support\CurrentCampaign;
+use App\Support\Generators\Generators;
 use App\View\Composers\SidebarComposer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(CurrentCampaign::class);
+
+        // The shipped table sets, read from database/generators once per request.
+        $this->app->singleton(Generators::class, fn () => new Generators(database_path('generators')));
     }
 
     public function boot(): void

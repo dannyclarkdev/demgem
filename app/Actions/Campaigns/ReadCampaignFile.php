@@ -22,6 +22,7 @@ use App\Models\GameSession;
 use App\Models\LedgerEntry;
 use App\Models\ReputationChange;
 use App\Models\StatBlock;
+use App\Support\Generators\Generators;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use App\Support\Reckoning\Reckoning;
@@ -783,6 +784,7 @@ class ReadCampaignFile
                 'id' => $id,
                 'name' => $this->text($row, 'name', 120) ?? 'Table',
                 'description' => $this->text($row, 'description', 240),
+                'generator_key' => $this->text($row, 'generator_key', Generators::MAX_KEY_LENGTH),
                 'entries' => $entries,
             ];
         }

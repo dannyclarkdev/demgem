@@ -1,0 +1,53 @@
+{
+  "key": "loot",
+  "name": "Loot",
+  "description": "What is in the chest, the pocket, or the drawer. Objects, not rules: price them for your own system.",
+  "tables": [
+    {
+      "slug": "loot-what",
+      "name": "Loot",
+      "description": "Roll it when the party searches something and you did not prepare the answer.",
+      "entries": [
+        {"body": "A handful of mixed coin, none of it local.", "weight": 8},
+        {"body": "Nothing but lint and a button.", "weight": 6},
+        {"body": "A purse with more in it than its owner could have earned.", "weight": 5},
+        {"body": "A good knife, well kept.", "weight": 5},
+        {"body": "A bundle of letters tied with ribbon, the top one unfinished.", "weight": 4},
+        {"body": "A ring, worn thin, engraved inside with a name.", "weight": 4},
+        {"body": "A flask of something that is not water.", "weight": 4},
+        {"body": "A folded map of somewhere the party has never heard of.", "weight": 3, "nested": "loot-curious"},
+        {"body": "A set of lockpicks, one broken.", "weight": 3},
+        {"body": "A small carved animal, the kind a child is given.", "weight": 3},
+        {"body": "A key with no lock the party knows of.", "weight": 3, "nested": "loot-curious"},
+        {"body": "A holy symbol of a god the party does not recognise.", "weight": 3, "nested": "loot-curious"},
+        {"body": "A tally stick, notched, with more notches than seems reasonable.", "weight": 2},
+        {"body": "A vial, stoppered with wax, its contents thick and dark.", "weight": 2, "nested": "loot-curious"},
+        {"body": "A deed to a property that does not exist.", "weight": 2, "nested": "loot-curious"},
+        {"body": "A lock of hair in a paper twist.", "weight": 2},
+        {"body": "A gem, small, and very possibly glass.", "weight": 2},
+        {"body": "A soldier's pay book with the last three months unpaid.", "weight": 2},
+        {"body": "A book with the title scratched off.", "weight": 1, "nested": "loot-curious"},
+        {"body": "Something that should not be here at all.", "weight": 1, "nested": "loot-curious"}
+      ]
+    },
+    {
+      "slug": "loot-curious",
+      "name": "Loot: the curious thing about it",
+      "description": "Why this one is worth a second look.",
+      "entries": [
+        {"body": "It is warm to the touch, and stays warm."},
+        {"body": "It has the party's own crest, or something very like it."},
+        {"body": "It is much older than the place it was found in."},
+        {"body": "It is one of a pair, and the other is somewhere close."},
+        {"body": "It has been mended recently, and badly, by somebody in a hurry."},
+        {"body": "It smells of the sea, and the sea is a week away."},
+        {"body": "Somebody has written a date on it: three days from now."},
+        {"body": "It is a fake, and a good one, of something the party has seen."},
+        {"body": "It hums, very faintly, when nobody is talking."},
+        {"body": "It is exactly what one of the party has been looking for, and they have said so aloud."},
+        {"body": "It was hidden rather than kept: wrapped, tucked, out of reach."},
+        {"body": "It is worth nothing, and somebody died holding it."}
+      ]
+    }
+  ]
+}

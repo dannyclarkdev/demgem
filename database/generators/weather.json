@@ -1,0 +1,44 @@
+{
+  "key": "weather",
+  "name": "The weather",
+  "description": "The day, and what it turns into by nightfall. Weighted toward ordinary.",
+  "tables": [
+    {
+      "slug": "weather-day",
+      "name": "The weather",
+      "description": "Roll it at the start of a travelling day.",
+      "entries": [
+        {"body": "Clear and cool. Good walking.", "weight": 12, "nested": "weather-night"},
+        {"body": "Overcast, with a wind that finds every gap in a cloak.", "weight": 10, "nested": "weather-night"},
+        {"body": "Drizzle that never quite becomes rain and never quite stops.", "weight": 10, "nested": "weather-night"},
+        {"body": "Warm and close. Flies. Tempers.", "weight": 8, "nested": "weather-night"},
+        {"body": "Fog until midday, thick enough to lose the road.", "weight": 6, "nested": "weather-night"},
+        {"body": "Bright and hot. Water runs short by afternoon.", "weight": 6, "nested": "weather-night"},
+        {"body": "Rain, proper rain, with the road turning to soup.", "weight": 6, "nested": "weather-night"},
+        {"body": "A cold snap. Frost on the grass at noon.", "weight": 4, "nested": "weather-night"},
+        {"body": "Wind from the sea, salt on everything, gulls inland.", "weight": 4, "nested": "weather-night"},
+        {"body": "A storm building all day on the horizon and never arriving.", "weight": 4, "nested": "weather-night"},
+        {"body": "Hail, briefly and hard.", "weight": 2, "nested": "weather-night"},
+        {"body": "Snow, out of season, and nobody can explain it.", "weight": 1, "nested": "weather-night"},
+        {"body": "A red sky all day. Animals uneasy. Old people crossing themselves.", "weight": 1, "nested": "weather-night"}
+      ]
+    },
+    {
+      "slug": "weather-night",
+      "name": "The weather: by nightfall",
+      "description": "What it does once the party stops.",
+      "entries": [
+        {"body": "By nightfall: still and clear, and cold with it.", "weight": 8},
+        {"body": "By nightfall: cloud comes over and the dark is total.", "weight": 6},
+        {"body": "By nightfall: rain on the tent, steady, all night.", "weight": 6},
+        {"body": "By nightfall: the wind gets up and stays up.", "weight": 5},
+        {"body": "By nightfall: a warm night, and nobody sleeps well.", "weight": 4},
+        {"body": "By nightfall: mist off the ground, knee deep.", "weight": 3},
+        {"body": "By nightfall: lightning far off, no thunder.", "weight": 2},
+        {"body": "By nightfall: a hard frost, and the water skin freezes.", "weight": 2},
+        {"body": "By nightfall: the sky clears and there are more stars than there should be.", "weight": 2},
+        {"body": "By nightfall: something in the weather changes that nobody can name.", "weight": 1}
+      ]
+    }
+  ]
+}

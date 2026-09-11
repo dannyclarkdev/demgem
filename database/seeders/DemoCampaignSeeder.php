@@ -33,6 +33,7 @@ use App\Actions\Ledger\RecordLedgerEntry;
 use App\Actions\Maps\PlaceMarker;
 use App\Actions\Maps\SetMarkerVisibility;
 use App\Actions\RandomTables\CreateRandomTable;
+use App\Actions\RandomTables\InstallGenerator;
 use App\Actions\Sessions\AddDateOption;
 use App\Actions\Sessions\CreateSession;
 use App\Actions\Sessions\RecordAttendance;
@@ -51,6 +52,7 @@ use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\User;
+use App\Support\Generators\Generators;
 use App\Support\Reckoning\GameDate;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -205,6 +207,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedLedger($campaign, $dm, $player);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
+        $this->seedGenerators($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
         $this->seedMaps($campaign, $dm);
         $this->seedRelations($campaign);
@@ -929,6 +932,21 @@ class DemoCampaignSeeder extends Seeder
     /**
      * Two tables, one nesting the other, so the nesting is visible on the first roll.
      */
+    /**
+     * Every shipped set, so the drawer on the Run screen has something to roll on
+     * the first night and the tables index shows the sets as Added.
+     */
+    private function seedGenerators(Campaign $campaign, User $dm): void
+    {
+        $installer = app(InstallGenerator::class);
+
+        foreach (app(Generators::class)->all() as $set) {
+            if (! InstallGenerator::isInstalled($campaign, $set)) {
+                $installer->handle($campaign, $dm, $set);
+            }
+        }
+    }
+
     private function seedTables(Campaign $campaign, User $dm): void
     {
         $create = app(CreateRandomTable::class);

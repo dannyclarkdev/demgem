@@ -19,13 +19,14 @@ use Illuminate\Support\Collection;
  * @property string $campaign_id
  * @property string $name
  * @property string|null $description
+ * @property string|null $generator_key
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Campaign $campaign
  * @property-read Collection<int, RandomTableEntry> $entries
  */
-#[Fillable(['campaign_id', 'name', 'description', 'created_by'])]
+#[Fillable(['campaign_id', 'name', 'description', 'generator_key', 'created_by'])]
 class RandomTable extends Model
 {
     use BelongsToCampaign;

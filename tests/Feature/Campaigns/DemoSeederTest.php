@@ -36,7 +36,9 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and(EntityTemplate::query()->count())->toBe(2)
         ->and(GameSession::query()->count())->toBe(4)
         ->and(Encounter::query()->count())->toBe(1)
-        ->and(RandomTable::query()->count())->toBe(2)
+        // Two tables of the demo's own, and every shipped generator set beside them.
+        ->and(RandomTable::query()->whereNull('generator_key')->count())->toBe(2)
+        ->and(RandomTable::query()->whereNotNull('generator_key')->distinct()->count('generator_key'))->toBe(6)
         // Two maps, one nested in the other, with half the pins revealed. A demo
         // that shows an empty map sells the feature badly.
         ->and(Entity::query()->where('type', 'map')->count())->toBe(2)

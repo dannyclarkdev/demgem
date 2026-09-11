@@ -1,0 +1,91 @@
+{
+  "key": "tavern",
+  "name": "A tavern",
+  "description": "The sign, the room, the keeper, and tonight's trouble. Four lines from one roll.",
+  "tables": [
+    {
+      "slug": "tavern-sign",
+      "name": "A tavern",
+      "description": "Roll it when the party goes looking for a drink.",
+      "entries": [
+        {"body": "The Drowned Cat.", "nested": "tavern-room"},
+        {"body": "The Lantern and Ladle.", "nested": "tavern-room"},
+        {"body": "The Second Chance.", "nested": "tavern-room"},
+        {"body": "The Hanged Goose.", "nested": "tavern-room"},
+        {"body": "The Low Tide.", "nested": "tavern-room"},
+        {"body": "The Widow's Kettle.", "nested": "tavern-room"},
+        {"body": "The Crooked Mile.", "nested": "tavern-room"},
+        {"body": "The Salt and Candle.", "nested": "tavern-room"},
+        {"body": "The Three Sisters.", "nested": "tavern-room"},
+        {"body": "The Copper Fish.", "nested": "tavern-room"},
+        {"body": "The Quiet Room, which is not.", "nested": "tavern-room"},
+        {"body": "The Last Oar.", "nested": "tavern-room"},
+        {"body": "The Broken Bell.", "nested": "tavern-room"},
+        {"body": "The Sleeping Judge.", "nested": "tavern-room"},
+        {"body": "The Nine Cups.", "nested": "tavern-room"},
+        {"body": "The Fox in Boots.", "nested": "tavern-room"},
+        {"body": "The Harbour Light.", "nested": "tavern-room"},
+        {"body": "The Old Customs House, now a bar.", "nested": "tavern-room"},
+        {"body": "The Hen and Halberd.", "nested": "tavern-room"},
+        {"body": "The Wrong Door.", "nested": "tavern-room"}
+      ]
+    },
+    {
+      "slug": "tavern-room",
+      "name": "A tavern: the room",
+      "description": "What the party sees from the door.",
+      "entries": [
+        {"body": "Low beams, a fire too big for the room, and a dog asleep across the threshold.", "nested": "tavern-keeper"},
+        {"body": "Long tables, a loud card game, and sawdust that needed changing yesterday.", "nested": "tavern-keeper"},
+        {"body": "Nearly empty. One regular at the bar who turns to look and does not turn back.", "nested": "tavern-keeper"},
+        {"body": "Packed to the walls for a wake. Everyone is crying or singing.", "nested": "tavern-keeper"},
+        {"body": "Clean, bright, and priced for people who are not the party.", "nested": "tavern-keeper"},
+        {"body": "A cellar room down six steps, with the tide audible through the floor.", "nested": "tavern-keeper"},
+        {"body": "Stools around barrels, a fiddler, and a cat that owns the place.", "nested": "tavern-keeper"},
+        {"body": "Two rooms: one for guards, one for everybody else. Nobody says which is which.", "nested": "tavern-keeper"},
+        {"body": "A courtyard under a vine, lanterns, and the smell of something roasting.", "nested": "tavern-keeper"},
+        {"body": "Dark, with a single candle per table and a rule about voices.", "nested": "tavern-keeper"},
+        {"body": "Warm, damp, and full of fishermen arguing about a boat.", "nested": "tavern-keeper"},
+        {"body": "An upstairs room reached by a ladder, with the best view in town.", "nested": "tavern-keeper"}
+      ]
+    },
+    {
+      "slug": "tavern-keeper",
+      "name": "A tavern: the keeper",
+      "description": "Who pours.",
+      "entries": [
+        {"body": "Kept by a broad, quiet woman who remembers every face and every debt.", "nested": "tavern-trouble"},
+        {"body": "Kept by a retired sailor with one story and twelve versions of it.", "nested": "tavern-trouble"},
+        {"body": "Kept by twins who finish each other's insults.", "nested": "tavern-trouble"},
+        {"body": "Kept by a man far too well dressed for the place, and nervous about it.", "nested": "tavern-trouble"},
+        {"body": "Kept by a girl of fourteen, because her father is upstairs and unwell.", "nested": "tavern-trouble"},
+        {"body": "Kept by an old priest who left the temple and took the incense with him.", "nested": "tavern-trouble"},
+        {"body": "Kept by somebody who will not give a name and does not need to.", "nested": "tavern-trouble"},
+        {"body": "Kept by a cheerful giant who cannot count change.", "nested": "tavern-trouble"},
+        {"body": "Kept by a widow who waters the ale and everyone knows and nobody minds.", "nested": "tavern-trouble"},
+        {"body": "Kept by a former guard who still stands like one.", "nested": "tavern-trouble"},
+        {"body": "Kept by a cook, mostly. The bar is an afterthought and the food is not.", "nested": "tavern-trouble"},
+        {"body": "Kept by nobody tonight. Help yourself and leave the coin on the bar.", "nested": "tavern-trouble"}
+      ]
+    },
+    {
+      "slug": "tavern-trouble",
+      "name": "A tavern: tonight's trouble",
+      "description": "What happens if the party stays an hour.",
+      "entries": [
+        {"body": "Tonight: somebody is looking for a fight and has chosen the wrong table."},
+        {"body": "Tonight: a stranger buys the whole room a round and asks one question."},
+        {"body": "Tonight: the guard come in, count heads, and leave."},
+        {"body": "Tonight: a purse goes missing, and the door is barred until it is found."},
+        {"body": "Tonight: a song starts that everyone knows and the party does not."},
+        {"body": "Tonight: the keeper asks the party, quietly, to walk somebody home."},
+        {"body": "Tonight: a debt collector reads a name off a list, and it is one of the party's."},
+        {"body": "Tonight: the cellar floods, slowly."},
+        {"body": "Tonight: an old friend of one of the party is here, and pretends not to be."},
+        {"body": "Tonight: a game of cards, played for a favour instead of coin."},
+        {"body": "Tonight: nothing. It is a good night, and the party will remember it."},
+        {"body": "Tonight: the fire goes out and nobody can relight it."}
+      ]
+    }
+  ]
+}
