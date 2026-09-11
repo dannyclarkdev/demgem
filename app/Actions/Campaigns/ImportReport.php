@@ -2,6 +2,8 @@
 
 namespace App\Actions\Campaigns;
 
+use App\Support\Storage\CampaignStorage;
+
 /**
  * What came across, what did not, and why.
  *
@@ -23,6 +25,12 @@ final class ImportReport
     public int $files = 0;
 
     public int $filesRestored = 0;
+
+    /**
+     * Files the archive carried that the campaign's ceiling has no room for. Unpacked,
+     * measured, and left behind before the GM commits, so the count is exact.
+     */
+    public int $filesOverQuota = 0;
 
     /** @var list<string> */
     public array $memberNames = [];
@@ -68,6 +76,13 @@ final class ImportReport
                 'detail' => $this->filesRestored > 0
                     ? 'Those entries are missing from the archive, or they are not the kind of file they say they are. Everything else came with it.'
                     : 'A JSON export names its images rather than carrying them, and demgem will not fetch a link out of an uploaded file. Export the archive instead, or upload them again after the import.',
+            ];
+        }
+
+        if ($this->filesOverQuota > 0) {
+            $losses[] = [
+                'label' => $this->filesOverQuota.' '.str('file')->plural($this->filesOverQuota).' would put the campaign over its storage limit',
+                'detail' => 'This install allows '.CampaignStorage::format(CampaignStorage::limitBytes()).' of files per campaign. The files that fit come across in the order the archive lists them; the rest stay behind, and you can upload them again after deleting something.',
             ];
         }
 

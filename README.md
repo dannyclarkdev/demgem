@@ -50,6 +50,8 @@ Slice 21 adds **the generators**: six shipped table sets, names, someone the par
 
 Slice 22 adds **Continue with Discord**. A button on the login and register pages, shown when the install has a Discord app: it signs a returning user in, links a verified Discord email to the account that already has it, or makes a new account with a password the user never sees. A player handed an invite link in Discord taps it, continues with Discord, and lands on the invite. The profile gains a card to link or unlink it. To turn it on, make an application at https://discord.com/developers/applications, add `APP_URL/auth/discord/callback` as a redirect, and set `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; with the id empty the button does not show.
 
+Slice 23 adds **a ceiling on a campaign's files**. `CAMPAIGN_STORAGE_MB`, 500 by default, is one limit for every campaign on the install, over its cover, every image, and every handout file. An upload that would cross it is refused on the form with the numbers in the sentence, an archive import stops attaching files at the ceiling and says how many it left before the GM commits, and campaign settings shows a bar of what is used. Zero turns it off.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup
