@@ -118,6 +118,15 @@ class EntityFactory extends Factory
         ]);
     }
 
+    /**
+     * A journal by this user. Hidden from the party unless forPlayers() says otherwise;
+     * the author sees it either way, through the gate every PC already passes.
+     */
+    public function journalBy(User $author): static
+    {
+        return $this->state(['type' => EntityType::Journal, 'player_user_id' => $author->id]);
+    }
+
     public function arc(): static
     {
         return $this->state(['type' => EntityType::Arc]);

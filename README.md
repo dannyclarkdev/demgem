@@ -42,6 +42,8 @@ Slice 17 adds **the GM's own monsters**. A campaign writes its own creatures int
 
 Slice 18 adds **story arcs, and the log of what the party earned and chose**. An arc is an entity, a chapter of the campaign: a quest and a session may each be filed under one, and the arc's page lists its quests by status and its sessions in order, each list gated by the viewer's own role. A session carries what the party earned that night, XP or a milestone or both, and the story page totals it over the sessions the reader may see. The decision log is what the party chose and what it cost them, written at the table on the run screen or on the session page, the consequence filled in when the world answers, and revealed to the party a row at a time. All three travel in the export, the import, and the Markdown vault.
 
+Slice 19 adds **the players' own pages, and the party's purse**. A journal is the one entity a player creates: they write it, keep it between them and the GM or share it with the party, and it gets wiki links, backlinks, search, the export, and the vault like everything else. The ledger is one list of coin and item movements any member writes to, summed into a balance and a pack on every read, in the one currency the campaign names in settings. Both travel in the export and the Markdown vault.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup

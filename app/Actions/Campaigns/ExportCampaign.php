@@ -15,6 +15,7 @@ use App\Models\EntityBodyRevision;
 use App\Models\EntityRelation;
 use App\Models\EntityTemplate;
 use App\Models\GameSession;
+use App\Models\LedgerEntry;
 use App\Models\MapMarker;
 use App\Models\QuestObjective;
 use App\Models\RandomTable;
@@ -94,6 +95,7 @@ class ExportCampaign
         'entity_body_revisions' => 'entity_body_revisions',
         'game_sessions' => 'sessions',
         'decisions' => 'decisions',
+        'ledger_entries' => 'ledger',
         'stat_blocks' => 'stat_blocks',
         'encounters' => 'encounters',
         'random_tables' => 'random_tables',
@@ -157,6 +159,7 @@ class ExportCampaign
             'dice_rolls' => $this->diceRolls($campaign),
             'clocks' => $this->clocks($campaign),
             'decisions' => $this->decisions($campaign),
+            'ledger' => $this->ledger($campaign),
         ];
     }
 
@@ -212,6 +215,7 @@ class ExportCampaign
             'timezone' => $campaign->timezone,
             'session_length_minutes' => $campaign->session_length_minutes,
             'reminder_lead_hours' => $campaign->reminder_lead_hours,
+            'currency' => $campaign->currency,
             'created_at' => $campaign->created_at?->toIso8601String(),
             'updated_at' => $campaign->updated_at?->toIso8601String(),
             'cover' => $this->media($campaign->getFirstMedia('cover')),
@@ -576,6 +580,31 @@ class ExportCampaign
                 'detail' => $roll->detail,
                 'private' => $roll->private,
                 'rolled_at' => $roll->created_at?->toIso8601String(),
+            ]);
+    }
+
+    /**
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function ledger(Campaign $campaign): iterable
+    {
+        return LedgerEntry::query()
+            ->withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->cursor()
+            ->map(fn (LedgerEntry $entry) => [
+                'id' => $entry->id,
+                'game_session_id' => $entry->game_session_id,
+                'kind' => $entry->kind->value,
+                'amount' => $entry->amount === null ? null : (float) $entry->amount,
+                'item_name' => $entry->item_name,
+                'quantity' => $entry->quantity,
+                'entity_id' => $entry->entity_id,
+                'note' => $entry->note,
+                'created_at' => $entry->created_at?->toIso8601String(),
+                'updated_at' => $entry->updated_at?->toIso8601String(),
             ]);
     }
 

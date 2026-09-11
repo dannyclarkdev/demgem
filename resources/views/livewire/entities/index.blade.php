@@ -1,5 +1,5 @@
 @php
-    $canCreate = auth()->user()?->can('create', [\App\Models\Entity::class, $campaign]) ?? false;
+    $canCreate = auth()->user()?->can('create', [\App\Models\Entity::class, $campaign, $type]) ?? false;
 @endphp
 <div
     @if ($canCreate)
@@ -7,9 +7,9 @@
     @endif
 >
     <x-ui.page-header :title="$type->plural()" :eyebrow="$campaign->name" :description="$type->description()">
-        @can('create', [\App\Models\Entity::class, $campaign])
+        @if ($canCreate)
             <x-ui.button :href="route('entities.create', [$campaign, $type->slug()])" icon="plus">New {{ strtolower($type->label()) }}</x-ui.button>
-        @endcan
+        @endif
     </x-ui.page-header>
 
     <div class="mb-4 flex flex-wrap items-center gap-2">
@@ -78,10 +78,10 @@
                 <x-ui.button variant="secondary" size="sm" wire:click="$set('search', ''); $set('tag', ''); $set('visibility', ''); $set('questStatus', ''); $set('partyOnly', '')">Clear filters</x-ui.button>
             </x-ui.empty-state>
         @else
-            <x-ui.empty-state title="No {{ strtolower($type->plural()) }} yet" :description="$role->isDm() ? $type->description() : 'The GM has not revealed any '.strtolower($type->plural()).' yet.'" :icon="$type->icon()">
-                @can('create', [\App\Models\Entity::class, $campaign])
+            <x-ui.empty-state title="No {{ strtolower($type->plural()) }} yet" :description="$role->isDm() || $canCreate ? $type->description() : 'The GM has not revealed any '.strtolower($type->plural()).' yet.'" :icon="$type->icon()">
+                @if ($canCreate)
                     <x-ui.button :href="route('entities.create', [$campaign, $type->slug()])" icon="plus">New {{ strtolower($type->label()) }}</x-ui.button>
-                @endcan
+                @endif
             </x-ui.empty-state>
         @endif
     @else
@@ -104,7 +104,9 @@
                                         <span class="ml-1 text-xs font-normal text-ink-faint">PC{{ $entity->player ? ' · '.$entity->player->name : '' }}</span>
                                     @endif
                                 </p>
-                                @if ($entity->parent && $entity->parent->isVisibleTo($viewer, $role))
+                                @if ($isJournal)
+                                    <p class="truncate text-xs text-ink-faint">{{ $entity->player ? 'by '.$entity->player->name.' · ' : '' }}{{ $entity->created_at?->format('D j M Y') }}</p>
+                                @elseif ($entity->parent && $entity->parent->isVisibleTo($viewer, $role))
                                     <p class="truncate text-xs text-ink-faint">in {{ $entity->parent->name }}</p>
                                 @elseif ($isCharacter && (filled($entity->character_class) || $entity->level !== null))
                                     <p class="truncate text-sm text-ink-faint">{{ collect([$entity->character_class, $entity->level !== null ? 'level '.$entity->level : null])->filter()->implode(' · ') }}</p>
@@ -127,6 +129,9 @@
                             @endif
                             @if ($role->isDm())
                                 <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
+                            @elseif ($isJournal && $entity->player_user_id === $viewer->id)
+                                {{-- The author's own journal, and whether the party can read it. --}}
+                                <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility === \App\Enums\Visibility::Dm ? 'You and the GM' : 'The party' }}</x-ui.badge>
                             @endif
                             <x-ui.icon name="chevron-right" class="size-4 text-ink-faint" />
                         </a>

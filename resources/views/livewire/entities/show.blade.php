@@ -15,6 +15,8 @@
         @endif
         @if ($role->isDm())
             <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
+        @elseif ($entity->isJournal() && $entity->player_user_id === $viewer->id)
+            <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility === \App\Enums\Visibility::Dm ? 'You and the GM' : 'The party' }}</x-ui.badge>
         @endif
         @if ($entity->isHandout())
             @can('update', $entity)
@@ -104,6 +106,13 @@
         <p class="-mt-4 mb-6 flex items-center gap-2 text-sm text-ink-muted">
             <x-ui.icon name="sun" class="size-4 text-ink-faint" />
             <span>{{ $happensOn }}</span>
+        </p>
+    @endif
+
+    @if ($entity->isJournal())
+        <p class="-mt-4 mb-6 flex items-center gap-2 text-sm text-ink-muted">
+            <x-ui.icon name="feather" class="size-4 text-ink-faint" />
+            <span>{{ $entity->player ? 'By '.$entity->player->name.' · ' : '' }}{{ $entity->created_at?->format('D j M Y') }}</span>
         </p>
     @endif
 

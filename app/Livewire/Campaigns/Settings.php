@@ -39,6 +39,9 @@ class Settings extends Component
     /** Hours, as a string because the select carries '' for off. */
     public string $reminderLeadHours = '';
 
+    /** What the party ledger counts in. A label, never a rate. */
+    public string $currency = 'gp';
+
     public string $discordWebhookUrl = '';
 
     public string $newOwnerId = '';
@@ -56,6 +59,7 @@ class Settings extends Component
         $this->timezone = $campaign->timezone;
         $this->sessionLengthMinutes = $campaign->session_length_minutes;
         $this->reminderLeadHours = (string) ($campaign->reminder_lead_hours ?? '');
+        $this->currency = $campaign->currency;
         $this->discordWebhookUrl = (string) ($campaign->discord_webhook_url ?? '');
     }
 
@@ -70,6 +74,7 @@ class Settings extends Component
             'timezone' => ['required', 'timezone'],
             'sessionLengthMinutes' => ['required', 'integer', 'min:30', 'max:720'],
             'reminderLeadHours' => ['nullable', Rule::in(array_keys(Campaign::reminderLeadOptions()))],
+            'currency' => ['required', 'string', 'max:'.Campaign::MAX_CURRENCY_LENGTH],
             'cover' => ['nullable', 'image', 'max:8192'],
         ]);
 
@@ -90,6 +95,7 @@ class Settings extends Component
             'timezone' => $validated['timezone'],
             'session_length_minutes' => $validated['sessionLengthMinutes'],
             'reminder_lead_hours' => filled($validated['reminderLeadHours'] ?? null) ? (int) $validated['reminderLeadHours'] : null,
+            'currency' => trim((string) $validated['currency']),
         ]);
 
         session()->flash('status', 'Campaign settings saved.');

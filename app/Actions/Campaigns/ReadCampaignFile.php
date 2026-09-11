@@ -6,6 +6,7 @@ use App\Actions\Clocks\Segments;
 use App\Actions\Maps\Coordinate;
 use App\Enums\EncounterStatus;
 use App\Enums\EntityType;
+use App\Enums\LedgerKind;
 use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
 use App\Enums\Ruleset;
@@ -18,6 +19,7 @@ use App\Models\Decision;
 use App\Models\Encounter;
 use App\Models\EntityRelation;
 use App\Models\GameSession;
+use App\Models\LedgerEntry;
 use App\Models\StatBlock;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
@@ -128,6 +130,7 @@ class ReadCampaignFile
             'random_tables' => $this->randomTables($this->list($decoded, 'random_tables')),
             'clocks' => $this->clocks($this->list($decoded, 'clocks')),
             'decisions' => $this->decisions($this->list($decoded, 'decisions')),
+            'ledger' => $this->ledger($this->list($decoded, 'ledger')),
         ];
 
         $this->countTheUncarried($decoded);
@@ -151,6 +154,7 @@ class ReadCampaignFile
             'timezone' => $this->text($row, 'timezone', 64) ?? 'UTC',
             'session_length_minutes' => min(720, max(30, $this->integer($row, 'session_length_minutes') ?? 240)),
             'reminder_lead_hours' => $this->reminderLead($row),
+            'currency' => $this->text($row, 'currency', Campaign::MAX_CURRENCY_LENGTH) ?? 'gp',
             'cover' => $this->mediaReference($row['cover'] ?? null),
             'calendar' => $this->calendar($row['calendar'] ?? null),
         ];
@@ -819,6 +823,71 @@ class ReadCampaignFile
     }
 
     /**
+     * A row that is neither a coin movement with an amount nor an item with a name
+     * is a row nothing can show, and it is dropped.
+     *
+     * @param  list<mixed>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function ledger(array $rows): array
+    {
+        $entries = [];
+
+        foreach ($rows as $index => $row) {
+            $id = $this->id($row, 'ledger', $index);
+
+            if ($id === null) {
+                continue;
+            }
+
+            $kind = $this->enum(LedgerKind::class, $row, 'kind', "ledger row {$id}") ?? LedgerKind::Coin;
+            $amount = $this->decimal($row, 'amount');
+            $name = $this->text($row, 'item_name', LedgerEntry::MAX_ITEM_NAME_LENGTH);
+            $quantity = $this->signedInteger($row, 'quantity');
+
+            if ($kind === LedgerKind::Coin && $amount === null) {
+                continue;
+            }
+
+            if ($kind === LedgerKind::Item && ($name === null || $quantity === null)) {
+                continue;
+            }
+
+            $entries[] = [
+                'id' => $id,
+                'game_session_id' => $this->reference($row, 'game_session_id'),
+                'kind' => $kind,
+                'amount' => $kind === LedgerKind::Coin ? max(-LedgerEntry::MAX_AMOUNT, min(LedgerEntry::MAX_AMOUNT, round((float) $amount, 2))) : null,
+                'item_name' => $kind === LedgerKind::Item ? $name : null,
+                'quantity' => $kind === LedgerKind::Item ? max(-LedgerEntry::MAX_QUANTITY, min(LedgerEntry::MAX_QUANTITY, (int) $quantity)) : null,
+                'entity_id' => $kind === LedgerKind::Item ? $this->reference($row, 'entity_id') : null,
+                'note' => $this->text($row, 'note', LedgerEntry::MAX_NOTE_LENGTH),
+                'created_at' => $this->text($row, 'created_at', 40),
+            ];
+        }
+
+        $this->report->count('ledger', count($entries));
+
+        return $entries;
+    }
+
+    /**
+     * An integer that may be negative, unlike integer(), which reads counts.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function signedInteger(array $row, string $key): ?int
+    {
+        $value = $row[$key] ?? null;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        return is_string($value) && preg_match('/^-?\\d+$/', $value) === 1 ? (int) $value : null;
+    }
+
+    /**
      * @param  list<mixed>  $rows
      * @return list<array<string, mixed>>
      */
@@ -906,6 +975,8 @@ class ReadCampaignFile
         $clocks = $document['clocks'];
         /** @var list<array<string, mixed>> $decisions */
         $decisions = $document['decisions'];
+        /** @var list<array<string, mixed>> $ledger */
+        $ledger = $document['ledger'];
 
         // An arc is an entity of one type, so the reference is checked against the
         // arcs the file carries rather than every page in it.
@@ -968,6 +1039,11 @@ class ReadCampaignFile
 
         foreach ($decisions as $decision) {
             $this->mustResolve($decision['game_session_id'], $this->sessionIds, 'session', 'a decision');
+        }
+
+        foreach ($ledger as $entry) {
+            $this->mustResolve($entry['game_session_id'], $this->sessionIds, 'session', 'a ledger row');
+            $this->mustResolve($entry['entity_id'], $this->entityIds, 'entity', 'a ledger row');
         }
 
         $this->checkCycles($entities, 'parent_id', 'The pages in that file nest inside each other in a loop');

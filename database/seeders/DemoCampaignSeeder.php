@@ -27,6 +27,7 @@ use App\Actions\Entities\CreateEntity;
 use App\Actions\Entities\CreateEntityTemplate;
 use App\Actions\Entities\RelateEntities;
 use App\Actions\Entities\UpdateEntity;
+use App\Actions\Ledger\RecordLedgerEntry;
 use App\Actions\Maps\PlaceMarker;
 use App\Actions\Maps\SetMarkerVisibility;
 use App\Actions\RandomTables\CreateRandomTable;
@@ -197,6 +198,8 @@ class DemoCampaignSeeder extends Seeder
         $this->seedSessions($campaign, $dm);
         $this->seedQuestDetails($campaign);
         $this->seedDecisions($campaign, $dm);
+        $this->seedJournals($campaign, $dm, $player);
+        $this->seedLedger($campaign, $dm, $player);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
@@ -428,6 +431,49 @@ class DemoCampaignSeeder extends Seeder
      * The active quest gets a giver and five objectives, two of them already ticked in
      * the first session, so the quest log and the Run screen both have something in them.
      */
+    /**
+     * Two pages by the player: one shared with the party, one kept between them and
+     * the GM. The author's own gate, player_user_id, is what makes the second work.
+     */
+    private function seedJournals(Campaign $campaign, User $dm, User $player): void
+    {
+        $create = app(CreateEntity::class);
+
+        $create->handle($campaign, $player, [
+            'type' => EntityType::Journal,
+            'name' => 'After the fire',
+            'visibility' => Visibility::Players,
+            'player_user_id' => $player->id,
+            'body' => "[[Mara Voss]] pulled us out and asked nothing. Nobody does that for free.\n\nWe have the signet. Halder wants to give it back. I want to know what it opens first.",
+            'tags' => ['journal'],
+        ]);
+
+        $create->handle($campaign, $player, [
+            'type' => EntityType::Journal,
+            'name' => 'The door knocker',
+            'visibility' => Visibility::Dm,
+            'player_user_id' => $player->id,
+            'body' => "I know that knocker. It was on our door, before the tide. I did not tell the others.\n\nIf the customs house is dry, somebody kept it dry.",
+        ]);
+    }
+
+    /**
+     * The purse and the pack: a starting purse, the bribe from session two, and the
+     * signet, linked to its page.
+     */
+    private function seedLedger(Campaign $campaign, User $dm, User $player): void
+    {
+        $record = app(RecordLedgerEntry::class);
+        $second = $campaign->gameSessions()->where('number', 2)->first();
+        $signet = $campaign->entities()->where('name', 'Tidewarden Signet')->first();
+
+        $record->coin($campaign, $dm, 150, 'Starting purse');
+        $record->item($campaign, $player, 'Tidewarden Signet', 1, $signet, 'On loan from Mara Voss', $campaign->gameSessions()->where('number', 1)->first());
+        $record->coin($campaign, $player, -40, 'The gate sergeant', $second);
+        $record->item($campaign, $player, 'Torch', 6, null, null, $second);
+        $record->item($campaign, $player, 'Torch', -2, null, 'Burned in the corridor', $second);
+    }
+
     /**
      * Three choices the party made: two revealed, one the GM is keeping to see how it
      * lands, and one consequence already written in.

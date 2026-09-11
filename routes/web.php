@@ -27,6 +27,7 @@ use App\Livewire\Entities\Form as EntitiesForm;
 use App\Livewire\Entities\Index as EntitiesIndex;
 use App\Livewire\Entities\Show as EntitiesShow;
 use App\Livewire\Entities\Templates;
+use App\Livewire\Ledger\Index as LedgerIndex;
 use App\Livewire\Profile\Edit as ProfileEdit;
 use App\Livewire\RandomTables\Index as TablesIndex;
 use App\Livewire\RandomTables\Show as TablesShow;
@@ -124,6 +125,9 @@ Route::middleware('auth')->group(function () {
             // The choices the party made and what came of them. Every member; what a
             // player reads is the log's own query.
             Route::get('/decisions', DecisionsIndex::class)->name('decisions.index');
+
+            // The party's purse and pack. Every member reads and writes it.
+            Route::get('/ledger', LedgerIndex::class)->name('ledger.index');
 
             // The shipped reference data. Addressed by slug, unlike an entity: a stat
             // block is not a GM's to rename, so the slug is stable in a way an entity's

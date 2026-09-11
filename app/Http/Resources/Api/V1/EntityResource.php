@@ -70,6 +70,10 @@ class EntityResource extends JsonResource
             $data['happens_on'] = $this->happens_on?->toArray();
         }
 
+        if ($this->isJournal()) {
+            $data['journal'] = ['author_user_id' => $this->player_user_id];
+        }
+
         $data['parent'] = $this->whenLoaded('parent', fn () => $this->parent === null ? null : self::link($this->parent));
         $data['children'] = $this->whenLoaded('children', fn () => $this->children
             ->map(fn (Entity $child) => self::link($child))->values()->all());

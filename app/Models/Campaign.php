@@ -27,6 +27,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string $timezone
  * @property int $session_length_minutes
  * @property int|null $reminder_lead_hours
+ * @property string $currency
  * @property string|null $discord_webhook_url Decrypted on read. Never exported.
  * @property int|null $created_by
  * @property Carbon|null $created_at
@@ -34,11 +35,21 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read CampaignMember|null $owner
  * @property-read Calendar|null $calendar
  */
-#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'discord_webhook_url', 'created_by'])]
+#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'currency', 'discord_webhook_url', 'created_by'])]
 class Campaign extends Model implements HasMedia
 {
     /** @use HasFactory<CampaignFactory> */
     use HasFactory, HasUlids, InteractsWithMedia, SoftDeletes;
+
+    public const MAX_CURRENCY_LENGTH = 12;
+
+    /**
+     * The column has the same default; this one is for an instance that has not been
+     * read back from the row yet, such as one a factory just made.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['currency' => 'gp'];
 
     /** @var array<int, CampaignMember|null> */
     private array $memberCache = [];
@@ -129,6 +140,16 @@ class Campaign extends Model implements HasMedia
     public function clocks(): HasMany
     {
         return $this->hasMany(Clock::class)->orderBy('position');
+    }
+
+    /**
+     * The party's purse and pack, oldest first.
+     *
+     * @return HasMany<LedgerEntry, $this>
+     */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LedgerEntry::class)->orderBy('created_at');
     }
 
     /**
