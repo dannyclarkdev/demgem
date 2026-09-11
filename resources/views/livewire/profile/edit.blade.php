@@ -43,6 +43,30 @@
             @endif
         </x-ui.card>
 
+        @if ($discordConfigured || $discord !== null)
+            <x-ui.card title="Connected accounts">
+                @if ($discord !== null)
+                    <div class="flex flex-wrap items-center gap-3">
+                        @if ($discord->avatar_url)
+                            <img src="{{ $discord->avatar_url }}" alt="" class="size-10 rounded-full">
+                        @else
+                            <span class="inline-flex size-10 items-center justify-center rounded-full bg-raised text-ink-muted"><x-ui.icon name="discord" class="size-5" /></span>
+                        @endif
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-ink">Discord</p>
+                            <p class="truncate text-xs text-ink-faint">{{ $discord->name ?? 'Linked' }} &middot; linked {{ $discord->created_at?->diffForHumans() }}</p>
+                        </div>
+                        <x-ui.button type="button" variant="ghost" size="sm" icon="trash" wire:click="unlinkDiscord" wire:confirm="Unlink Discord? You can still log in with your password, or set one with the reset link.">Unlink</x-ui.button>
+                    </div>
+                @else
+                    <p class="text-sm text-ink-muted">Link Discord and log in with one press from now on.</p>
+                    <div class="mt-4">
+                        <x-ui.button :href="route('auth.discord.redirect')" variant="secondary" icon="discord">Link Discord</x-ui.button>
+                    </div>
+                @endif
+            </x-ui.card>
+        @endif
+
         <x-ui.card title="API keys">
             <p class="text-sm text-ink-muted">A key lets a script or an assistant read what you can read, in every campaign you belong to, and write what you can write if you tick the box. Treat one like a password.</p>
 

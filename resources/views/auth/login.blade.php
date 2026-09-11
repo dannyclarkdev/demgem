@@ -6,7 +6,11 @@
         <x-ui.alert variant="success" class="mt-4">{{ session('status') }}</x-ui.alert>
     @endif
 
-    <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
+    <div class="mt-6">
+        <x-auth.discord-button />
+    </div>
+
+    <form method="POST" action="{{ route('login') }}" class="space-y-4">
         @csrf
         <x-ui.input label="Email" name="email" type="email" :value="old('email')" required autofocus autocomplete="email" />
         <x-ui.input label="Password" name="password" type="password" required autocomplete="current-password" />

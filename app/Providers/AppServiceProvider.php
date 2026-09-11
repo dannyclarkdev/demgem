@@ -14,9 +14,12 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Discord\DiscordExtendSocialite;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Discord is not a first-party Socialite provider; the community package adds
+        // it when Socialite is asked for a driver it does not know.
+        Event::listen(SocialiteWasCalled::class, DiscordExtendSocialite::class.'@handle');
+
         Model::shouldBeStrict(! $this->app->isProduction());
 
         Relation::enforceMorphMap([
