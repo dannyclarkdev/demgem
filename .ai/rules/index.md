@@ -26,7 +26,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | tests/Feature/Campaigns/** | .ai/rules/feature-campaigns.md |
 | app/Livewire/** | .ai/rules/livewire.md |
 | database/migrations/** | .ai/rules/migrations.md |
-| app/Models/**, app/Models/MapMarker.php, app/Models/Clock.php, app/Models/Entity.php | .ai/rules/models.md |
+| app/Models/**, app/Models/MapMarker.php, app/Models/Clock.php, app/Models/Entity.php, app/Models/LedgerEntry.php | .ai/rules/models.md |
 | app/Observers/** | .ai/rules/observers.md |
 | app/Support/Reckoning/** | .ai/rules/reckoning.md |
 | routes/web.php | .ai/rules/routes.md |

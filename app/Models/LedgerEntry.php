@@ -143,24 +143,34 @@ class LedgerEntry extends Model
      * The pack, summed from the rows: one line per item with a total above zero,
      * named by the last row that mentioned it. Computed, never stored.
      *
+     * A plain list rather than a Collection: the shape is the contract, and a
+     * Collection's value type is not covariant, so PHPStan cannot hold it.
+     *
      * @param  Collection<int, LedgerEntry>  $rows
-     * @return Collection<int, array{key: string, name: string, quantity: int, entity_id: string|null}>
+     * @return list<array{key: string, name: string, quantity: int, entity_id: string|null}>
      */
-    public static function inventory(Collection $rows): Collection
+    public static function inventory(Collection $rows): array
     {
-        /** @var Collection<int, array{key: string, name: string, quantity: int, entity_id: string|null}> $lines */
-        $lines = $rows
-            ->filter(fn (LedgerEntry $row) => ! $row->isCoin())
-            ->groupBy(fn (LedgerEntry $row) => $row->inventoryKey())
-            ->map(fn (Collection $group, string $key) => [
+        $lines = [];
+
+        foreach ($rows as $row) {
+            if ($row->isCoin()) {
+                continue;
+            }
+
+            $key = $row->inventoryKey();
+
+            $lines[$key] = [
                 'key' => $key,
-                'name' => (string) ($group->last()?->item_name ?? ''),
-                'quantity' => (int) $group->sum('quantity'),
-                'entity_id' => $group->last()?->entity_id,
-            ])
-            ->filter(fn (array $line) => $line['quantity'] > 0)
-            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
-            ->values();
+                'name' => (string) $row->item_name,
+                'quantity' => ($lines[$key]['quantity'] ?? 0) + (int) $row->quantity,
+                'entity_id' => $row->entity_id,
+            ];
+        }
+
+        $lines = array_values(array_filter($lines, fn (array $line): bool => $line['quantity'] > 0));
+
+        usort($lines, fn (array $a, array $b): int => strnatcasecmp($a['name'], $b['name']));
 
         return $lines;
     }

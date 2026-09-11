@@ -29,9 +29,9 @@ it('lets a player record coin and an item, and sums the purse and the pack', fun
         ->set('kind', 'item')->set('direction', 'spend')->set('itemName', 'torch')->set('quantity', '2')
         ->call('record')->assertHasNoErrors()
         ->assertViewHas('balance', 110.0)
-        ->assertViewHas('inventory', fn ($inventory) => $inventory->count() === 1
-            && $inventory->first()['quantity'] === 3
-            && $inventory->first()['name'] === 'torch')
+        ->assertViewHas('inventory', fn (array $inventory) => count($inventory) === 1
+            && $inventory[0]['quantity'] === 3
+            && $inventory[0]['name'] === 'torch')
         ->assertSee('110.00')
         ->assertSee('Starting purse')
         ->assertSee('The gate sergeant');

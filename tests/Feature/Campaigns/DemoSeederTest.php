@@ -7,6 +7,7 @@ use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\EntityTemplate;
 use App\Models\GameSession;
+use App\Models\LedgerEntry;
 use App\Models\MapMarker;
 use App\Models\RandomTable;
 use App\Models\User;
@@ -67,6 +68,15 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and(Decision::query()->count())->toBe(3)
         ->and(Decision::query()->where('player_visible', true)->count())->toBe(2)
         ->and(Decision::query()->whereNotNull('consequence')->count())->toBe(2);
+
+    // Slice 19: the player's two pages, one private, and a ledger that sums.
+    $journals = Entity::query()->where('type', 'journal')->get();
+
+    expect($journals)->toHaveCount(2)
+        ->and($journals->pluck('player_user_id')->unique()->all())->toBe([$player->id])
+        ->and($journals->where('visibility', 'dm')->count())->toBe(1)
+        ->and((float) LedgerEntry::query()->coin()->sum('amount'))->toBe(110.0)
+        ->and(collect(LedgerEntry::inventory(LedgerEntry::query()->items()->get()))->pluck('quantity', 'name')->all())->toBe(['Tidewarden Signet' => 1, 'Torch' => 4]);
 });
 
 it('renders every demo screen for the GM it seeds', function () {
@@ -90,6 +100,9 @@ it('renders every demo screen for the GM it seeds', function () {
         route('entities.index', [$campaign, 'arcs']),
         route('entities.show', [$campaign, 'arcs', 'the-duke-beneath']),
         route('decisions.index', $campaign),
+        route('ledger.index', $campaign),
+        route('entities.index', [$campaign, 'journals']),
+        route('entities.show', [$campaign, 'journals', 'after-the-fire']),
         route('sessions.show', [$campaign, 1]),
         route('sessions.run', [$campaign, 3]),
         route('calendar.show', $campaign),

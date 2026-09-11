@@ -123,7 +123,7 @@ class WriteCampaignMarkdown
 
         $balance = (float) $ledger->filter(fn (LedgerEntry $row) => $row->isCoin())->sum('amount');
 
-        $pack = LedgerEntry::inventory($ledger)
+        $pack = collect(LedgerEntry::inventory($ledger))
             ->map(fn (array $line) => '- '.$line['quantity'].' × '.$line['name'])
             ->implode("\n");
 

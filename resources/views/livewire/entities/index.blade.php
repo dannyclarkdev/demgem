@@ -129,6 +129,9 @@
                             @endif
                             @if ($role->isDm())
                                 <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility->label() }}</x-ui.badge>
+                            @elseif ($isJournal && $entity->player_user_id === $viewer->id)
+                                {{-- The author's own journal, and whether the party can read it. --}}
+                                <x-ui.badge :variant="$entity->visibility === \App\Enums\Visibility::Dm ? 'dm' : 'neutral'" :icon="$entity->visibility === \App\Enums\Visibility::Dm ? 'eye-off' : 'eye'">{{ $entity->visibility === \App\Enums\Visibility::Dm ? 'You and the GM' : 'The party' }}</x-ui.badge>
                             @endif
                             <x-ui.icon name="chevron-right" class="size-4 text-ink-faint" />
                         </a>

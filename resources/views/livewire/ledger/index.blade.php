@@ -15,7 +15,7 @@
 
         <div class="rounded-lg border border-line bg-panel px-5 py-4">
             <p class="eyebrow mb-2">In the pack</p>
-            @if ($inventory->isEmpty())
+            @if ($inventory === [])
                 <p class="text-sm text-ink-faint">Nothing carried yet.</p>
             @else
                 <ul class="flex flex-wrap gap-2">

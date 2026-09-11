@@ -4,6 +4,7 @@ paths:
   - app/Models/MapMarker.php
   - app/Models/Clock.php
   - app/Models/Entity.php
+  - app/Models/LedgerEntry.php
 ---
 
 # Models
@@ -77,3 +78,6 @@ Every in-game date is three integer columns (year, month, day) read through Game
 `EntityType::Arc` is an entity. `entities.arc_id` (quests only, prohibited elsewhere including on an arc, so no chain forms) and `game_sessions.arc_id` are scalars, nullOnDelete. Soft delete never fires that, so `DeleteEntity` nulls both columns itself when an arc goes. The arc page reads its two lists through `Entity::visibleTo()` and `GameSession::scopeVisibleTo()`; the quest page and the session page show "Part of" only when the arc itself passes the viewer's gate, the giver's rule.
 
 `game_sessions.xp_awarded` and `milestone` are not DM fields: whoever sees the session sees the reward, and the story page totals only what `visibleTo()` returned.
+
+## The ledger is ungated, append-only, and summed on every read
+`ledger_entries` has no visibility column and no `scopeVisibleTo()`: the purse is the party's, every member reads and writes it. Rows are never edited; a mistake is deleted (author or GM) and written again, so there is no update action. The balance is `sum(amount)` over coin rows and the inventory is `LedgerEntry::inventory()` over item rows, grouped by the linked Item page or the case-folded name, computed on every read and never stored. The two links on a row, the session and the Item page, are loaded through `GameSession::visibleTo()` and `Entity::visibleTo()` keyed by id, the clock's way; a member who posts a page id the picker never offered gets the row without the link, silently. The unit is `campaigns.currency`, one label, no rate.

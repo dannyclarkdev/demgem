@@ -2,7 +2,7 @@
 title: "feat: The players' own pages, and the party's purse"
 type: feat
 date: 2026-09-11
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-11-feat-story-arcs-rewards-decisions-plan.md
 ---
@@ -152,3 +152,42 @@ Then the full suite with `memory_limit=1G`, and a browser pass at a laptop width
 - `.ai/rules/campaigns.md` — a new campaign-scoped table joins the export in the same commit; an added key does not bump the version; people are never re-linked.
 - `.ai/rules/api.md` — the API is the screens in JSON.
 - `docs/plans/2026-09-11-feat-story-arcs-rewards-decisions-plan.md` — the last type added, and the decision log this ledger is shaped after.
+
+## Implementation Results — 2026-09-11
+
+Implemented in full. 16 new tests; the suite is 1349 tests, 1348 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `EntityType::Journal`, author in `player_user_id` | As planned. `EntityPolicy::create()` takes the type; every caller passes it. The form strips the DM card's `player_user_id` and `is_pc` on a journal so a GM's edit keeps the author. |
+| The author's visibility switch | As planned, outside the DM card, limited to Dm and Players in the form and in `EntityController::rules()`. Selected from an author is a 422. |
+| The journals index | Newest first, with the author and the date on each card, and a **New journal** button for every member. |
+| `campaigns.currency` | As planned, in settings and in the export. The model carries the same default the column does, because an instance a factory just made has not read the row back. |
+| `ledger_entries`, one table, two kinds | As planned. `LedgerEntry::inventory()` returns a plain list rather than a Collection: the shape is the contract, and a Collection's value type is not covariant, so Larastan could not hold it. |
+| `/ledger` | As planned: the purse, the pack, the form, the movements newest first, and a delete for the author or a GM. |
+| The round trip | `ledger` is a new top-level section with both links remapped; `campaign.currency` is an added key. A journal's author is dropped with every other person column, as the plan said. |
+| The vault | `journals/` with `author` in the front matter, and one `ledger.md` with the purse, the pack, and the movements. |
+
+### Deviations
+
+| Planned | Shipped | Why |
+|---|---|---|
+| Nothing about a private journal's look for its author | A badge, "You and the GM" or "The party", on the index and the page for the author | The browser pass from the player's seat showed two journals with no way to tell the private one apart. |
+| A forged Item page id refused | Dropped silently, the row written without the link | The picker never offers a page the writer may not see, so an id for one is a forged request, and a forged request is downgraded silently, the dice log's rule. |
+
+### Open questions, answered
+
+1. No in-world date on a journal, and not on the timeline. Out, as recommended.
+2. No starting balance column. The demo's first row is "Starting purse, 150 gp".
+3. One unit. A 5e table writes 0.5 for five silver.
+
+### Browser checks
+
+Driven end to end on the seeded world at 834px as the player and 1400px as the GM:
+
+- The ledger reads 110.00 gp in the purse and a signet and four torches in the pack from both seats. The player's rows carry a delete; the GM's starting purse does not, from the player's seat.
+- The journals index offers the player **New journal**, lists both entries newest first with the author, and marks the private one.
+- The journal form gives the player name, body, tags, details, an image, and the one switch, "Just me and the GM" or "The whole party".
+- The private journal page reads "By Tobin Ashgrove" with the badge, and the GM opens the same page.

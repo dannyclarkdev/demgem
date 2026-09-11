@@ -128,7 +128,7 @@ class Index extends Component
             'inventory' => $inventory,
             'entries' => $entries,
             'sessionLinks' => $this->sessionLinks($rows),
-            'itemLinks' => $this->itemLinks($rows->pluck('entity_id')->merge($inventory->pluck('entity_id'))),
+            'itemLinks' => $this->itemLinks($rows->pluck('entity_id')->merge(array_column($inventory, 'entity_id'))),
             'kinds' => LedgerKind::cases(),
             'sessionOptions' => GameSession::query()->visibleTo($role)->orderByDesc('number')->get(['id', 'number', 'title']),
             // The Item pages this member may see, for the optional link.
