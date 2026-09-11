@@ -30,6 +30,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Models/**, app/Models/MapMarker.php, app/Models/Clock.php, app/Models/Entity.php, app/Models/LedgerEntry.php | .ai/rules/models.md |
 | app/Observers/** | .ai/rules/observers.md |
+| database/generators/**, app/Support/Generators/**, app/Actions/RandomTables/InstallGenerator.php | .ai/rules/random-tables.md |
 | app/Support/Reckoning/** | .ai/rules/reckoning.md |
 | routes/web.php | .ai/rules/routes.md |
 | app/Livewire/Table/** | .ai/rules/table.md |

@@ -2,7 +2,7 @@
 title: "feat: The generators, six table sets a GM adds with one press"
 type: feat
 date: 2026-09-11
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-11-feat-secret-blocks-reputation-plan.md
 ---
@@ -132,3 +132,35 @@ Then the full suite with `memory_limit=1G`, and a browser pass: add one set from
 - `.ai/rules/campaigns.md` — an added key does not bump the version.
 - `.ai/rules/commands.md` — the precedent for shipped data under `database/` and the notice that says where it came from.
 - `docs/plans/2026-09-03-feat-quests-tracker-dice-tables-plan.md` — where nesting was designed.
+
+## Implementation Results — 2026-09-11
+
+Implemented in full. 8 new tests; the suite is 1378 tests, 1377 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| Six sets under `database/generators` | As planned: 17 tables and 309 rows, with a README that says the content is demgem's own. |
+| `Generators` reads and checks the files | As planned. A missing key, a table with no rows, or a nested slug the set lacks throws at read time, and a test holds the last of those. |
+| `InstallGenerator` | As planned: one transaction, the chain resolved, every table stamped, a taken name suffixed " (generator)". |
+| The index | A Generators card above the list with Add, Added, and Add all. |
+| `generator_key` on the round trip | As planned, and a test confirms a set counts as added on the other side. |
+| The demo | The seeder adds every set beside its own two tables. |
+
+### Deviations
+
+None from the plan.
+
+### Seen on the way, and left for a later slice
+
+With every set added, the drawer on the Run screen lists nineteen tables, and twelve of them are the inner tables of a chain that a GM never rolls on their own. A later slice could mark a table as "rolled only through another" and keep it out of the drawer. It is a drawer question rather than a generator question, and it is recorded here rather than solved.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px as the GM:
+
+- The tables index offers the six sets with their table and row counts. **Add all** turns every button to **Added** and the list below grows from two tables to nineteen.
+- The Run screen's drawer rolls "Someone the party meets" and prints the chain: a midwife who knows every family in the district, wants a place to hide a box, hides that they have met one of the party before, and how they carry it.
+
+The tool's synthetic click on a Livewire button reached nothing, as slice 12 found; `element.click()` through the page's own DOM did, and that is how the pass was driven.

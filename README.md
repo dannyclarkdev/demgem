@@ -46,6 +46,8 @@ Slice 19 adds **the players' own pages, and the party's purse**. A journal is th
 
 Slice 20 adds **what the party may not read, and how the factions feel about them**. A `:::secret` fence inside any Markdown body is a paragraph the GM reads as a marked aside and a player never receives: not on the page, not in the API, not in a backlink, not in a search hit, not in their own editor. A faction carries a log of the moments that changed its standing with the party, each with a reason, a session, and an eye; the party reads the sum of the moments the GM revealed, and the GM reads that number beside the true one.
 
+Slice 21 adds **the generators**: six shipped table sets, names, someone the party meets, a tavern, the weather, loot, and a rumour, that a GM adds from the tables index with one press. A set copies in as ordinary tables, nested three and four deep so one roll reads as a whole person or a whole evening, and the copies are the GM's to edit. The content is demgem's own.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup
