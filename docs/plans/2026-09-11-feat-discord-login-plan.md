@@ -2,7 +2,7 @@
 title: "feat: Continue with Discord, and the account it links to"
 type: feat
 date: 2026-09-11
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-11-feat-built-in-generators-plan.md
 ---
@@ -128,3 +128,36 @@ Then the full suite with `memory_limit=1G`. The browser pass needs a Discord app
 - `.ai/rules/discord.md` — the server posts to Discord and nothing else; this slice reads from it through Socialite, and takes no URL from a user.
 - `.ai/rules/calendar.md` — the feed's token is a credential; a Discord id is an identity, and the row that holds it cascades with the user.
 - `docs/plans/2026-09-08-feat-api-tokens-discord-plan.md` — the webhook, and the reason there is no bot.
+
+## Implementation Results — 2026-09-11
+
+Implemented in full. 10 new tests; the suite is 1388 tests, 1387 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `laravel/socialite` and `socialiteproviders/discord` | Installed, with the Discord provider registered through `SocialiteWasCalled` in `AppServiceProvider`. |
+| `social_accounts` | As planned. A person table, never exported. |
+| One callback, three outcomes | `SignInWithDiscord`, in the plan's order, with `DiscordSignInRefused` carrying the notice for each refusal. A Discord account already linked to another user is a fourth refusal the plan did not list. |
+| The verified check | Read from Socialite's raw payload, and defensive: no payload reads as unverified. |
+| The button | One Blade component on the login and register pages, rendered only when both keys are set. The routes 404 otherwise. |
+| The profile card | Link, or the name and avatar with Unlink. |
+| The invite round trip | A test opens an invite as a guest, continues with Discord, and lands on the invite. |
+
+### Deviations
+
+None from the plan.
+
+### Browser checks
+
+The pass could not be driven. The browser tool failed on every read partway through this slice, after four slices of use today, and the screenshot of the login page with the button on it was never captured. Two things stand in for it:
+
+- With the two keys in `.env`, a request for the login page carries "Continue with Discord"; without them it does not. Checked with curl against the served app.
+- The tests drive every outcome of the callback with a faked provider, and the profile card's link and unlink through Livewire.
+
+A real Discord app is needed to press the button end to end, and this machine has none. That is recorded here rather than pretended.
+
+### For the next session
+
+`php artisan serve` does not pass shell environment variables to the server it spawns, so a key set on the command line is not seen by the served app. Put it in `.env` for a local check.
