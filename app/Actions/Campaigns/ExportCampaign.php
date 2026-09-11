@@ -551,6 +551,7 @@ class ExportCampaign
                 'id' => $table->id,
                 'name' => $table->name,
                 'description' => $table->description,
+                'generator_key' => $table->generator_key,
                 'entries' => $table->entries
                     ->map(fn (RandomTableEntry $entry) => [
                         'id' => $entry->id,

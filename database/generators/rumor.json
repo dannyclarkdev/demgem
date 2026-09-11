@@ -1,0 +1,57 @@
+{
+  "key": "rumor",
+  "name": "A rumour",
+  "description": "What people are saying, and sometimes what is actually true.",
+  "tables": [
+    {
+      "slug": "rumor-heard",
+      "name": "A rumour",
+      "description": "Roll it when the party asks around.",
+      "entries": [
+        {"body": "A caravan is three days late and nobody will say why.", "nested": "rumor-truth"},
+        {"body": "The well on the east side has gone sweet, and it was never sweet.", "nested": "rumor-truth"},
+        {"body": "Somebody is buying up boats, quietly, for more than they are worth.", "nested": "rumor-truth"},
+        {"body": "The mayor has not been seen in a week. The mayor's coach has.", "nested": "rumor-truth"},
+        {"body": "A child went missing and came back with a different accent."},
+        {"body": "There is a new tax coming, on doors."},
+        {"body": "The guard captain lost at cards to a stranger and paid in a key."},
+        {"body": "Lights on the hill, three nights running, where the old fort was.", "nested": "rumor-truth"},
+        {"body": "The priest has stopped ringing the dawn bell and will not say why."},
+        {"body": "A ship came in flying no flag and left flying two."},
+        {"body": "Somebody is asking after the party by name."},
+        {"body": "The river is running the wrong way at the bend, for an hour each morning.", "nested": "rumor-truth"},
+        {"body": "The baker's dog will not go near the cellar any more."},
+        {"body": "A wedding was called off at the altar, and the groom left town on foot."},
+        {"body": "The old bridge is to be pulled down, and the new one is not built."},
+        {"body": "There is a reward posted, but the notice was torn down before anyone read it.", "nested": "rumor-truth"},
+        {"body": "A soldier came home from a war nobody has heard of."},
+        {"body": "The fishmonger has started paying in old coin."},
+        {"body": "Somebody has been sleeping in the graveyard, and tidying it."},
+        {"body": "The letters from the capital have stopped."},
+        {"body": "A wolf was seen in the market square at noon, and it was not hungry.", "nested": "rumor-truth"},
+        {"body": "A house on the high street has been empty a year and last night it had a light in it."},
+        {"body": "The healer will not treat anyone from the north bank."},
+        {"body": "The party has been talked about, favourably, by somebody important."}
+      ]
+    },
+    {
+      "slug": "rumor-truth",
+      "name": "A rumour: and the truth of it",
+      "description": "For the GM's eyes. What is behind it, if anything.",
+      "entries": [
+        {"body": "The truth: it is exactly as they say, and worse."},
+        {"body": "The truth: it is a lie, spread on purpose, and the party has just met the person spreading it."},
+        {"body": "The truth: it was true a month ago and is over now, and the ending is the story."},
+        {"body": "The truth: it is two separate things, told as one."},
+        {"body": "The truth: it is true, and the person who told the party is part of it."},
+        {"body": "The truth: nobody knows, and the not knowing is what is doing the damage."},
+        {"body": "The truth: it is a cover for something smaller and more embarrassing."},
+        {"body": "The truth: it is a cover for something larger, and the cover is failing."},
+        {"body": "The truth: a child started it, and adults finished it."},
+        {"body": "The truth: it is true, and the authorities know, and they are waiting."},
+        {"body": "The truth: it is half true, and the wrong half is the one people repeat."},
+        {"body": "The truth: it is about the party, and they do not know it yet."}
+      ]
+    }
+  ]
+}

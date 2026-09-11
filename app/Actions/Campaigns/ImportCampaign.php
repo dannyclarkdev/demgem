@@ -572,6 +572,7 @@ class ImportCampaign
                 'campaign_id' => $campaign->id,
                 'name' => $row['name'],
                 'description' => $row['description'],
+                'generator_key' => $row['generator_key'],
                 'created_by' => $importer->id,
             ]);
         }

@@ -12,6 +12,31 @@
         </form>
     </x-ui.card>
 
+    {{-- The shipped sets. Adding one copies it in as ordinary tables, stamped with the
+         set's key, so the button reads Added while any table of it survives. --}}
+    <x-ui.card class="mb-4" title="Generators" :padding="false">
+        <x-slot:header>
+            @if ($anySetOut)
+                <x-ui.button variant="secondary" size="sm" icon="plus" wire:click="installAll" class="ml-auto">Add all</x-ui.button>
+            @endif
+        </x-slot:header>
+        <ul class="divide-y divide-line">
+            @foreach ($sets as $row)
+                <li wire:key="set-{{ $row['set']->key }}" class="flex flex-wrap items-center gap-3 px-5 py-3">
+                    <span class="min-w-0 flex-1">
+                        <span class="block font-medium text-ink">{{ $row['set']->name }}</span>
+                        <span class="block text-xs text-ink-faint">{{ $row['set']->tableCount() }} {{ Str::plural('table', $row['set']->tableCount()) }}, {{ $row['set']->entryCount() }} rows &middot; {{ $row['set']->description }}</span>
+                    </span>
+                    @if ($row['installed'])
+                        <x-ui.badge variant="success" icon="check">Added</x-ui.badge>
+                    @else
+                        <x-ui.button variant="secondary" size="sm" icon="plus" wire:click="install('{{ $row['set']->key }}')">Add</x-ui.button>
+                    @endif
+                </li>
+            @endforeach
+        </ul>
+    </x-ui.card>
+
     @if ($tables->isEmpty())
         <x-ui.empty-state
             title="No tables yet"
