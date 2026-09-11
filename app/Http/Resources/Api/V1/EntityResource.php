@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Enums\EntityType;
 use App\Http\Resources\Api\V1\Concerns\ReadsTheViewerRole;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Models\Entity;
 use App\Models\EntityRelation;
 use App\Models\QuestObjective;
@@ -31,7 +32,9 @@ class EntityResource extends JsonResource
             'type' => $this->type->value,
             'name' => $this->name,
             'slug' => $this->slug,
-            'body' => $this->body,
+            // A non-DM key never receives a :::secret fence. Dropped from the text,
+            // the way a DM-only key is dropped from the document.
+            'body' => $this->isDm() ? $this->body : SecretBlocks::strip($this->body),
             'tags' => $this->tags->pluck('name')->values()->all(),
             'custom_fields' => $this->customFields(),
             'image_url' => $this->imageUrl(),
@@ -53,7 +56,7 @@ class EntityResource extends JsonResource
         if ($this->isQuest()) {
             $data['quest'] = [
                 'status' => $this->questStatus()?->value,
-                'rewards' => $this->rewards,
+                'rewards' => $this->isDm() ? $this->rewards : SecretBlocks::strip($this->rewards),
                 'giver' => $this->whenLoaded('giver', fn () => $this->giver === null ? null : self::link($this->giver)),
                 'arc' => $this->whenLoaded('arc', fn () => $this->arc === null ? null : self::link($this->arc)),
                 'objectives' => $this->whenLoaded('objectives', fn () => $this->objectives

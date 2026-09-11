@@ -2,6 +2,8 @@
 
 namespace App\Markdown;
 
+use App\Markdown\Secrets\SecretBlockExtension;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Markdown\WikiLink\WikiLinkExtension;
 use App\Markdown\WikiLink\WikiLinkRenderer;
 use Illuminate\Support\Str;
@@ -26,10 +28,19 @@ class MarkdownRenderer
     }
 
     /**
-     * Without a wiki link renderer, [[links]] stay as typed.
+     * Without a wiki link renderer, [[links]] stay as typed, and a :::secret fence is
+     * stripped: no viewer is known, so the safe reading is a player's.
+     *
+     * With one, the fence is parsed into a GM's aside when the viewer is a GM and
+     * stripped before parsing otherwise. Stripped, not hidden: the paragraph never
+     * reaches the parser, so it cannot reach the HTML.
      */
     public function render(?string $markdown, ?WikiLinkRenderer $wikiLinks = null): string
     {
+        if ($wikiLinks === null || ! $wikiLinks->revealsSecrets()) {
+            $markdown = SecretBlocks::strip($markdown);
+        }
+
         if ($markdown === null || trim($markdown) === '') {
             return '';
         }
@@ -39,6 +50,10 @@ class MarkdownRenderer
         if ($wikiLinks !== null) {
             $wikiLinks->preload($this->scanner->scan($markdown));
             $extensions[] = new WikiLinkExtension($wikiLinks);
+
+            if ($wikiLinks->revealsSecrets()) {
+                $extensions[] = new SecretBlockExtension;
+            }
         }
 
         return (string) Str::markdown($markdown, self::options(), $extensions);

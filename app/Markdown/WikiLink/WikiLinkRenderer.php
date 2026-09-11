@@ -34,6 +34,15 @@ final class WikiLinkRenderer implements NodeRendererInterface
     }
 
     /**
+     * Whether this viewer reads what is inside a :::secret fence. A GM does; the
+     * renderer strips the fence from everyone else's text before it is parsed.
+     */
+    public function revealsSecrets(): bool
+    {
+        return $this->role->isDm();
+    }
+
+    /**
      * @param  iterable<WikiLinkToken>  $tokens
      */
     public function preload(iterable $tokens): void

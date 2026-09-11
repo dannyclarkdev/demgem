@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ReadsTheViewerRole;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\Scene;
@@ -39,7 +40,7 @@ class SessionResource extends JsonResource
             'arc_id' => $this->arc_id,
             'xp_awarded' => $this->xp_awarded,
             'milestone' => $this->milestone,
-            'recap' => $this->isRecapVisibleTo($role) ? $this->recap : null,
+            'recap' => $this->isRecapVisibleTo($role) ? ($role->isDm() ? $this->recap : SecretBlocks::strip($this->recap)) : null,
             'recap_published_at' => $this->hasPublishedRecap() ? $this->recap_published_at?->toIso8601String() : null,
             'url' => $this->url(),
             'created_at' => $this->created_at?->toIso8601String(),

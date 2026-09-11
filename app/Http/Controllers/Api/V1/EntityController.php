@@ -9,6 +9,7 @@ use App\Enums\EntityType;
 use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Http\Resources\Api\V1\EntityResource;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Rules\UniqueEntityName;
@@ -143,7 +144,15 @@ class EntityController extends ApiController
 
         $validated = $request->validate($this->rules($campaign, $entity->type, $canEditDmFields, $entity));
 
-        $updateEntity->handle($entity, $user, $this->attributes($validated));
+        $attributes = $this->attributes($validated);
+
+        // A non-DM key never saw the stored :::secret fences, so its body cannot carry
+        // them; they are put back after it, as the form does for a player's own page.
+        if (! $canEditDmFields && array_key_exists('body', $attributes)) {
+            $attributes['body'] = SecretBlocks::merge($attributes['body'], $entity->body);
+        }
+
+        $updateEntity->handle($entity, $user, $attributes);
 
         return $this->show($campaign, $entity->id);
     }

@@ -45,6 +45,13 @@ class Search extends Component
                 ->take(50)
                 ->get();
 
+        // Both Scout drivers search the stored column, and a :::secret fence lives in
+        // that column. A player's hit stays only when the term appears outside the
+        // fence; fifty rows at most, one string check each. A GM's hits are untouched.
+        if (! $role->isDm() && $term !== '') {
+            $results = $results->filter(fn (Entity $entity) => $entity->matchesOutsideSecrets($term))->values();
+        }
+
         return view('livewire.search', [
             'term' => $term,
             'groups' => $results->groupBy(fn (Entity $entity) => $entity->type->value)->sortKeys(),

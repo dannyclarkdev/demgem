@@ -10,6 +10,7 @@ use App\Enums\QuestStatus;
 use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
+use App\Markdown\Secrets\SecretBlocks;
 use App\Markdown\WikiLink\WikiLinkRenderer;
 use App\Models\Calendar;
 use App\Models\Campaign;
@@ -146,7 +147,9 @@ class Form extends Component
 
         $this->entity = $entity;
         $this->name = $entity->name;
-        $this->body = $entity->body ?? '';
+        // A player editing their own page never receives a :::secret fence: the editor
+        // holds the stripped body, and save() puts the stored fences back after it.
+        $this->body = ($this->user()->can('viewDmNotes', $entity) ? $entity->body : SecretBlocks::strip($entity->body)) ?? '';
         $this->tags = $entity->tags->pluck('name')->implode(', ');
         $this->custom_fields = $entity->customFields();
         $this->happensOn = $entity->happens_on?->toArray() ?? $this->happensOn;
@@ -385,9 +388,15 @@ class Form extends Component
             return;
         }
 
+        $body = $validated['body'] !== null && $validated['body'] !== '' ? $validated['body'] : null;
+
+        if ($isEdit && ! $this->user()->can('viewDmNotes', $this->entity)) {
+            $body = SecretBlocks::merge($body, $this->entity->body);
+        }
+
         $data = [
             'name' => $validated['name'],
-            'body' => $validated['body'] !== null && $validated['body'] !== '' ? $validated['body'] : null,
+            'body' => $body,
             'tags' => $this->parseTags($validated['tags'] ?? ''),
             'custom_fields' => $this->parseCustomFields($validated['custom_fields'] ?? []),
         ];
