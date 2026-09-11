@@ -7,6 +7,7 @@ use App\Actions\Handouts\RevealHandout;
 use App\Actions\Sessions\SessionsMentioning;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
+use App\Enums\QuestStatus;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
@@ -95,7 +96,7 @@ class Show extends Component
         }
 
         if ($this->entity->isQuest()) {
-            $this->entity->load('giver');
+            $this->entity->load(['giver', 'arc']);
         }
 
         $backlinkSourceIds = Mention::query()
@@ -119,6 +120,18 @@ class Show extends Component
             'questStatus' => $this->entity->questStatus(),
             'happensOn' => $this->entity->happens_on === null ? null : Calendar::query()->first()?->reckoning()->format($this->entity->happens_on),
             'giver' => $this->visibleGiver($user, $role),
+            'arc' => $this->visibleArc($user, $role),
+            // An arc's two lists, each through its own scope, so a quest or a session
+            // the party may not see never reaches the page. Grouped in PHP, like the
+            // timeline: the Blade never asks who may see a row.
+            'arcQuests' => $this->entity->isArc()
+                ? $this->entity->questsInArc()->visibleTo($user, $role)->with('objectives')->orderBy('name')->get()
+                    ->groupBy(fn (Entity $quest) => ($quest->questStatus() ?? QuestStatus::Available)->value)
+                : collect(),
+            'arcSessions' => $this->entity->isArc()
+                ? $this->entity->sessionsInArc()->visibleTo($role)->get()
+                : collect(),
+            'questStatuses' => QuestStatus::cases(),
             'pinnedOn' => $this->mapsPinningThis($user, $role),
             // A handout's attachments. Eager-loaded, because strict mode is on and the
             // gallery is the point of the page rather than an extra on it.
@@ -165,6 +178,18 @@ class Show extends Component
         $giver = $this->entity->isQuest() ? $this->entity->giver : null;
 
         return $giver !== null && $giver->isVisibleTo($user, $role) ? $giver : null;
+    }
+
+    /**
+     * The arc has its own visibility, exactly as the giver does: a quest the party can
+     * read may belong to a chapter they have not been told about, and a hidden arc
+     * renders nothing at all rather than a placeholder.
+     */
+    private function visibleArc(User $user, CampaignRole $role): ?Entity
+    {
+        $arc = $this->entity->isQuest() ? $this->entity->arc : null;
+
+        return $arc !== null && $arc->isVisibleTo($user, $role) ? $arc : null;
     }
 
     private function user(): User

@@ -13,6 +13,7 @@ enum EntityType: string
     case Handout = 'handout';
     case Map = 'map';
     case Event = 'event';
+    case Arc = 'arc';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum EntityType: string
             self::Handout => 'Handout',
             self::Map => 'Map',
             self::Event => 'Event',
+            self::Arc => 'Arc',
         };
     }
 
@@ -41,6 +43,7 @@ enum EntityType: string
             self::Handout => 'Handouts',
             self::Map => 'Maps',
             self::Event => 'Events',
+            self::Arc => 'Arcs',
         };
     }
 
@@ -59,6 +62,7 @@ enum EntityType: string
             self::Handout => 'handouts',
             self::Map => 'maps',
             self::Event => 'events',
+            self::Arc => 'arcs',
         };
     }
 
@@ -74,6 +78,7 @@ enum EntityType: string
             self::Handout => 'paperclip',
             self::Map => 'map',
             self::Event => 'flag',
+            self::Arc => 'bookmark',
         };
     }
 
@@ -89,6 +94,7 @@ enum EntityType: string
             self::Handout => 'The letter, the map fragment, the ledger page. Things the party holds, with the files attached.',
             self::Map => 'The picture of the world, with a pin on everything the party has found.',
             self::Event => 'The fire, the coronation, the night the bridge fell. Things that happened on a day, for the timeline.',
+            self::Arc => 'A chapter of the campaign. The quests that belong to it and the sessions the party spent on it.',
         };
     }
 
@@ -112,6 +118,7 @@ enum EntityType: string
             self::Handout => 6,
             self::Map => 7,
             self::Event => 8,
+            self::Arc => 9,
         };
     }
 

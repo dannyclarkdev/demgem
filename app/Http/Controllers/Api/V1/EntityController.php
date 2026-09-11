@@ -82,6 +82,9 @@ class EntityController extends ApiController
             $entity->setRelation('giver', $entity->giver_entity_id === null
                 ? null
                 : Entity::query()->visibleTo($user, $role)->find($entity->giver_entity_id));
+            $entity->setRelation('arc', $entity->arc_id === null
+                ? null
+                : Entity::query()->visibleTo($user, $role)->find($entity->arc_id));
         }
 
         return new EntityResource($entity);
@@ -189,6 +192,9 @@ class EntityController extends ApiController
             'player_user_id' => $isCharacter ? ['nullable', 'integer', $inCampaign('campaign_members', 'user_id')] : ['prohibited'],
             'quest_status' => $isQuest ? ['string', Rule::enum(QuestStatus::class)] : ['prohibited'],
             'giver_entity_id' => $isQuest ? $anotherEntity() : ['prohibited'],
+            'arc_id' => $isQuest
+                ? ['nullable', 'string', Rule::exists('entities', 'id')->where('campaign_id', $campaign->id)->where('type', EntityType::Arc->value)->whereNull('deleted_at')]
+                : ['prohibited'],
             'rewards' => $isQuest ? ['nullable', 'string', 'max:100000'] : ['prohibited'],
         ];
 
@@ -210,7 +216,7 @@ class EntityController extends ApiController
     {
         $data = [];
 
-        foreach (['name', 'body', 'dm_notes', 'rewards', 'character_class', 'sheet_url', 'parent_id', 'giver_entity_id'] as $key) {
+        foreach (['name', 'body', 'dm_notes', 'rewards', 'character_class', 'sheet_url', 'parent_id', 'giver_entity_id', 'arc_id'] as $key) {
             if (array_key_exists($key, $validated)) {
                 $data[$key] = filled($validated[$key]) ? trim((string) $validated[$key]) : null;
             }

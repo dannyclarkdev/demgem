@@ -118,6 +118,20 @@ class EntityFactory extends Factory
         ]);
     }
 
+    public function arc(): static
+    {
+        return $this->state(['type' => EntityType::Arc]);
+    }
+
+    /**
+     * A quest filed under an arc. The type stays whatever the caller set, because the
+     * refusal of an arc on the wrong type is the form's job, not the factory's.
+     */
+    public function inArc(Entity $arc): static
+    {
+        return $this->state(['arc_id' => $arc->id, 'campaign_id' => $arc->campaign_id]);
+    }
+
     public function givenBy(Entity $giver): static
     {
         return $this->state(['giver_entity_id' => $giver->id, 'campaign_id' => $giver->campaign_id]);

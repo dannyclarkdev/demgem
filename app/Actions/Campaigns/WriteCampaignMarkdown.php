@@ -46,7 +46,7 @@ class WriteCampaignMarkdown
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'parent', 'objectives', 'relations.target', 'incomingRelations.source'])
+            ->with(['tags', 'parent', 'arc', 'objectives', 'relations.target', 'incomingRelations.source'])
             ->orderBy('name')
             ->get();
 
@@ -57,7 +57,7 @@ class WriteCampaignMarkdown
         $sessions = GameSession::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['scenes', 'secrets', 'rsvps.user'])
+            ->with(['scenes', 'secrets', 'rsvps.user', 'arc'])
             ->orderBy('number')
             ->get();
 
@@ -98,6 +98,10 @@ class WriteCampaignMarkdown
 
         if ($entity->quest_status !== null) {
             $matter['status'] = $entity->quest_status->value;
+        }
+
+        if ($entity->arc !== null) {
+            $matter['arc'] = $entity->arc->name;
         }
 
         if (filled($entity->character_class)) {
@@ -161,6 +165,18 @@ class WriteCampaignMarkdown
 
         if ($session->in_game_end !== null && $this->reckoning !== null) {
             $matter['in_game_end'] = $this->reckoning->format($session->in_game_end);
+        }
+
+        if ($session->arc !== null) {
+            $matter['arc'] = $session->arc->name;
+        }
+
+        if ($session->xp_awarded !== null) {
+            $matter['xp_awarded'] = (string) $session->xp_awarded;
+        }
+
+        if (filled($session->milestone)) {
+            $matter['milestone'] = (string) $session->milestone;
         }
 
         $attended = $session->rsvps

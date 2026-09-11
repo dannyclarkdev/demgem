@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Campaign;
+use App\Models\Entity;
 use App\Models\GameSession;
 use App\Support\Reckoning\GameDate;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -48,6 +49,19 @@ class GameSessionFactory extends Factory
             'in_game_end_month' => $end?->month,
             'in_game_end_day' => $end?->day,
         ]);
+    }
+
+    public function inArc(Entity $arc): static
+    {
+        return $this->state(['arc_id' => $arc->id, 'campaign_id' => $arc->campaign_id]);
+    }
+
+    /**
+     * What the party earned that night.
+     */
+    public function rewarded(?int $xp = null, ?string $milestone = null): static
+    {
+        return $this->state(['xp_awarded' => $xp, 'milestone' => $milestone]);
     }
 
     public function number(int $number): static

@@ -53,6 +53,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $sheet_url
  * @property QuestStatus|null $quest_status
  * @property string|null $giver_entity_id
+ * @property string|null $arc_id
  * @property GameDate|null $happens_on
  * @property int|null $created_by
  * @property int|null $updated_by
@@ -66,6 +67,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read Collection<int, User> $viewers
  * @property-read User|null $player
  * @property-read Entity|null $giver
+ * @property-read Entity|null $arc
+ * @property-read Collection<int, Entity> $questsInArc
+ * @property-read Collection<int, GameSession> $sessionsInArc
  * @property-read Collection<int, QuestObjective> $objectives
  * @property-read Collection<int, Clock> $clocks
  * @property-read Collection<int, EntityRelation> $relations
@@ -76,7 +80,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[Fillable([
     'campaign_id', 'type', 'name', 'slug', 'body', 'dm_notes', 'rewards', 'custom_fields', 'visibility',
     'parent_id', 'is_pc', 'player_user_id', 'character_class', 'level', 'sheet_url',
-    'quest_status', 'giver_entity_id', 'happens_on', 'stat_block_id',
+    'quest_status', 'giver_entity_id', 'arc_id', 'happens_on', 'stat_block_id',
     'created_by', 'updated_by',
 ])]
 class Entity extends Model implements HasMedia
@@ -188,6 +192,42 @@ class Entity extends Model implements HasMedia
     public function giver(): BelongsTo
     {
         return $this->belongsTo(Entity::class, 'giver_entity_id');
+    }
+
+    /**
+     * The chapter a quest belongs to. Set on a quest only, and it points at an arc.
+     *
+     * @return BelongsTo<Entity, $this>
+     */
+    public function arc(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class, 'arc_id');
+    }
+
+    /**
+     * The quests in this arc. Every reader goes through Entity::visibleTo() on it.
+     *
+     * @return HasMany<Entity, $this>
+     */
+    public function questsInArc(): HasMany
+    {
+        return $this->hasMany(Entity::class, 'arc_id');
+    }
+
+    /**
+     * The sessions the party spent on this arc, in play order. Every reader goes
+     * through GameSession::scopeVisibleTo() on it.
+     *
+     * @return HasMany<GameSession, $this>
+     */
+    public function sessionsInArc(): HasMany
+    {
+        return $this->hasMany(GameSession::class, 'arc_id')->orderBy('number');
+    }
+
+    public function isArc(): bool
+    {
+        return $this->type === EntityType::Arc;
     }
 
     /**

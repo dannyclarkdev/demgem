@@ -211,6 +211,13 @@
                                 <option value="{{ $option->id }}">{{ $option->name }} &middot; {{ $option->type->label() }}</option>
                             @endforeach
                         </x-ui.select>
+
+                        <x-ui.select label="Part of" name="arc_id" wire:model="arc_id" hint="The arc this quest belongs to. A player only sees it if they can see the arc.">
+                            <option value="">No arc</option>
+                            @foreach ($arcOptions as $option)
+                                <option value="{{ $option->id }}">{{ $option->name }}</option>
+                            @endforeach
+                        </x-ui.select>
                     </div>
                 </x-ui.card>
             @endif

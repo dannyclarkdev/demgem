@@ -191,6 +191,59 @@
                 @endif
             @endif
 
+            @if ($entity->isArc())
+                <x-ui.card title="Quests in this arc" :padding="false">
+                    @if ($arcQuests->isEmpty())
+                        <p class="px-5 py-4 text-sm text-ink-faint">
+                            {{ $role->isDm() ? 'No quests filed under this arc yet. Pick it on a quest\'s form.' : 'No quests here yet.' }}
+                        </p>
+                    @else
+                        @foreach ($questStatuses as $status)
+                            @if ($arcQuests->has($status->value))
+                                <p class="eyebrow border-b border-line px-5 pt-4 pb-2">{{ $status->label() }}</p>
+                                <ul class="divide-y divide-line">
+                                    @foreach ($arcQuests[$status->value] as $quest)
+                                        <li>
+                                            <a href="{{ $quest->url() }}" class="flex items-center gap-3 px-5 py-3 hover:bg-raised">
+                                                <x-ui.icon name="compass" class="size-4 text-ink-faint" />
+                                                <span class="min-w-0 flex-1 truncate font-medium text-ink">{{ $quest->name }}</span>
+                                                @php ($progress = $quest->objectiveProgress())
+                                                @if ($progress['total'] > 0)
+                                                    <x-ui.progress :value="$progress['done']" :max="$progress['total']" class="hidden w-28 sm:flex" />
+                                                @endif
+                                                <x-ui.icon name="chevron-right" class="size-4 text-ink-faint" />
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        @endforeach
+                    @endif
+                </x-ui.card>
+
+                <x-ui.card title="Sessions in this arc" :padding="false">
+                    @if ($arcSessions->isEmpty())
+                        <p class="px-5 py-4 text-sm text-ink-faint">
+                            {{ $role->isDm() ? 'No sessions filed under this arc yet. Pick it on a session\'s form.' : 'No sessions here yet.' }}
+                        </p>
+                    @else
+                        <ul class="divide-y divide-line">
+                            @foreach ($arcSessions as $session)
+                                <li>
+                                    <a href="{{ $session->url() }}" class="flex items-center gap-3 px-5 py-3 hover:bg-raised">
+                                        <x-ui.icon name="calendar" class="size-4 text-ink-faint" />
+                                        <span class="shrink-0 text-sm text-ink-faint">{{ $session->label() }}</span>
+                                        <span class="min-w-0 flex-1 truncate font-medium text-ink">{{ $session->displayTitle() }}</span>
+                                        <x-ui.badge :variant="$session->status->badgeVariant()" :icon="$session->status->icon()">{{ $session->status->label() }}</x-ui.badge>
+                                        <x-ui.icon name="chevron-right" class="size-4 text-ink-faint" />
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </x-ui.card>
+            @endif
+
             @if ($showClocks)
                 <x-ui.card title="What is coming">
                     <livewire:clocks.panel
@@ -227,6 +280,17 @@
                     @else
                         <p class="text-sm text-ink-faint">Unassigned</p>
                     @endif
+                </div>
+            @endif
+
+            {{-- A hidden arc renders nothing at all, like a hidden giver. --}}
+            @if ($arc)
+                <div>
+                    <p class="eyebrow mb-2">Part of</p>
+                    <a href="{{ $arc->url() }}" class="flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
+                        <x-ui.icon name="bookmark" class="size-3.5 text-ink-faint" />
+                        {{ $arc->name }}
+                    </a>
                 </div>
             @endif
 

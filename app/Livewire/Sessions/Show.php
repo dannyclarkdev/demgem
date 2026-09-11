@@ -5,11 +5,13 @@ namespace App\Livewire\Sessions;
 use App\Actions\Sessions\DeleteSession;
 use App\Actions\Sessions\PublishRecap;
 use App\Actions\Sessions\UpdateSession;
+use App\Enums\CampaignRole;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Markdown\MarkdownRenderer;
 use App\Markdown\WikiLink\WikiLinkRenderer;
 use App\Models\Calendar;
 use App\Models\Campaign;
+use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -133,9 +135,20 @@ class Show extends Component
             'timezone' => $this->campaign->timezone,
             'inWorld' => $this->session->in_game_start === null ? null : Calendar::query()->first()?->reckoning()->formatRange($this->session->in_game_start, $this->session->in_game_end),
             'recapHtml' => $recapHtml,
+            // The arc has its own visibility. A hidden one renders nothing at all.
+            'arc' => $this->visibleArc($role),
             'canEdit' => $role->isDm(),
             'autocompleteUrl' => route('entities.autocomplete', $this->campaign),
         ])->title($this->session->label());
+    }
+
+    private function visibleArc(CampaignRole $role): ?Entity
+    {
+        if ($this->session->arc_id === null) {
+            return null;
+        }
+
+        return Entity::query()->visibleTo($this->user(), $role)->find($this->session->arc_id);
     }
 
     private function user(): User

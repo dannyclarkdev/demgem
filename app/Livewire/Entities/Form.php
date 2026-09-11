@@ -93,6 +93,12 @@ class Form extends Component
     public string $giver_entity_id = '';
 
     /**
+     * The chapter a quest belongs to. A GM field on a quest only, and it must name an
+     * arc: the rule below checks the type as well as the campaign.
+     */
+    public string $arc_id = '';
+
+    /**
      * What an NPC fights as. A GM field, offered only when the campaign's ruleset has a
      * compendium to name, and a reference: the entity's own page owns none of it.
      */
@@ -166,6 +172,7 @@ class Form extends Component
             if ($this->isQuest()) {
                 $this->quest_status = ($entity->questStatus() ?? QuestStatus::Available)->value;
                 $this->giver_entity_id = $entity->giver_entity_id ?? '';
+                $this->arc_id = $entity->arc_id ?? '';
                 $this->rewards = $entity->rewards ?? '';
             }
         }
@@ -316,11 +323,19 @@ class Form extends Component
                             ->where('campaign_id', $this->campaign->id)
                             ->whereNull('deleted_at'),
                     ],
+                    'arc_id' => [
+                        'nullable',
+                        Rule::exists('entities', 'id')
+                            ->where('campaign_id', $this->campaign->id)
+                            ->where('type', EntityType::Arc->value)
+                            ->whereNull('deleted_at'),
+                    ],
                     'rewards' => ['nullable', 'string', 'max:100000'],
                 ]
                 : [
                     'quest_status' => ['prohibited'],
                     'giver_entity_id' => ['prohibited'],
+                    'arc_id' => ['prohibited'],
                     'rewards' => ['prohibited'],
                 ];
         }
@@ -391,6 +406,7 @@ class Form extends Component
                 $data += [
                     'quest_status' => QuestStatus::from($validated['quest_status']),
                     'giver_entity_id' => ($validated['giver_entity_id'] ?? '') !== '' ? $validated['giver_entity_id'] : null,
+                    'arc_id' => ($validated['arc_id'] ?? '') !== '' ? $validated['arc_id'] : null,
                     'rewards' => ($validated['rewards'] ?? '') !== '' ? $validated['rewards'] : null,
                 ];
             }
@@ -518,7 +534,12 @@ class Form extends Component
                 ->get(['id', 'name', 'type'])
             : collect();
 
+        $arcOptions = $canEditDmFields && $this->isQuest()
+            ? Entity::query()->ofType(EntityType::Arc)->orderBy('name')->get(['id', 'name'])
+            : collect();
+
         return view('livewire.entities.form', [
+            'arcOptions' => $arcOptions,
             'statBlockOptions' => $this->offersStatBlock()
                 ? StatBlock::query()
                     ->forCampaign($this->campaign)

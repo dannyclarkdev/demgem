@@ -16,6 +16,7 @@ use App\Models\Campaign;
 use App\Models\Combatant;
 use App\Models\Encounter;
 use App\Models\EntityRelation;
+use App\Models\GameSession;
 use App\Models\StatBlock;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
@@ -408,6 +409,7 @@ class ReadCampaignFile
                 'stat_block_id' => $this->ownStatBlockReference($row),
                 'quest_status' => $this->optionalEnum(QuestStatus::class, $row, 'quest_status', "entity {$id}"),
                 'giver_entity_id' => $this->reference($row, 'giver_entity_id'),
+                'arc_id' => $this->reference($row, 'arc_id'),
                 'happens_on' => $this->gameDate($row, 'happens_on'),
                 'tags' => $this->strings($row, 'tags', 60),
                 'objectives' => $this->objectives($row),
@@ -542,6 +544,9 @@ class ReadCampaignFile
                 'scheduled_at' => $this->text($row, 'scheduled_at', 40),
                 'in_game_start' => $this->gameDate($row, 'in_game_start'),
                 'in_game_end' => $this->gameDate($row, 'in_game_end'),
+                'arc_id' => $this->reference($row, 'arc_id'),
+                'xp_awarded' => $this->clamped($row, 'xp_awarded', GameSession::MAX_XP),
+                'milestone' => $this->text($row, 'milestone', GameSession::MAX_MILESTONE_LENGTH),
                 'reminder_sent_at' => $this->text($row, 'reminder_sent_at', 40),
                 'status' => $this->enum(SessionStatus::class, $row, 'status', "session {$number}") ?? SessionStatus::cases()[0],
                 'visibility' => $this->sessionVisibility($row, $number),
@@ -861,9 +866,20 @@ class ReadCampaignFile
         /** @var list<array<string, mixed>> $clocks */
         $clocks = $document['clocks'];
 
+        // An arc is an entity of one type, so the reference is checked against the
+        // arcs the file carries rather than every page in it.
+        $arcIds = [];
+
+        foreach ($entities as $entity) {
+            if ($entity['type'] === EntityType::Arc) {
+                $arcIds[$entity['id']] = true;
+            }
+        }
+
         foreach ($entities as $entity) {
             $this->mustResolve($entity['parent_id'], $this->entityIds, 'entity', "the parent of \"{$entity['name']}\"");
             $this->mustResolve($entity['giver_entity_id'], $this->entityIds, 'entity', "the giver of \"{$entity['name']}\"");
+            $this->mustResolve($entity['arc_id'], $arcIds, 'arc', "the arc of \"{$entity['name']}\"");
 
             foreach ($entity['objectives'] as $objective) {
                 $this->mustResolve($objective['completed_in_session_id'], $this->sessionIds, 'session', 'a completed objective');
@@ -879,6 +895,8 @@ class ReadCampaignFile
         }
 
         foreach ($sessions as $session) {
+            $this->mustResolve($session['arc_id'], $arcIds, 'arc', "the arc of session {$session['number']}");
+
             foreach ($session['secrets'] as $secret) {
                 $this->mustResolve($secret['revealed_in_session_id'], $this->sessionIds, 'session', 'a revealed secret');
             }

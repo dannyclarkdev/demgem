@@ -4,11 +4,13 @@ namespace App\Livewire\Sessions;
 
 use App\Actions\Sessions\CreateSession;
 use App\Actions\Sessions\UpdateSession;
+use App\Enums\EntityType;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Calendar;
 use App\Models\Campaign;
+use App\Models\Entity;
 use App\Models\GameSession;
 use App\Models\User;
 use App\Support\Reckoning\Bounds;
@@ -45,6 +47,19 @@ class Form extends Component
     /** @var array{year: int|string, month: int|string, day: int|string} */
     public array $inGameEnd = ['year' => '', 'month' => '', 'day' => ''];
 
+    /**
+     * The chapter this session was spent on. Must name an arc of this campaign.
+     */
+    public string $arc_id = '';
+
+    /**
+     * What the party earned. Either, both, or neither; a string so a blank input
+     * stays a blank rather than a zero.
+     */
+    public string $xp_awarded = '';
+
+    public string $milestone = '';
+
     public string $status = SessionStatus::Planned->value;
 
     public string $visibility = Visibility::Players->value;
@@ -72,6 +87,9 @@ class Form extends Component
         $this->scheduled_at = $session->scheduledAtIn($campaign->timezone)?->format('Y-m-d\TH:i') ?? '';
         $this->inGameStart = $session->in_game_start?->toArray() ?? $this->inGameStart;
         $this->inGameEnd = $session->in_game_end?->toArray() ?? $this->inGameEnd;
+        $this->arc_id = $session->arc_id ?? '';
+        $this->xp_awarded = $session->xp_awarded === null ? '' : (string) $session->xp_awarded;
+        $this->milestone = $session->milestone ?? '';
         $this->status = $session->status->value;
         $this->visibility = $session->visibility->value;
     }
@@ -97,6 +115,15 @@ class Form extends Component
             ],
             'title' => ['nullable', 'string', 'max:120'],
             'scheduled_at' => ['nullable', 'date'],
+            'arc_id' => [
+                'nullable',
+                Rule::exists('entities', 'id')
+                    ->where('campaign_id', $this->campaign->id)
+                    ->where('type', EntityType::Arc->value)
+                    ->whereNull('deleted_at'),
+            ],
+            'xp_awarded' => ['nullable', 'integer', 'min:0', 'max:'.GameSession::MAX_XP],
+            'milestone' => ['nullable', 'string', 'max:'.GameSession::MAX_MILESTONE_LENGTH],
             'status' => ['required', Rule::enum(SessionStatus::class)],
             'visibility' => ['required', Rule::enum(Visibility::class)->only([Visibility::Dm, Visibility::Players])],
         ]);
@@ -117,6 +144,9 @@ class Form extends Component
             'number' => (int) $validated['number'],
             'in_game_start' => $start,
             'in_game_end' => $start === null ? null : $end,
+            'arc_id' => ($validated['arc_id'] ?? '') !== '' ? $validated['arc_id'] : null,
+            'xp_awarded' => ($validated['xp_awarded'] ?? '') !== '' && $validated['xp_awarded'] !== null ? (int) $validated['xp_awarded'] : null,
+            'milestone' => filled($validated['milestone'] ?? null) ? trim((string) $validated['milestone']) : null,
             'title' => filled($validated['title']) ? trim((string) $validated['title']) : null,
             'scheduled_at' => filled($validated['scheduled_at'])
                 ? Carbon::parse((string) $validated['scheduled_at'], $this->campaign->timezone)->utc()
@@ -146,6 +176,7 @@ class Form extends Component
 
         return view('livewire.sessions.form', [
             'months' => $reckoning === null ? [] : $reckoning->months,
+            'arcOptions' => Entity::query()->ofType(EntityType::Arc)->orderBy('name')->get(['id', 'name']),
             'isEdit' => $this->session !== null,
             'statuses' => SessionStatus::cases(),
             'visibilities' => [Visibility::Players, Visibility::Dm],
