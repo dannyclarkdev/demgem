@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Rules\UniqueEntityName;
 use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
+use App\Support\Storage\CampaignStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Gate;
@@ -372,6 +373,16 @@ class Form extends Component
 
         if ($this->isHandout() && $this->fileCountAfterSave() > Entity::MAX_FILES) {
             $this->addError('files', 'A handout carries at most '.Entity::MAX_FILES.' files. Remove one first.');
+
+            return;
+        }
+
+        // The campaign's ceiling, checked before any row is written: a refused upload
+        // leaves nothing behind. Conversions are not counted; the originals are.
+        $incoming = ($this->image?->getSize() ?? 0) + array_sum(array_map(fn (TemporaryUploadedFile $file) => (int) $file->getSize(), $this->files));
+
+        if ($incoming > 0 && ! CampaignStorage::canStore($this->campaign, $incoming)) {
+            $this->addError($this->image !== null ? 'image' : 'files', CampaignStorage::refusal($this->campaign));
 
             return;
         }

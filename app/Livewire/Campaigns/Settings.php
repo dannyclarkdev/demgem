@@ -10,6 +10,7 @@ use App\Jobs\PostToDiscord;
 use App\Livewire\Concerns\InteractsWithCampaign;
 use App\Models\Campaign;
 use App\Rules\DiscordWebhookUrl;
+use App\Support\Storage\CampaignStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
@@ -77,6 +78,12 @@ class Settings extends Component
             'currency' => ['required', 'string', 'max:'.Campaign::MAX_CURRENCY_LENGTH],
             'cover' => ['nullable', 'image', 'max:8192'],
         ]);
+
+        if ($this->cover !== null && ! CampaignStorage::canStore($this->campaign, (int) $this->cover->getSize())) {
+            $this->addError('cover', CampaignStorage::refusal($this->campaign));
+
+            return;
+        }
 
         if ($this->removeCover) {
             $this->campaign->clearMediaCollection('cover');
@@ -181,6 +188,11 @@ class Settings extends Component
 
         return view('livewire.campaigns.settings', [
             'role' => $role,
+            'storageLimited' => CampaignStorage::isLimited(),
+            'storageUsed' => CampaignStorage::usedBytes($this->campaign),
+            'storageLimit' => CampaignStorage::limitBytes(),
+            'storageUsedLabel' => CampaignStorage::format(CampaignStorage::usedBytes($this->campaign)),
+            'storageLimitLabel' => CampaignStorage::format(CampaignStorage::limitBytes()),
             'rulesets' => Ruleset::cases(),
             'timezones' => timezone_identifiers_list(),
             'reminderLeadOptions' => Campaign::reminderLeadOptions(),

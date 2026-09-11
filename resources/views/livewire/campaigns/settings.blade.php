@@ -30,6 +30,27 @@
                 @if ($cover && $cover->isPreviewable())
                     <img src="{{ $cover->temporaryUrl() }}" alt="" class="h-32 w-full rounded-md border border-ember/40 object-cover">
                 @endif
+                {{-- What the campaign holds, of what the install allows: the cover, every
+                     image, every handout file. Summed on every read. --}}
+                <div class="rounded-md border border-line bg-canvas px-3 py-2.5">
+                    <div class="flex items-center justify-between gap-3 text-xs">
+                        <span class="eyebrow">Storage</span>
+                        <span class="text-ink-muted">
+                            @if ($storageLimited)
+                                {{ $storageUsedLabel }} of {{ $storageLimitLabel }}
+                            @else
+                                {{ $storageUsedLabel }} &middot; no limit on this install
+                            @endif
+                        </span>
+                    </div>
+                    @if ($storageLimited)
+                        @php($share = $storageLimit > 0 ? min(100, (int) round($storageUsed / $storageLimit * 100)) : 0)
+                        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-raised" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $share }}" aria-label="Storage used">
+                            <div class="h-full rounded-full {{ $share >= 90 ? 'bg-danger' : 'bg-ember' }}" style="width: {{ $share }}%"></div>
+                        </div>
+                    @endif
+                </div>
+
                 <x-ui.field label="Cover image" for="cover" :error="$errors->first('cover')" hint="Wide images work best. Up to 8 MB.">
                     <input type="file" id="cover" wire:model="cover" accept="image/*" class="block w-full text-sm text-ink-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-raised file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:border-ink-faint">
                 </x-ui.field>

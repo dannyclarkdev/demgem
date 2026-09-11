@@ -3,6 +3,7 @@
 namespace App\Actions\Campaigns;
 
 use App\Models\Entity;
+use App\Support\Storage\CampaignStorage;
 use Illuminate\Support\Str;
 use ZipArchive;
 
@@ -103,7 +104,7 @@ class ReadCampaignArchive
         }
 
         $restored = $extract
-            ? $this->extract($zip, $wanted, $read->report)
+            ? $this->trimToQuota($this->extract($zip, $wanted, $read->report), $read->report)
             : $this->count($zip, $wanted, $read->report);
 
         $zip->close();
@@ -213,6 +214,44 @@ class ReadCampaignArchive
         $report->filesRestored = count($restored);
 
         return $restored;
+    }
+
+    /**
+     * The campaign that results must fit its ceiling. The restored files are walked
+     * in document order, the cover first and then the entities as exported, and the
+     * ones past the ceiling are unlinked and counted, so the report the GM reads
+     * before pressing the button promises exactly what will attach.
+     *
+     * @param  array<string, string>  $restored
+     * @return array<string, string>
+     */
+    private function trimToQuota(array $restored, ImportReport $report): array
+    {
+        if (! CampaignStorage::isLimited()) {
+            return $restored;
+        }
+
+        $limit = CampaignStorage::limitBytes();
+        $used = 0;
+        $kept = [];
+
+        foreach ($restored as $entry => $path) {
+            $size = (int) (@filesize($path) ?: 0);
+
+            if ($used + $size <= $limit) {
+                $used += $size;
+                $kept[$entry] = $path;
+
+                continue;
+            }
+
+            @unlink($path);
+            $report->filesOverQuota++;
+        }
+
+        $report->filesRestored = count($kept);
+
+        return $kept;
     }
 
     /**
