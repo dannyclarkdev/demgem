@@ -43,6 +43,14 @@ class Campaign extends Model implements HasMedia
 
     public const MAX_CURRENCY_LENGTH = 12;
 
+    /**
+     * The column has the same default; this one is for an instance that has not been
+     * read back from the row yet, such as one a factory just made.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['currency' => 'gp'];
+
     /** @var array<int, CampaignMember|null> */
     private array $memberCache = [];
 
@@ -132,6 +140,16 @@ class Campaign extends Model implements HasMedia
     public function clocks(): HasMany
     {
         return $this->hasMany(Clock::class)->orderBy('position');
+    }
+
+    /**
+     * The party's purse and pack, oldest first.
+     *
+     * @return HasMany<LedgerEntry, $this>
+     */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LedgerEntry::class)->orderBy('created_at');
     }
 
     /**

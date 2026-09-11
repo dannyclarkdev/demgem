@@ -13,6 +13,7 @@ use App\Models\Entity;
 use App\Models\EntityBodyRevision;
 use App\Models\EntityTemplate;
 use App\Models\GameSession;
+use App\Models\LedgerEntry;
 use App\Models\RandomTable;
 use App\Models\StatBlock;
 use App\Models\User;
@@ -67,6 +68,7 @@ class ImportCampaign
                 'timezone' => $attributes['timezone'],
                 'session_length_minutes' => $attributes['session_length_minutes'],
                 'reminder_lead_hours' => $attributes['reminder_lead_hours'],
+                'currency' => $attributes['currency'],
             ]);
 
             if ($attributes['calendar'] !== null) {
@@ -88,6 +90,7 @@ class ImportCampaign
                 $this->randomTables($document, $campaign, $importer, $ids);
                 $this->clocks($document, $campaign, $ids);
                 $this->decisions($document, $campaign, $importer, $ids);
+                $this->ledger($document, $campaign, $importer, $ids);
             });
 
             // One index at the end rather than a write per entity. Chunked, so a
@@ -583,6 +586,28 @@ class ImportCampaign
                     'nested_table_id' => $ids->newForNullable($entry['nested_table_id']),
                 ]);
             }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     */
+    private function ledger(array $document, Campaign $campaign, User $importer, IdMap $ids): void
+    {
+        foreach ($document['ledger'] as $row) {
+            $this->write(new LedgerEntry, [
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                'game_session_id' => $ids->newForNullable($row['game_session_id']),
+                'kind' => $row['kind'],
+                'amount' => $row['amount'],
+                'item_name' => $row['item_name'],
+                'quantity' => $row['quantity'],
+                'entity_id' => $ids->newForNullable($row['entity_id']),
+                'note' => $row['note'],
+                'created_at' => $row['created_at'],
+                'created_by' => $importer->id,
+            ]);
         }
     }
 

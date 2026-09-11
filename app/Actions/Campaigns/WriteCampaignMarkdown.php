@@ -7,6 +7,7 @@ use App\Models\Decision;
 use App\Models\Entity;
 use App\Models\EntityRelation;
 use App\Models\GameSession;
+use App\Models\LedgerEntry;
 use App\Models\QuestObjective;
 use App\Models\RandomTable;
 use App\Models\RandomTableEntry;
@@ -96,7 +97,51 @@ class WriteCampaignMarkdown
             $files['markdown/decisions.md'] = $this->decisions($decisions);
         }
 
+        $ledger = LedgerEntry::withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->with('gameSession')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        if ($ledger->isNotEmpty()) {
+            $files['markdown/ledger.md'] = $this->ledger($ledger, $campaign->currency);
+        }
+
         return $files;
+    }
+
+    /**
+     * The purse, the pack, and every movement, oldest first: the same three things the
+     * page shows, in the order a reader wants them.
+     *
+     * @param  Collection<int, LedgerEntry>  $ledger
+     */
+    private function ledger(Collection $ledger, string $currency): string
+    {
+        $matter = ['name' => 'Ledger', 'type' => 'ledger', 'currency' => $currency, 'demgem' => 'ledger'];
+
+        $balance = (float) $ledger->filter(fn (LedgerEntry $row) => $row->isCoin())->sum('amount');
+
+        $pack = LedgerEntry::inventory($ledger)
+            ->map(fn (array $line) => '- '.$line['quantity'].' × '.$line['name'])
+            ->implode("\n");
+
+        $rows = $ledger->map(function (LedgerEntry $row) use ($currency): string {
+            $what = $row->isCoin()
+                ? $row->signedAmount().' '.$currency
+                : (($row->quantity ?? 0) < 0 ? '−' : '+').abs($row->quantity ?? 0).' '.$row->item_name;
+            $where = $row->gameSession !== null ? ' *('.$row->gameSession->label().')*' : '';
+            $note = filled($row->note) ? ' — '.$row->note : '';
+
+            return '- '.$what.$note.$where;
+        })->implode("\n");
+
+        return $this->frontMatter($matter, [])."\n".$this->body([
+            '## In the purse'."\n\n".number_format($balance, 2).' '.$currency,
+            $pack !== '' ? "## In the pack\n\n".$pack : null,
+            "## Movements\n\n".$rows,
+        ]);
     }
 
     /**
