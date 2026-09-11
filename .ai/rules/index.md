@@ -16,6 +16,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | database/srd/**, app/Models/StatBlock.php, config/compendium.php, app/Console/Commands/ImportSrdCommand.php, app/Actions/Compendium/** | .ai/rules/commands.md |
 | config/broadcasting.php | .ai/rules/config.md |
 | resources/css/** | .ai/rules/css.md |
+| app/Livewire/Decisions/** | .ai/rules/decisions.md |
 | app/Support/Dice/** | .ai/rules/dice.md |
 | app/Discord/** | .ai/rules/discord.md |
 | app/Support/Encounters/** | .ai/rules/encounters.md |

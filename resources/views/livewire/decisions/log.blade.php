@@ -22,7 +22,9 @@
         </form>
     @endif
 
-    @if ($decisions->isEmpty())
+    @if ($decisions->isEmpty() && $scoped)
+        <p class="text-sm text-ink-faint">{{ $canManage ? 'Nothing recorded for this session yet.' : 'Nothing recorded for this session.' }}</p>
+    @elseif ($decisions->isEmpty())
         <x-ui.empty-state
             icon="flag"
             title="{{ $canManage ? 'No decisions recorded' : 'Nothing recorded yet' }}"
@@ -67,7 +69,7 @@
                             {{-- Absent when this viewer may not see the session, which is the
                                  whole gate: the query never loaded it. --}}
                             @php($link = $decision->game_session_id ? ($sessionLinks[$decision->game_session_id] ?? null) : null)
-                            @if ($link)
+                            @if ($link && ! $scoped)
                                 <a href="{{ $link->url() }}" class="inline-flex items-center gap-1 hover:text-ember">
                                     <x-ui.icon name="calendar" class="size-3 shrink-0" />
                                     <span>{{ $link->label() }}{{ $link->title ? ' · '.$link->title : '' }}</span>

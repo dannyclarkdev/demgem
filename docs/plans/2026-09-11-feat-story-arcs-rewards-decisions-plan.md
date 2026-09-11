@@ -2,7 +2,7 @@
 title: "feat: Story arcs, and the log of what the party earned and chose"
 type: feat
 date: 2026-09-11
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-09-feat-homebrew-stat-blocks-plan.md
 ---
@@ -170,3 +170,46 @@ Then the full suite with `memory_limit=1G`, and a browser pass at a laptop width
 - `.ai/rules/api.md` — the API is the screens in JSON; prohibited fields name themselves in the 422.
 - `.ai/rules/routes.md` — no route parameter named after a model.
 - `docs/plans/2026-09-08-feat-calendar-timeline-plan.md` — the last type added late, and the shape of a session scalar's touchpoints.
+
+## Implementation Results — 2026-09-11
+
+Implemented in full. 30 new tests; the suite is 1331 tests, 1330 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `EntityType::Arc`, `entities.arc_id`, `game_sessions.arc_id` | As planned. `DeleteEntity` nulls both columns itself, because a soft delete never fires `nullOnDelete`. |
+| The arc page's two lists | As planned, through the two scopes, grouped by status in PHP. The browser pass moved them to directly under the body: they are the point of the page, and they sat below Relationships and Body history on the first render. |
+| `xp_awarded` and `milestone` on a session | As planned. `GameSession::rewardLine()` is the one place "450 XP · Reached the Drowned Court" is spelled; the session page, the story page and the vault all go through it. |
+| The story page strip and per-recap line | As planned. Three counts in one query, cloned, over `visibleTo()`. |
+| `decisions` and `Decisions\Log` in three places | As planned, with one addition: `Decisions\Index` is the routed page and holds nothing but the header, so the log stays one component. |
+| The round trip | `decisions` is a new top-level section; `arc_id` joins the dropped-id list in `RoundTripTest` and `ArcsRewardsRoundTripTest` holds the link itself, the way `HomebrewRoundTripTest` does for a creature. `created_at` travels on a decision because the order of the log is the order they were made in. |
+| The vault | Front matter as planned, plus one `decisions.md` page for the whole log rather than a file per row. |
+| The API | As planned. A decision has no endpoint, like a clock. |
+
+### Deviations
+
+| Planned | Shipped | Why |
+|---|---|---|
+| The demo arc named "The Drowned Duke" | "The Duke Beneath" | The demo already has a character of that name, so the arc's slug would have been suffixed, and the seeder test could not name the page. The villain and the chapter reading differently is better anyway. |
+| One empty state for the log | A one-line notice when the log is scoped to a session | The full empty state, with its icon and two sentences, was the tallest thing in the run screen's narrow column. |
+| A session link on every row | Hidden when the log is scoped | On the session page every row would have linked to the page it was on. |
+
+### Open questions, answered
+
+1. The timeline does not show decisions. Out, as recommended.
+2. The arc page has no XP total. It would have needed the sessions' columns loaded for a sum the story page already shows, so it stayed out.
+3. A decision carries no entity pivot. Out, as recommended; wiki links in the text carry the names.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px as the GM and at 834px as the player:
+
+- The arc page lists Seal the Undercity under Active with its progress bar, and the three sessions in order with their status badges.
+- The story page reads 1,450 XP over 2 sessions and 1 milestone for the GM, with the reward line under each recap's date.
+- `/decisions` shows the GM three rows with edit, eye and delete, and the player the two revealed ones with no controls and no trace of the third.
+- The session page shows the player "Part of The Duke Beneath", the reward line, and the one decision made that night.
+- The run screen carries the log under Clocks with the form ready to write in.
+
+The first screenshots showed a decision's session and its time run together. That was the CSS build, not the Blade: the utility the meta line uses was not in the compiled stylesheet until `npm run build` ran. A change that adds a utility class no view has used before needs a build before a browser pass means anything.

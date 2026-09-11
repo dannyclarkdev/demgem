@@ -156,41 +156,6 @@
                 @endif
             </x-ui.card>
 
-            <livewire:entities.relations :campaign="$campaign" :entity="$entity" :wire:key="'relations-'.$entity->id" />
-            @if ($role->isDm())
-                <livewire:entities.history :campaign="$campaign" :entity="$entity" :key="'history-'.$entity->id" />
-            @endif
-
-            @php ($customFields = $entity->customFields())
-            @if ($customFields !== [])
-                <x-ui.card title="Details">
-                    <dl class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-                        @foreach ($customFields as $field)
-                            <div>
-                                <dt class="eyebrow">{{ $field['key'] }}</dt>
-                                <dd class="mt-0.5 text-ink">{{ $field['value'] }}</dd>
-                            </div>
-                        @endforeach
-                    </dl>
-                </x-ui.card>
-            @endif
-
-            @if ($entity->isQuest())
-                <x-ui.card title="Objectives">
-                    <livewire:quests.objectives
-                        :campaign="$campaign"
-                        :quest="$entity"
-                        :wire:key="'objectives-'.$entity->id"
-                    />
-                </x-ui.card>
-
-                @if ($rewardsHtml !== '')
-                    <x-ui.card title="Rewards">
-                        <div class="prose-entity">{!! $rewardsHtml !!}</div>
-                    </x-ui.card>
-                @endif
-            @endif
-
             @if ($entity->isArc())
                 <x-ui.card title="Quests in this arc" :padding="false">
                     @if ($arcQuests->isEmpty())
@@ -242,6 +207,41 @@
                         </ul>
                     @endif
                 </x-ui.card>
+            @endif
+
+            <livewire:entities.relations :campaign="$campaign" :entity="$entity" :wire:key="'relations-'.$entity->id" />
+            @if ($role->isDm())
+                <livewire:entities.history :campaign="$campaign" :entity="$entity" :key="'history-'.$entity->id" />
+            @endif
+
+            @php ($customFields = $entity->customFields())
+            @if ($customFields !== [])
+                <x-ui.card title="Details">
+                    <dl class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+                        @foreach ($customFields as $field)
+                            <div>
+                                <dt class="eyebrow">{{ $field['key'] }}</dt>
+                                <dd class="mt-0.5 text-ink">{{ $field['value'] }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </x-ui.card>
+            @endif
+
+            @if ($entity->isQuest())
+                <x-ui.card title="Objectives">
+                    <livewire:quests.objectives
+                        :campaign="$campaign"
+                        :quest="$entity"
+                        :wire:key="'objectives-'.$entity->id"
+                    />
+                </x-ui.card>
+
+                @if ($rewardsHtml !== '')
+                    <x-ui.card title="Rewards">
+                        <div class="prose-entity">{!! $rewardsHtml !!}</div>
+                    </x-ui.card>
+                @endif
             @endif
 
             @if ($showClocks)

@@ -60,7 +60,7 @@ class Log extends Component
         $this->authorize('viewAny', [Decision::class, $campaign]);
 
         $this->session = $session;
-        $this->newSessionId = $session?->id ?? '';
+        $this->newSessionId = $session === null ? '' : $session->id;
     }
 
     public function record(RecordDecision $recordDecision): void
@@ -82,7 +82,7 @@ class Log extends Component
         );
 
         $this->reset('newChoice', 'newConsequence');
-        $this->newSessionId = $this->session?->id ?? '';
+        $this->newSessionId = $this->session === null ? '' : $this->session->id;
     }
 
     public function edit(string $decisionId): void
