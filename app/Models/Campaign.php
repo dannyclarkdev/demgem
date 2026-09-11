@@ -27,6 +27,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string $timezone
  * @property int $session_length_minutes
  * @property int|null $reminder_lead_hours
+ * @property string $currency
  * @property string|null $discord_webhook_url Decrypted on read. Never exported.
  * @property int|null $created_by
  * @property Carbon|null $created_at
@@ -34,11 +35,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property-read CampaignMember|null $owner
  * @property-read Calendar|null $calendar
  */
-#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'discord_webhook_url', 'created_by'])]
+#[Fillable(['name', 'description', 'ruleset', 'timezone', 'session_length_minutes', 'reminder_lead_hours', 'currency', 'discord_webhook_url', 'created_by'])]
 class Campaign extends Model implements HasMedia
 {
     /** @use HasFactory<CampaignFactory> */
     use HasFactory, HasUlids, InteractsWithMedia, SoftDeletes;
+
+    public const MAX_CURRENCY_LENGTH = 12;
 
     /** @var array<int, CampaignMember|null> */
     private array $memberCache = [];

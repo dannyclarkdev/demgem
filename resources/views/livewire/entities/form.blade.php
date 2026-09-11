@@ -222,6 +222,17 @@
                 </x-ui.card>
             @endif
 
+            @if ($isJournal && ! $canEditDmFields)
+                <x-ui.card>
+                    <x-ui.select label="Who reads this" name="visibility" wire:model="visibility">
+                        @foreach ($authorVisibilities as $option)
+                            <option value="{{ $option->value }}">{{ $option === \App\Enums\Visibility::Dm ? 'Just me and the GM' : 'The whole party' }}</option>
+                        @endforeach
+                    </x-ui.select>
+                    <p class="mt-1.5 text-xs text-ink-faint">The GM can always read a journal. You choose whether the party can.</p>
+                </x-ui.card>
+            @endif
+
             @if ($canEditDmFields)
                 <x-ui.card>
                     <div class="space-y-5">

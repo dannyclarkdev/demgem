@@ -15,6 +15,7 @@
                     <option value="{{ $option }}">{{ str_replace('_', ' ', $option) }}</option>
                 @endforeach
             </x-ui.select>
+            <x-ui.input label="Currency" name="currency" wire:model="currency" placeholder="gp" hint="What the party ledger counts in. One unit; silver and copper are your arithmetic." />
             <x-ui.input label="Session length" name="sessionLengthMinutes" type="number" min="30" max="720" step="15" wire:model="sessionLengthMinutes" hint="In minutes. Calendar feeds use it for the end of each session." />
             <x-ui.select label="Reminder email" name="reminderLeadHours" wire:model="reminderLeadHours" hint="One email to every member who wants one, before each session with a date. Needs a mailer configured on this install.">
                 @foreach ($reminderLeadOptions as $value => $label)

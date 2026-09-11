@@ -231,6 +231,16 @@ class Entity extends Model implements HasMedia
     }
 
     /**
+     * A journal is a player's own page. Its author is player_user_id, which is what
+     * the gate already reads: the author sees it whatever the visibility says, so
+     * Dm means "me and the GM" and Players means "the party", with no new rule.
+     */
+    public function isJournal(): bool
+    {
+        return $this->type === EntityType::Journal;
+    }
+
+    /**
      * What this NPC fights as, when the GM named a creature from the compendium.
      *
      * A scalar, one-to-one with the row, so it is a column rather than a child table.

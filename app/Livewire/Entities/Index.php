@@ -79,6 +79,7 @@ class Index extends Component
         $visibilityFilter = $role->isDm() ? Visibility::tryFrom($this->visibility) : null;
         $isQuest = $this->entityType === EntityType::Quest;
         $isCharacter = $this->entityType === EntityType::Character;
+        $isJournal = $this->entityType === EntityType::Journal;
         $statusFilter = $isQuest ? QuestStatus::tryFrom($this->questStatus) : null;
         $partyFilter = $isCharacter && $this->partyOnly !== '';
 
@@ -92,7 +93,8 @@ class Index extends Component
             ->when($visibilityFilter !== null, fn (Builder $q) => $q->where('visibility', $visibilityFilter?->value))
             ->when($statusFilter !== null, fn (Builder $q) => $q->where('quest_status', $statusFilter?->value))
             ->when($partyFilter, fn (Builder $q) => $q->where('is_pc', true))
-            ->orderBy('name')
+            // A journal is a diary, not an encyclopedia: newest first.
+            ->when($isJournal, fn (Builder $q) => $q->orderByDesc('created_at'), fn (Builder $q) => $q->orderBy('name'))
             ->paginate(25);
 
         $visibleOfType = function (Builder $q) use ($user, $role): void {
@@ -115,6 +117,7 @@ class Index extends Component
             'visibilities' => Visibility::cases(),
             'isQuest' => $isQuest,
             'isCharacter' => $isCharacter,
+            'isJournal' => $isJournal,
             'questStatuses' => QuestStatus::cases(),
         ])->title($this->entityType->plural());
     }

@@ -48,7 +48,7 @@ class WriteCampaignMarkdown
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'parent', 'arc', 'objectives', 'relations.target', 'incomingRelations.source'])
+            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source'])
             ->orderBy('name')
             ->get();
 
@@ -140,6 +140,10 @@ class WriteCampaignMarkdown
 
         if ($entity->arc !== null) {
             $matter['arc'] = $entity->arc->name;
+        }
+
+        if ($entity->isJournal() && $entity->player !== null) {
+            $matter['author'] = $entity->player->name;
         }
 
         if (filled($entity->character_class)) {

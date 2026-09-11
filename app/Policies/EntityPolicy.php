@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\CampaignRole;
+use App\Enums\EntityType;
 use App\Models\Campaign;
 use App\Models\Entity;
 use App\Models\User;
@@ -26,9 +27,19 @@ class EntityPolicy
         return $role !== null && $entity->isVisibleTo($user, $role);
     }
 
-    public function create(User $user, Campaign $campaign): bool
+    /**
+     * A GM makes anything. A member makes a journal, and nothing else: the type is
+     * passed so a create check without one stays what it always was, a GM's.
+     */
+    public function create(User $user, Campaign $campaign, ?EntityType $type = null): bool
     {
-        return $campaign->roleFor($user)?->isDm() ?? false;
+        $role = $campaign->roleFor($user);
+
+        if ($role === null) {
+            return false;
+        }
+
+        return $role->isDm() || ($type !== null && $type->isPlayerWritable());
     }
 
     /**
@@ -45,9 +56,18 @@ class EntityPolicy
         return $role->isDm() || $entity->player_user_id === $user->id;
     }
 
+    /**
+     * DM roles delete anything. The author of a journal deletes their own.
+     */
     public function delete(User $user, Entity $entity): bool
     {
-        return $this->roleFor($user, $entity)?->isDm() ?? false;
+        $role = $this->roleFor($user, $entity);
+
+        if ($role === null) {
+            return false;
+        }
+
+        return $role->isDm() || ($entity->isJournal() && $entity->player_user_id === $user->id);
     }
 
     public function viewDmNotes(User $user, Entity $entity): bool

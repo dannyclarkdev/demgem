@@ -14,6 +14,7 @@ enum EntityType: string
     case Map = 'map';
     case Event = 'event';
     case Arc = 'arc';
+    case Journal = 'journal';
 
     public function label(): string
     {
@@ -28,6 +29,7 @@ enum EntityType: string
             self::Map => 'Map',
             self::Event => 'Event',
             self::Arc => 'Arc',
+            self::Journal => 'Journal',
         };
     }
 
@@ -44,6 +46,7 @@ enum EntityType: string
             self::Map => 'Maps',
             self::Event => 'Events',
             self::Arc => 'Arcs',
+            self::Journal => 'Journals',
         };
     }
 
@@ -63,6 +66,7 @@ enum EntityType: string
             self::Map => 'maps',
             self::Event => 'events',
             self::Arc => 'arcs',
+            self::Journal => 'journals',
         };
     }
 
@@ -79,6 +83,7 @@ enum EntityType: string
             self::Map => 'map',
             self::Event => 'flag',
             self::Arc => 'bookmark',
+            self::Journal => 'feather',
         };
     }
 
@@ -95,6 +100,7 @@ enum EntityType: string
             self::Map => 'The picture of the world, with a pin on everything the party has found.',
             self::Event => 'The fire, the coronation, the night the bridge fell. Things that happened on a day, for the timeline.',
             self::Arc => 'A chapter of the campaign. The quests that belong to it and the sessions the party spent on it.',
+            self::Journal => 'A player\'s own pages. What they saw, what they think, and what they have told nobody yet.',
         };
     }
 
@@ -119,7 +125,16 @@ enum EntityType: string
             self::Map => 7,
             self::Event => 8,
             self::Arc => 9,
+            self::Journal => 10,
         };
+    }
+
+    /**
+     * The one type a player may create. Everything else is the GM's to write.
+     */
+    public function isPlayerWritable(): bool
+    {
+        return $this === self::Journal;
     }
 
     public static function fromSlug(string $slug): ?self

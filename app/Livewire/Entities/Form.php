@@ -131,7 +131,7 @@ class Form extends Component
         $this->entityType = EntityType::fromSlug($type) ?? abort(404);
 
         if ($slug === null) {
-            $this->authorize('create', [Entity::class, $campaign]);
+            $this->authorize('create', [Entity::class, $campaign, $this->entityType]);
             $this->name = (string) request()->query('name', '');
             $this->quest_status = $this->isQuest() ? QuestStatus::Available->value : '';
 
@@ -150,6 +150,12 @@ class Form extends Component
         $this->tags = $entity->tags->pluck('name')->implode(', ');
         $this->custom_fields = $entity->customFields();
         $this->happensOn = $entity->happens_on?->toArray() ?? $this->happensOn;
+
+        // The author of a journal chooses between the party and the GM. It is the one
+        // visibility a non-DM may set, and it loads for whoever passed the update check.
+        if ($this->isJournal()) {
+            $this->visibility = $entity->visibility->value;
+        }
 
         // The character record is not a DM field: a player edits their own PC, so these
         // three load for anybody who passed the update check above.
@@ -203,6 +209,11 @@ class Form extends Component
         return $this->entityType === EntityType::Event;
     }
 
+    private function isJournal(): bool
+    {
+        return $this->entityType === EntityType::Journal;
+    }
+
     /**
      * The upload cap for one handout attachment, in kilobytes. The same ten megabytes
      * a map image gets, and the same ceiling config/media-library.php sets.
@@ -222,10 +233,14 @@ class Form extends Component
         if ($isEdit) {
             $this->authorize('update', $this->entity);
         } else {
-            $this->authorize('create', [Entity::class, $this->campaign]);
+            $this->authorize('create', [Entity::class, $this->campaign, $this->entityType]);
         }
 
         $canEditDmFields = $this->canEditDmFields();
+
+        // The author's switch: the party, or just them and the GM. Selected stays a
+        // decision for the DM card, which an author never sees.
+        $authorSetsVisibility = $this->isJournal() && ! $canEditDmFields;
 
         $rules = [
             'name' => ['required', 'string', 'max:120', new UniqueEntityName($this->campaign->id, $this->entityType, $this->entity?->id)],
@@ -288,6 +303,10 @@ class Form extends Component
                 'level' => ['prohibited'],
                 'sheet_url' => ['prohibited'],
             ];
+
+        if ($authorSetsVisibility) {
+            $rules += ['visibility' => ['required', Rule::enum(Visibility::class)->only([Visibility::Dm, Visibility::Players])]];
+        }
 
         if ($canEditDmFields) {
             $rules += [
@@ -409,6 +428,20 @@ class Form extends Component
                     'arc_id' => ($validated['arc_id'] ?? '') !== '' ? $validated['arc_id'] : null,
                     'rewards' => ($validated['rewards'] ?? '') !== '' ? $validated['rewards'] : null,
                 ];
+            }
+        }
+
+        if ($authorSetsVisibility) {
+            $data['visibility'] = Visibility::from($validated['visibility']);
+        }
+
+        // A journal's author is set at birth and never moves. The DM card's character
+        // fields would write null here on a GM's edit, so they come back out.
+        if ($this->isJournal()) {
+            unset($data['player_user_id'], $data['is_pc']);
+
+            if (! $isEdit) {
+                $data['player_user_id'] = $this->user()->id;
             }
         }
 
@@ -560,6 +593,8 @@ class Form extends Component
             'isMap' => $this->isMap(),
             'isHandout' => $this->isHandout(),
             'isEvent' => $this->isEvent(),
+            'isJournal' => $this->isJournal(),
+            'authorVisibilities' => [Visibility::Dm, Visibility::Players],
             'months' => $this->isEvent() ? (Calendar::query()->first()?->reckoning()->months ?? []) : [],
             'existingFiles' => $this->isHandout() ? ($this->entity?->files() ?? collect()) : collect(),
             'maxFiles' => Entity::MAX_FILES,

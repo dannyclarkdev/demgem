@@ -96,12 +96,13 @@ class EntityController extends ApiController
      */
     public function store(Request $request, Campaign $campaign, CreateEntity $createEntity, ApplyEntityTemplate $applyTemplate): JsonResponse
     {
-        Gate::authorize('create', [Entity::class, $campaign]);
-
         $typeSlug = $request->validate(['type' => ['required', 'string', Rule::in(EntityType::slugs())]])['type'];
         $type = EntityType::fromSlug($typeSlug) ?? abort(422);
 
-        $validated = $request->validate($this->rules($campaign, $type, true, null));
+        // With the type: a member may create a journal and nothing else.
+        Gate::authorize('create', [Entity::class, $campaign, $type]);
+
+        $validated = $request->validate($this->rules($campaign, $type, $this->role()->isDm(), null));
 
         if (isset($validated['template_id'])) {
             $templateBody = $applyTemplate->handle($campaign, $this->viewer(), $type, $validated['template_id']);
@@ -115,6 +116,8 @@ class EntityController extends ApiController
             'type' => $type,
             'name' => $validated['name'],
             ...$this->attributes($validated),
+            // A journal's author is whoever wrote it, set at birth and never moved.
+            ...($type === EntityType::Journal ? ['player_user_id' => $this->viewer()->id] : []),
         ]);
 
         return $this->show($campaign, $entity->id)->response()->setStatusCode(201);
@@ -200,6 +203,11 @@ class EntityController extends ApiController
 
         if (! $canEditDmFields) {
             $dmRules = array_map(fn () => ['prohibited'], $dmRules);
+
+            // The author's one switch: the party, or just them and the GM.
+            if ($type === EntityType::Journal) {
+                $dmRules['visibility'] = ['string', Rule::enum(Visibility::class)->only([Visibility::Dm, Visibility::Players])];
+            }
         }
 
         return $rules + $dmRules;
