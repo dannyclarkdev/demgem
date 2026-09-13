@@ -219,6 +219,8 @@ class ExportCampaign
             'session_length_minutes' => $campaign->session_length_minutes,
             'reminder_lead_hours' => $campaign->reminder_lead_hours,
             'currency' => $campaign->currency,
+            'screen_focus' => $campaign->screen_focus?->value,
+            'screen_entity_id' => $campaign->screen_entity_id,
             'created_at' => $campaign->created_at?->toIso8601String(),
             'updated_at' => $campaign->updated_at?->toIso8601String(),
             'cover' => $this->media($campaign->getFirstMedia('cover')),

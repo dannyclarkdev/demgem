@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\CampaignRole;
 use App\Enums\Ruleset;
+use App\Enums\ScreenFocus;
+use App\Support\Table\ScreenState;
 use Database\Factories\CampaignFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -20,7 +22,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- * @property string $id
+ * @property string|null $discord_webhook_url Decrypted on read. Never exported.
+ * @property ScreenFocus|null $screen_focus
+ * @property string|null $screen_entity_id
  * @property string $name
  * @property string|null $description
  * @property Ruleset $ruleset
@@ -61,6 +65,7 @@ class Campaign extends Model implements HasMedia
     {
         return [
             'ruleset' => Ruleset::class,
+            'screen_focus' => ScreenFocus::class,
             'session_length_minutes' => 'integer',
             'reminder_lead_hours' => 'integer',
             'discord_webhook_url' => 'encrypted',
@@ -170,6 +175,37 @@ class Campaign extends Model implements HasMedia
     public function calendar(): HasOne
     {
         return $this->hasOne(Calendar::class);
+    }
+
+    /**
+     * What the television at the end of the table shows, resolved through the party's
+     * gate. The page is read with Entity::visibleToParty(), the strictest gate in the
+     * app, whoever is asking: a GM who opens the screen on the laptop that feeds the
+     * wall reads exactly what a player reads. A focus that needs a page and gets none
+     * back resolves to null, so a handout the GM took back comes off the wall on the
+     * next render with the columns left as they are.
+     */
+    public function screen(): ScreenState
+    {
+        $focus = $this->screen_focus;
+
+        if ($focus === null) {
+            return ScreenState::nothing();
+        }
+
+        if (! $focus->needsPage()) {
+            return new ScreenState($focus, null);
+        }
+
+        $page = $this->screen_entity_id === null
+            ? null
+            : Entity::query()->visibleToParty()->whereKey($this->screen_entity_id)->first();
+
+        if ($page === null || ScreenFocus::forPage($page->type) !== $focus) {
+            return ScreenState::nothing();
+        }
+
+        return new ScreenState($focus, $page);
     }
 
     public function registerMediaCollections(): void

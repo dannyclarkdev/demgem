@@ -114,6 +114,27 @@ class MapMarker extends Model
     }
 
     /**
+     * The party's map with no player in the question: the GM's eye, and a target the
+     * whole party may see. The same two gates as scopeVisibleTo() for a player, with
+     * Entity::visibleToParty() as the second. For the screen on the wall.
+     *
+     * @param  Builder<MapMarker>  $query
+     * @return Builder<MapMarker>
+     */
+    public function scopeVisibleToParty(Builder $query): Builder
+    {
+        return $query
+            ->where($query->qualifyColumn('player_visible'), true)
+            ->where(function (Builder $gate): void {
+                $gate->whereNull($gate->qualifyColumn('target_entity_id'))
+                    ->orWhereIn(
+                        $gate->qualifyColumn('target_entity_id'),
+                        Entity::query()->visibleToParty()->select('entities.id'),
+                    );
+            });
+    }
+
+    /**
      * Whether the party sees this pin at all, before the target's own rule applies.
      */
     public function isVisibleToPlayers(): bool

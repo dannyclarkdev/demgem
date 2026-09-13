@@ -52,6 +52,8 @@ Slice 22 adds **Continue with Discord**. A button on the login and register page
 
 Slice 23 adds **a ceiling on a campaign's files**. `CAMPAIGN_STORAGE_MB`, 500 by default, is one limit for every campaign on the install, over its cover, every image, and every handout file. An upload that would cross it is refused on the form with the numbers in the sentence, an archive import stops attaching files at the ceiling and says how many it left before the GM commits, and campaign settings shows a bar of what is used. Zero turns it off.
 
+Slice 24 adds **the player screen**, for the television at the end of the table. `/screen` is one page with no sidebar and no controls that shows what the whole party may see and nothing else, whoever opened it: the turn order with health as a word, a handout full size, a map with the pins the party found, or the revealed clocks, with the clocks in a strip along the bottom the rest of the time. The GM chooses from a card on the Run screen, and putting a hidden handout up shows the party on the way. It changes on every open screen at once over the same channel as the table, and it falls back on its own: to the fight while one runs, then to the campaign's name and the party.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup

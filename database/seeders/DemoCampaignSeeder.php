@@ -39,6 +39,7 @@ use App\Actions\Sessions\CreateSession;
 use App\Actions\Sessions\RecordAttendance;
 use App\Actions\Sessions\RespondToSession;
 use App\Actions\Sessions\ToggleDateVote;
+use App\Actions\Table\SetScreen;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
 use App\Enums\PrepRole;
@@ -837,6 +838,10 @@ class DemoCampaignSeeder extends Seeder
 
         $this->attachPlaceholderScan($letter, "The duke's letter", 900, 1200);
         $this->attachPlaceholderScan($orders, 'The sealed orders', 900, 1200);
+
+        // The letter is on the television, so /screen has something on it on the
+        // first run. It is already revealed, so nothing changes hands here.
+        app(SetScreen::class)->show($campaign, $letter, $dm);
     }
 
     /**

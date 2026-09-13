@@ -2,6 +2,7 @@
 
 namespace App\Actions\Entities;
 
+use App\Models\Campaign;
 use App\Models\Entity;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +24,13 @@ class DeleteEntity
                 $entity->questsInArc()->update(['arc_id' => null]);
                 $entity->sessionsInArc()->update(['arc_id' => null]);
             }
+
+            // The screen on the wall. nullOnDelete never fires for a soft delete, so the
+            // columns are cleared here, the way an arc's quests are unfiled above.
+            Campaign::query()
+                ->whereKey($entity->campaign_id)
+                ->where('screen_entity_id', $entity->id)
+                ->update(['screen_focus' => null, 'screen_entity_id' => null]);
 
             $entity->delete();
         });

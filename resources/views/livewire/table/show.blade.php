@@ -10,7 +10,10 @@
         title="The table"
         :eyebrow="$campaign->name"
         description="What is happening right now. It changes on its own, so leave it open."
-    />
+    >
+        {{-- The same facts for a wall: no controls, larger type, its own layout. --}}
+        <x-ui.button :href="route('screen', $campaign)" target="_blank" variant="secondary" size="sm" icon="monitor">Second display</x-ui.button>
+    </x-ui.page-header>
 
     <div class="mb-4">
         <livewire:table.presence :campaign="$campaign" :wire:key="'table-presence'" />
