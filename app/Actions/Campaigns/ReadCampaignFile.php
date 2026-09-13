@@ -10,6 +10,7 @@ use App\Enums\LedgerKind;
 use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
 use App\Enums\Ruleset;
+use App\Enums\ScreenFocus;
 use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Calendar;
@@ -159,6 +160,8 @@ class ReadCampaignFile
             'session_length_minutes' => min(720, max(30, $this->integer($row, 'session_length_minutes') ?? 240)),
             'reminder_lead_hours' => $this->reminderLead($row),
             'currency' => $this->text($row, 'currency', Campaign::MAX_CURRENCY_LENGTH) ?? 'gp',
+            'screen_focus' => $this->screenFocus($row),
+            'screen_entity_id' => $this->reference($row, 'screen_entity_id'),
             'cover' => $this->mediaReference($row['cover'] ?? null),
             'calendar' => $this->calendar($row['calendar'] ?? null),
         ];
@@ -286,6 +289,22 @@ class ReadCampaignFile
             'current_month' => $today->month,
             'current_day' => $today->day,
         ];
+    }
+
+    /**
+     * What the screen on the wall shows, or null. Absent from a file older than slice
+     * 24, and null is what that means; a value this demgem does not know is an error,
+     * as every other enum in the file is.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function screenFocus(array $row): ?ScreenFocus
+    {
+        if (! isset($row['screen_focus'])) {
+            return null;
+        }
+
+        return $this->enum(ScreenFocus::class, $row, 'screen_focus', 'the screen');
     }
 
     /**
@@ -1035,6 +1054,8 @@ class ReadCampaignFile
                 $arcIds[$entity['id']] = true;
             }
         }
+
+        $this->mustResolve($document['campaign']['screen_entity_id'], $this->entityIds, 'page', 'the screen');
 
         foreach ($entities as $entity) {
             $this->mustResolve($entity['parent_id'], $this->entityIds, 'entity', "the parent of \"{$entity['name']}\"");

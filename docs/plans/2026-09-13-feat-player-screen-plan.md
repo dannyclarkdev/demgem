@@ -2,7 +2,7 @@
 title: "feat: The player screen, for the television at the end of the table"
 type: feat
 date: 2026-09-13
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-11-feat-storage-quotas-plan.md
 ---
@@ -134,3 +134,41 @@ Then the full suite with `memory_limit=1G`, and a browser pass: open the Run scr
 - `.ai/rules/models.md` — a handout is revealed by its visibility column and nothing else; the screen reads that column and adds no second switch.
 - `.ai/rules/routes.md` — `/screen` is singular and sits above the `{type}` routes, like `/table`.
 - `.ai/rules/campaigns.md` — an added key does not bump the export version.
+
+## Implementation Results — 2026-09-13
+
+Implemented in full. 28 new tests; the suite is 1422 tests, 1421 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| Two columns on the campaign | As planned: `screen_focus` and `screen_entity_id`, with `ScreenFocus` as a backed enum and `Campaign::screen()` returning a `ScreenState` resolved through the party's gate. |
+| The party's gate, whoever opened it | `Entity::visibleToParty()` and `MapMarker::visibleToParty()`, both user-free. `Table\Screen` has no `isDm()` branch at all, and the snapshot test holds that a hidden handout the columns name never reaches the payload. |
+| `SetScreen` | As planned. `show()` reveals a hidden handout through `RevealHandout` and refuses a map the party may not see; `focus()` refuses a focus that needs a page. |
+| `ScreenChanged` | As planned, with an empty payload. |
+| `/screen` on its own layout | `layouts::screen`: no sidebar, no header, no search. The four focuses, the idle state, and the clock strip. |
+| The card on the Run screen | `Table\ScreenControls`, at the top of the aside beside the secrets. Every handout, every party-visible map with a picture, the two focus buttons, clear, and a link that opens the screen in a new tab. |
+| The round trip | Both keys in the campaign section; the reader accepts absent keys and refuses an unknown focus or a page the file does not carry; the importer writes both after the entities. |
+| The demo world | The duke's letter is on the screen on first run, and the seeder test opens `/screen` and `/table`. |
+
+### Deviations
+
+| Planned | Shipped | Why |
+|---|---|---|
+| No poll on the controls card | A sixty-second poll, like every panel | The browser pass took a handout back from the panel beside the card, and with no socket the card kept saying the letter was up. The poll is the same backstop the panels keep. |
+| The handout at 78vh, the map at 82vh | 62vh and 68vh | At 1024×768 the clock strip fell below the fold. The strip is the part a table glances at, so it has to be on the screen. |
+
+### Not done
+
+- The `public/storage` link was missing on this machine, so the first screenshot showed a broken image. `php artisan storage:link` fixed it. That is the environment, not the slice, and nothing in the repo changed for it.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px as the GM and 1024px as the player, with `BROADCAST_CONNECTION=null`, so every change was read on the next load rather than pushed:
+
+- The Run screen for session 3 shows the "On the screen" card with the two handouts, the two maps, "The fight", "The clocks", and the link.
+- "On the screen" beside the duke's letter puts the letter on `/screen`, full size with its name under it and the two revealed clocks in the strip. The player's `/screen` shows the same page.
+- "The fight" puts the turn order up: round, whose turn, four rows the party may see, health as words, the hidden thralls absent, no numbers anywhere, read from the GM's own session.
+- The Duchy of Vell on the screen shows the four pins the party found and neither of the two hidden ones, which the GM's own map page shows in purple.
+- "Take it back" on the letter while it is up drops the screen to the fight on the next load, with the columns still naming the letter.

@@ -39,6 +39,7 @@ use App\Livewire\Sessions\Prep as SessionsPrep;
 use App\Livewire\Sessions\Run as SessionsRun;
 use App\Livewire\Sessions\Show as SessionsShow;
 use App\Livewire\Sessions\Story as SessionsStory;
+use App\Livewire\Table\Screen as TableScreen;
 use App\Livewire\Table\Show as TableShow;
 use Illuminate\Support\Facades\Route;
 
@@ -113,6 +114,11 @@ Route::middleware('auth')->group(function () {
             // Singular, and it cannot collide with /tables: {type} is patterned to the
             // six entity slugs, so no catch-all below can claim it either.
             Route::get('/table', TableShow::class)->name('table');
+
+            // The television at the end of the table: what the party may see, large,
+            // and nothing else, whoever opened it. Every member, like /table, and
+            // singular for the same reason. Its own layout, with no sidebar.
+            Route::get('/screen', TableScreen::class)->name('screen');
 
             // The recap archive, read oldest first. A page of prose, not a schedule,
             // which is why it is not a tab on the sessions index.

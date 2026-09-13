@@ -32,6 +32,7 @@ it('seeds a world a GM can open and a player can read', function () {
     expect($campaign->name)->toBe('The Drowned Duchy')
         ->and($campaign->roleFor($dm))->toBe(CampaignRole::Owner)
         ->and($campaign->roleFor($player))->toBe(CampaignRole::Player)
+        ->and($campaign->screen()->entity?->name)->toBe("The duke's letter")
         ->and(Entity::query()->count())->toBeGreaterThan(10)
         ->and(EntityTemplate::query()->count())->toBe(2)
         ->and(GameSession::query()->count())->toBe(4)
@@ -118,6 +119,8 @@ it('renders every demo screen for the GM it seeds', function () {
         route('entities.show', [$campaign, 'characters', 'abbess-corvane']),
         route('sessions.show', [$campaign, 1]),
         route('sessions.run', [$campaign, 3]),
+        route('table', $campaign),
+        route('screen', $campaign),
         route('calendar.show', $campaign),
         route('calendar.edit', $campaign),
         route('timeline', $campaign),

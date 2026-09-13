@@ -93,6 +93,7 @@ class ImportCampaign
                 $this->decisions($document, $campaign, $importer, $ids);
                 $this->ledger($document, $campaign, $importer, $ids);
                 $this->reputation($document, $campaign, $importer, $ids);
+                $this->screen($document, $campaign, $ids);
             });
 
             // One index at the end rather than a write per entity. Chunked, so a
@@ -503,6 +504,26 @@ class ImportCampaign
                 ]);
             }
         }
+    }
+
+    /**
+     * What the screen on the wall shows, written after the page it names exists. The
+     * focus travels as it is; the page is remapped like every other id.
+     *
+     * @param  array<string, mixed>  $document
+     */
+    private function screen(array $document, Campaign $campaign, IdMap $ids): void
+    {
+        $attributes = $document['campaign'];
+
+        if ($attributes['screen_focus'] === null && $attributes['screen_entity_id'] === null) {
+            return;
+        }
+
+        $campaign->forceFill([
+            'screen_focus' => $attributes['screen_focus'],
+            'screen_entity_id' => $ids->newForNullable($attributes['screen_entity_id']),
+        ])->save();
     }
 
     /**

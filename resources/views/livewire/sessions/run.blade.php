@@ -148,6 +148,12 @@
         </div>
 
         <aside class="space-y-6">
+            {{-- The television at the end of the table, and what is on it. At the top of
+                 the aside because it is pressed mid-scene, like a secret. --}}
+            <x-ui.card title="On the screen">
+                <livewire:table.screen-controls :campaign="$campaign" :wire:key="'screen-controls-'.$session->id" />
+            </x-ui.card>
+
             <x-ui.card title="Secrets and clues" :padding="false">
                 <x-slot:header>
                     <span class="text-sm text-ink-faint">{{ $readySecrets->count() }} left</span>

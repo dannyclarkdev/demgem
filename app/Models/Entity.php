@@ -520,6 +520,20 @@ class Entity extends Model implements HasMedia
         });
     }
 
+    /**
+     * The strictest gate in the app: what the whole party may see, with no user in
+     * the question. Players only. Not Selected, which names some of the party, and
+     * not "my own character", which names one. It is the gate for the screen on the
+     * wall, where the viewer is whoever plugged the laptop in.
+     *
+     * @param  Builder<Entity>  $query
+     * @return Builder<Entity>
+     */
+    public function scopeVisibleToParty(Builder $query): Builder
+    {
+        return $query->where($query->qualifyColumn('visibility'), Visibility::Players->value);
+    }
+
     public function isVisibleTo(User $user, CampaignRole $role): bool
     {
         if ($role->isDm() || $this->player_user_id === $user->id) {
