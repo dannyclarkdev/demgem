@@ -358,7 +358,11 @@ class ExportCampaign
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
             ->with(['tags', 'viewers', 'media', 'objectives', 'markers', 'relations', 'statBlock', 'sheet'])
+            // The id breaks a tie in created_at: PostgreSQL keeps timestamps to the
+            // second, and two pages made in one second otherwise come out in any
+            // order, which moved a media ordinal in CI once.
             ->orderBy('created_at')
+            ->orderBy('id')
             ->cursor()
             ->map(fn (Entity $entity) => [
                 'id' => $entity->id,

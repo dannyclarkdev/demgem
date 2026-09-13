@@ -176,3 +176,7 @@ Driven end to end on the seeded world at 1100px as the player and 1400px as the 
 - Wren's page shows the player "No sheet yet" and "Edit sheet". The form takes the six scores, two saving throws, Stealth with expertise, Perception, 38 hit points with 5 temporary, a d8, armour class 15 and speed 30, and the card reads Dexterity 17 +3, Stealth +9, Perception +5, save +6 on Dexterity, Passive Perception 15, initiative +3, and "5 of 5d8".
 - Taking 12 damage reads "31 / 38" with the temporary hit points gone. "Long rest" reads "38 / 38".
 - The GM opens the same page and reads the sheet with "Edit sheet" and "Long rest", and the attribution notice under it.
+
+### A flake found on the way
+
+The first CI run failed `BuildArchiveTest` on PostgreSQL: the entities export ordered by `created_at` alone, PostgreSQL keeps timestamps to the second, and two pages made in one second came out in either order, which moved a media ordinal. The export now breaks the tie on the id, as the other sections do. It is not this slice's, and it is fixed here because it was found here.
