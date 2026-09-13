@@ -8,6 +8,7 @@ use App\Markdown\Secrets\SecretBlocks;
 use App\Models\Entity;
 use App\Models\EntityRelation;
 use App\Models\QuestObjective;
+use App\Support\Sheets\FifthEdition;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -52,6 +53,53 @@ class EntityResource extends JsonResource
                 'sheet_url' => $this->sheet_url,
             ];
         }
+
+        // The ruleset's sheet, on the show route, when the character has one. The
+        // derived numbers come along because a reader of the API is a reader, and
+        // the screen prints them too.
+        $data['sheet'] = $this->whenLoaded('sheet', function () {
+            $sheet = $this->sheet;
+
+            if ($sheet === null) {
+                return null;
+            }
+
+            $sheet->setRelation('character', $this->resource);
+
+            $scores = [];
+            $modifiers = [];
+            $saves = [];
+            $skills = [];
+
+            foreach (array_keys(FifthEdition::ABILITIES) as $ability) {
+                $scores[$ability] = $sheet->score($ability);
+                $modifiers[$ability] = $sheet->modifier($ability);
+                $saves[$ability] = $sheet->saveBonus($ability);
+            }
+
+            foreach (array_keys(FifthEdition::SKILLS) as $key) {
+                $skills[$key] = $sheet->skillBonus($key);
+            }
+
+            return [
+                'scores' => $scores,
+                'modifiers' => $modifiers,
+                'proficiency_bonus' => $sheet->proficiencyBonus(),
+                'saving_throws' => $saves,
+                'saving_throw_proficiencies' => $sheet->saving_throws,
+                'skills' => $skills,
+                'skill_proficiencies' => $sheet->skills,
+                'expertise' => $sheet->expertise,
+                'passive_perception' => $sheet->passivePerception(),
+                'initiative' => $sheet->initiative(),
+                'hit_points' => ['max' => $sheet->hp_max, 'current' => $sheet->hp_current, 'temporary' => $sheet->hp_temp],
+                'hit_dice' => ['die' => $sheet->hit_die, 'total' => $sheet->level(), 'spent' => $sheet->hit_dice_spent],
+                'spell_slots' => (object) array_combine(array_map('strval', array_keys($sheet->slots())), $sheet->slots()),
+                'spellcasting_ability' => $sheet->spellcasting_ability,
+                'armor_class' => $sheet->armor_class,
+                'speed' => $sheet->speed,
+            ];
+        });
 
         if ($this->isQuest()) {
             $data['quest'] = [

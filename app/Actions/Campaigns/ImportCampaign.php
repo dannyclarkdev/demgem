@@ -393,6 +393,11 @@ class ImportCampaign
                 ]);
             }
 
+            // The ruleset's sheet, one-to-one, written after the character it belongs to.
+            if (($row['sheet'] ?? null) !== null) {
+                $entity->sheet()->create(['campaign_id' => $entity->campaign_id, ...$row['sheet']]);
+            }
+
             foreach ($row['relations'] as $relation) {
                 $entity->relations()->create([
                     'campaign_id' => $entity->campaign_id,

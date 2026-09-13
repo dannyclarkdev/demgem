@@ -79,6 +79,13 @@ class EntityController extends ApiController
         $entity->setRelation('relations', $entity->relations()->visibleTo($user, $role)->with('target')->get());
         $entity->setRelation('incomingRelations', $entity->incomingRelations()->visibleTo($user, $role)->with('source')->orderBy('created_at')->get());
 
+        // The ruleset's sheet, only on a ruleset that has one. The relation is set
+        // either way on a character, so the key is present and null when there is
+        // no sheet rather than absent, which would read as "hidden".
+        if ($entity->isCharacter() && $campaign->ruleset->hasCharacterSheet()) {
+            $entity->setRelation('sheet', $entity->sheet()->first());
+        }
+
         if ($entity->isQuest()) {
             $entity->setRelation('giver', $entity->giver_entity_id === null
                 ? null

@@ -18,6 +18,7 @@ use App\Models\Secret;
 use App\Models\SessionRsvp;
 use App\Support\Reckoning\Reckoning;
 use App\Support\Reputation\Standing;
+use App\Support\Sheets\FifthEdition;
 use Illuminate\Support\Collection;
 
 /**
@@ -52,7 +53,7 @@ class WriteCampaignMarkdown
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source', 'reputationChanges.gameSession', 'downtimeActivities.gameSession'])
+            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source', 'reputationChanges.gameSession', 'downtimeActivities.gameSession', 'sheet'])
             ->orderBy('name')
             ->get();
 
@@ -241,6 +242,34 @@ class WriteCampaignMarkdown
                     .($change->gameSession !== null ? ' *('.$change->gameSession->label().')*' : '')
                     .($change->player_visible ? '' : ' *(GM only)*'))
                 ->implode("\n");
+        }
+
+        // The ruleset's sheet: the scores with their modifiers, the hit points, the
+        // dice, the proficient skills with their bonuses, and the slots. Derived
+        // numbers are printed here because a vault page is read, not imported.
+        if ($entity->isCharacter() && $entity->sheet !== null) {
+            $sheet = $entity->sheet->setRelation('character', $entity);
+            $lines = [];
+
+            foreach (FifthEdition::ABILITIES as $ability => $name) {
+                $lines[] = '- '.$name.' '.$sheet->score($ability).' ('.FifthEdition::signed($sheet->modifier($ability)).')';
+            }
+
+            $lines[] = '- Hit points: '.$sheet->hp_current.' of '.$sheet->hp_max.($sheet->hp_temp > 0 ? ' (+'.$sheet->hp_temp.' temporary)' : '');
+            $lines[] = '- Hit dice: '.$sheet->hitDiceLeft().' of '.$sheet->hitDiceLabel();
+            $lines[] = '- Proficiency bonus: '.FifthEdition::signed($sheet->proficiencyBonus());
+
+            foreach (FifthEdition::SKILLS as $key => $skill) {
+                if ($sheet->hasSkillProficiency($key) || $sheet->hasExpertise($key)) {
+                    $lines[] = '- '.$skill['name'].' '.FifthEdition::signed($sheet->skillBonus($key)).($sheet->hasExpertise($key) ? ' (expertise)' : '');
+                }
+            }
+
+            foreach ($sheet->slots() as $level => $slot) {
+                $lines[] = '- Level '.$level.' slots: '.($slot['total'] - $slot['used']).' of '.$slot['total'];
+            }
+
+            $body[] = "## Character sheet\n\n".implode("\n", $lines);
         }
 
         // What the character did between sessions, oldest first, with the days, the
