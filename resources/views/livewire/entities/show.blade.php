@@ -228,6 +228,14 @@
                 </x-ui.card>
             @endif
 
+            {{-- What the character did between sessions. A PC always carries the card,
+                 so its player has the form; an NPC carries it once it has a row. --}}
+            @if ($showDowntime)
+                <x-ui.card title="Downtime">
+                    <livewire:downtime.log :campaign="$campaign" :character="$entity" :wire:key="'downtime-'.$entity->id" />
+                </x-ui.card>
+            @endif
+
             <livewire:entities.relations :campaign="$campaign" :entity="$entity" :wire:key="'relations-'.$entity->id" />
             @if ($role->isDm())
                 <livewire:entities.history :campaign="$campaign" :entity="$entity" :key="'history-'.$entity->id" />

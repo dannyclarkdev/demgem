@@ -3,6 +3,7 @@
 use App\Enums\CampaignRole;
 use App\Models\Campaign;
 use App\Models\Decision;
+use App\Models\DowntimeActivity;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\EntityTemplate;
@@ -33,6 +34,7 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and($campaign->roleFor($dm))->toBe(CampaignRole::Owner)
         ->and($campaign->roleFor($player))->toBe(CampaignRole::Player)
         ->and($campaign->screen()->entity?->name)->toBe("The duke's letter")
+        ->and((int) DowntimeActivity::query()->sum('days'))->toBe(15)
         ->and(Entity::query()->count())->toBeGreaterThan(10)
         ->and(EntityTemplate::query()->count())->toBe(2)
         ->and(GameSession::query()->count())->toBe(4)
@@ -112,6 +114,7 @@ it('renders every demo screen for the GM it seeds', function () {
         route('entities.show', [$campaign, 'arcs', 'the-duke-beneath']),
         route('decisions.index', $campaign),
         route('ledger.index', $campaign),
+        route('downtime.index', $campaign),
         route('entities.index', [$campaign, 'journals']),
         route('entities.show', [$campaign, 'journals', 'after-the-fire']),
         route('entities.index', [$campaign, 'factions']),

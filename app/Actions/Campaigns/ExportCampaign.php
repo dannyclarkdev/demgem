@@ -9,6 +9,7 @@ use App\Models\Clock;
 use App\Models\Combatant;
 use App\Models\Decision;
 use App\Models\DiceRoll;
+use App\Models\DowntimeActivity;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\EntityBodyRevision;
@@ -97,6 +98,7 @@ class ExportCampaign
         'game_sessions' => 'sessions',
         'decisions' => 'decisions',
         'ledger_entries' => 'ledger',
+        'downtime_activities' => 'downtime',
         'reputation_changes' => 'reputation',
         'stat_blocks' => 'stat_blocks',
         'encounters' => 'encounters',
@@ -162,6 +164,7 @@ class ExportCampaign
             'clocks' => $this->clocks($campaign),
             'decisions' => $this->decisions($campaign),
             'ledger' => $this->ledger($campaign),
+            'downtime' => $this->downtime($campaign),
             'reputation' => $this->reputation($campaign),
         ];
     }
@@ -634,6 +637,30 @@ class ExportCampaign
                 'note' => $entry->note,
                 'created_at' => $entry->created_at?->toIso8601String(),
                 'updated_at' => $entry->updated_at?->toIso8601String(),
+            ]);
+    }
+
+    /**
+     * @return iterable<int, array<string, mixed>> A LazyCollection: it streams row by row.
+     */
+    private function downtime(Campaign $campaign): iterable
+    {
+        return DowntimeActivity::query()
+            ->withoutGlobalScopes()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->cursor()
+            ->map(fn (DowntimeActivity $activity) => [
+                'id' => $activity->id,
+                'entity_id' => $activity->entity_id,
+                'game_session_id' => $activity->game_session_id,
+                'activity' => $activity->activity,
+                'days' => $activity->days,
+                'notes' => $activity->notes,
+                'starts_on' => $activity->starts_on?->toArray(),
+                'created_at' => $activity->created_at?->toIso8601String(),
+                'updated_at' => $activity->updated_at?->toIso8601String(),
             ]);
     }
 

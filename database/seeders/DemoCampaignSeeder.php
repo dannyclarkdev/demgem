@@ -11,6 +11,7 @@ use App\Actions\Compendium\CreateStatBlock;
 use App\Actions\Decisions\RecordDecision;
 use App\Actions\Decisions\SetDecisionVisibility;
 use App\Actions\Dice\RollDice;
+use App\Actions\Downtime\RecordDowntime;
 use App\Actions\Encounters\AddCombatants;
 use App\Actions\Encounters\ApplyDamage;
 use App\Actions\Encounters\CreateEncounter;
@@ -206,6 +207,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedJournals($campaign, $dm, $player);
         $this->seedReputation($campaign, $dm);
         $this->seedLedger($campaign, $dm, $player);
+        $this->seedDowntime($campaign, $dm, $player);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
         $this->seedGenerators($campaign, $dm);
@@ -501,6 +503,42 @@ class DemoCampaignSeeder extends Seeder
         $record->coin($campaign, $player, -40, 'The gate sergeant', $second);
         $record->item($campaign, $player, 'Torch', 6, null, null, $second);
         $record->item($campaign, $player, 'Torch', -2, null, 'Burned in the corridor', $second);
+    }
+
+    /**
+     * What the party did in the fortnight between the first two sessions: two rows
+     * of Wren's, written by her player, and one of Halder's, written by the GM, each
+     * with a day in the world so the calendar prints a range.
+     */
+    private function seedDowntime(Campaign $campaign, User $dm, User $player): void
+    {
+        $record = app(RecordDowntime::class);
+        $first = $campaign->gameSessions()->where('number', 1)->first();
+        $wren = $campaign->entities()->where('name', 'Wren Ashgrove')->firstOrFail();
+        $halder = $campaign->entities()->where('name', 'Halder Bream')->firstOrFail();
+
+        $record->handle($campaign, $player, $wren, [
+            'activity' => 'Forged the harbor papers',
+            'days' => 5,
+            'notes' => 'A clerk at the customs house owed [[Mara Voss]] a favour. Now he owes two.',
+            'session' => $first,
+            'starts_on' => new GameDate(312, 2, 22),
+        ]);
+
+        $record->handle($campaign, $dm, $halder, [
+            'activity' => 'Drank the Tidewardens under the table',
+            'days' => 3,
+            'notes' => 'Learned two names and forgot one of them.',
+            'session' => $first,
+            'starts_on' => new GameDate(312, 2, 25),
+        ]);
+
+        $record->handle($campaign, $player, $wren, [
+            'activity' => 'Copied the tide charts',
+            'days' => 7,
+            'session' => $first,
+            'starts_on' => new GameDate(312, 2, 28),
+        ]);
     }
 
     /**

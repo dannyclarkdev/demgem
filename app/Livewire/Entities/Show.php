@@ -119,6 +119,10 @@ class Show extends Component
             'dmNotesHtml' => $role->isDm() ? $renderer->render($this->entity->dm_notes, $wikiLinks) : null,
             'rewardsHtml' => $this->entity->isQuest() ? $renderer->render($this->entity->rewards, $wikiLinks) : '',
             'questStatus' => $this->entity->questStatus(),
+            // A PC always carries the downtime card, so its player has the form. An NPC
+            // carries it once a GM has written a row, and never an empty one.
+            'showDowntime' => $this->entity->isCharacter()
+                && ($this->entity->is_pc || $this->entity->downtimeActivities()->exists()),
             'happensOn' => $this->entity->happens_on === null ? null : Calendar::query()->first()?->reckoning()->format($this->entity->happens_on),
             'giver' => $this->visibleGiver($user, $role),
             'arc' => $this->visibleArc($user, $role),

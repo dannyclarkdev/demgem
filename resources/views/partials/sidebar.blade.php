@@ -80,6 +80,11 @@
                 :active="request()->routeIs('ledger.*')"
                 icon="box"
             >Ledger</x-ui.nav-link>
+            <x-ui.nav-link
+                :href="route('downtime.index', $currentCampaign)"
+                :active="request()->routeIs('downtime.*')"
+                icon="compass"
+            >Downtime</x-ui.nav-link>
             @if ($currentRole?->isDm())
                 <x-ui.nav-link
                     :href="route('encounters.index', $currentCampaign)"

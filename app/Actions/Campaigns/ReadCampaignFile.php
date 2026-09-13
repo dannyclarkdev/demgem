@@ -17,6 +17,7 @@ use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\Combatant;
 use App\Models\Decision;
+use App\Models\DowntimeActivity;
 use App\Models\Encounter;
 use App\Models\EntityRelation;
 use App\Models\GameSession;
@@ -135,6 +136,7 @@ class ReadCampaignFile
             'clocks' => $this->clocks($this->list($decoded, 'clocks')),
             'decisions' => $this->decisions($this->list($decoded, 'decisions')),
             'ledger' => $this->ledger($this->list($decoded, 'ledger')),
+            'downtime' => $this->downtime($this->list($decoded, 'downtime')),
             'reputation' => $this->reputation($this->list($decoded, 'reputation')),
         ];
 
@@ -953,6 +955,49 @@ class ReadCampaignFile
     }
 
     /**
+     * What each character did between sessions. A row is its character and its
+     * activity; one with neither is a row nothing can show. Absent from a file older
+     * than slice 25, and an empty list is what that means.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function downtime(array $rows): array
+    {
+        $activities = [];
+
+        foreach ($rows as $index => $row) {
+            $id = $this->id($row, 'downtime', $index);
+
+            if ($id === null) {
+                continue;
+            }
+
+            $activity = $this->text($row, 'activity', DowntimeActivity::MAX_ACTIVITY_LENGTH);
+            $character = $this->reference($row, 'entity_id');
+
+            if ($activity === null || $character === null) {
+                continue;
+            }
+
+            $activities[] = [
+                'id' => $id,
+                'entity_id' => $character,
+                'game_session_id' => $this->reference($row, 'game_session_id'),
+                'activity' => $activity,
+                'days' => max(0, min(DowntimeActivity::MAX_DAYS, $this->integer($row, 'days') ?? 0)),
+                'notes' => $this->text($row, 'notes', DowntimeActivity::MAX_NOTES_LENGTH),
+                'starts_on' => $this->gameDate($row, 'starts_on'),
+                'created_at' => $this->text($row, 'created_at', 40),
+            ];
+        }
+
+        $this->report->count('downtime', count($activities));
+
+        return $activities;
+    }
+
+    /**
      * @param  list<mixed>  $rows
      * @return list<array<string, mixed>>
      */
@@ -1044,6 +1089,8 @@ class ReadCampaignFile
         $ledger = $document['ledger'];
         /** @var list<array<string, mixed>> $reputation */
         $reputation = $document['reputation'];
+        /** @var list<array<string, mixed>> $downtime */
+        $downtime = $document['downtime'];
 
         // An arc is an entity of one type, so the reference is checked against the
         // arcs the file carries rather than every page in it.
@@ -1118,6 +1165,11 @@ class ReadCampaignFile
         foreach ($reputation as $change) {
             $this->mustResolve($change['entity_id'], $this->entityIds, 'entity', 'a reputation change');
             $this->mustResolve($change['game_session_id'], $this->sessionIds, 'session', 'a reputation change');
+        }
+
+        foreach ($downtime as $activity) {
+            $this->mustResolve($activity['entity_id'], $this->entityIds, 'character', 'a downtime row');
+            $this->mustResolve($activity['game_session_id'], $this->sessionIds, 'session', 'a downtime row');
         }
 
         $this->checkCycles($entities, 'parent_id', 'The pages in that file nest inside each other in a loop');
