@@ -2,6 +2,7 @@
 
 use App\Enums\CampaignRole;
 use App\Models\Campaign;
+use App\Models\CharacterSheet;
 use App\Models\Decision;
 use App\Models\DowntimeActivity;
 use App\Models\Encounter;
@@ -35,6 +36,7 @@ it('seeds a world a GM can open and a player can read', function () {
         ->and($campaign->roleFor($player))->toBe(CampaignRole::Player)
         ->and($campaign->screen()->entity?->name)->toBe("The duke's letter")
         ->and((int) DowntimeActivity::query()->sum('days'))->toBe(15)
+        ->and(CharacterSheet::query()->count())->toBe(2)
         ->and(Entity::query()->count())->toBeGreaterThan(10)
         ->and(EntityTemplate::query()->count())->toBe(2)
         ->and(GameSession::query()->count())->toBe(4)

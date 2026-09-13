@@ -165,6 +165,13 @@
                 @endif
             </x-ui.card>
 
+            {{-- The ruleset's own sheet, on a campaign whose ruleset has one. --}}
+            @if ($showSheet)
+                <x-ui.card title="Character sheet">
+                    <livewire:characters.sheet :campaign="$campaign" :character="$entity" :wire:key="'sheet-'.$entity->id" />
+                </x-ui.card>
+            @endif
+
             @if ($entity->isArc())
                 <x-ui.card title="Quests in this arc" :padding="false">
                     @if ($arcQuests->isEmpty())

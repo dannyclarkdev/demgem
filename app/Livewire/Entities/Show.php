@@ -119,6 +119,9 @@ class Show extends Component
             'dmNotesHtml' => $role->isDm() ? $renderer->render($this->entity->dm_notes, $wikiLinks) : null,
             'rewardsHtml' => $this->entity->isQuest() ? $renderer->render($this->entity->rewards, $wikiLinks) : '',
             'questStatus' => $this->entity->questStatus(),
+            // The SRD 5.2.1 sheet is a ruleset module: the card mounts only on a campaign
+            // whose ruleset has one, and a page on any other ruleset never asks for it.
+            'showSheet' => $this->entity->isCharacter() && $this->campaign->ruleset->hasCharacterSheet(),
             // A PC always carries the downtime card, so its player has the form. An NPC
             // carries it once a GM has written a row, and never an empty one.
             'showDowntime' => $this->entity->isCharacter()

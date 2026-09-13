@@ -16,6 +16,7 @@ use App\Enums\SessionStatus;
 use App\Enums\Visibility;
 use App\Models\Calendar;
 use App\Models\Campaign;
+use App\Models\CharacterSheet;
 use App\Models\Combatant;
 use App\Models\Decision;
 use App\Models\DowntimeActivity;
@@ -30,6 +31,7 @@ use App\Support\Reckoning\Bounds;
 use App\Support\Reckoning\GameDate;
 use App\Support\Reckoning\Reckoning;
 use App\Support\Reputation\Standing;
+use App\Support\Sheets\FifthEdition;
 use BackedEnum;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -447,6 +449,7 @@ class ReadCampaignFile
                 'objectives' => $this->objectives($row),
                 'markers' => $this->markers($row),
                 'relations' => $this->relations($row),
+                'sheet' => $this->sheet($row),
                 'image' => $image,
                 'files' => $files,
             ];
@@ -543,6 +546,93 @@ class ReadCampaignFile
         }
 
         return $relations;
+    }
+
+    /**
+     * The SRD 5.2.1 sheet under a character, or null. Absent from a file older than
+     * slice 27, and null is what that means. A number outside the bounds is refused
+     * rather than clamped: a sheet is a player's own record, and a quiet clamp would
+     * hand them a different character.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>|null
+     */
+    private function sheet(array $row): ?array
+    {
+        $sheet = $row['sheet'] ?? null;
+
+        if (! is_array($sheet)) {
+            return null;
+        }
+
+        $name = (string) ($row['name'] ?? 'a character');
+        $parts = [];
+
+        foreach (CharacterSheet::SCORE_COLUMNS as $column) {
+            $score = $this->integer($sheet, $column) ?? 10;
+
+            if ($score < FifthEdition::MIN_SCORE || $score > FifthEdition::MAX_SCORE) {
+                $this->errors[] = "The sheet on \"{$name}\" has a {$column} of {$score}, which the rules do not allow.";
+            }
+
+            $parts[$column] = $score;
+        }
+
+        $abilities = array_keys(FifthEdition::ABILITIES);
+        $skills = array_keys(FifthEdition::SKILLS);
+
+        $parts['saving_throws'] = $this->keyList($sheet, 'saving_throws', $abilities);
+        $parts['skills'] = $this->keyList($sheet, 'skills', $skills);
+        $parts['expertise'] = $this->keyList($sheet, 'expertise', $skills);
+        $parts['hp_max'] = max(0, min(FifthEdition::MAX_HIT_POINTS, $this->integer($sheet, 'hp_max') ?? 0));
+        $parts['hp_current'] = max(0, min($parts['hp_max'], $this->integer($sheet, 'hp_current') ?? 0));
+        $parts['hp_temp'] = max(0, min(FifthEdition::MAX_HIT_POINTS, $this->integer($sheet, 'hp_temp') ?? 0));
+        $die = $this->integer($sheet, 'hit_die') ?? 8;
+        $parts['hit_die'] = in_array($die, FifthEdition::HIT_DICE, true) ? $die : 8;
+        $parts['hit_dice_spent'] = max(0, min(FifthEdition::MAX_LEVEL, $this->integer($sheet, 'hit_dice_spent') ?? 0));
+
+        $slots = [];
+
+        foreach (is_array($sheet['spell_slots'] ?? null) ? $sheet['spell_slots'] : [] as $level => $slot) {
+            $level = (int) $level;
+            $total = is_array($slot) ? max(0, min(FifthEdition::MAX_SLOTS, (int) ($slot['total'] ?? 0))) : 0;
+
+            if ($level >= 1 && $level <= FifthEdition::MAX_SLOT_LEVEL && $total > 0) {
+                $slots[$level] = ['total' => $total, 'used' => max(0, min($total, (int) ($slot['used'] ?? 0)))];
+            }
+        }
+
+        ksort($slots);
+        $parts['spell_slots'] = $slots;
+
+        $ability = $this->text($sheet, 'spellcasting_ability', 3);
+        $parts['spellcasting_ability'] = in_array($ability, $abilities, true) ? $ability : null;
+
+        $armor = $this->integer($sheet, 'armor_class');
+        $parts['armor_class'] = $armor === null ? null : max(0, min(FifthEdition::MAX_ARMOR_CLASS, $armor));
+
+        $speed = $this->integer($sheet, 'speed');
+        $parts['speed'] = $speed === null ? null : max(0, min(FifthEdition::MAX_SPEED, $speed));
+
+        return $parts;
+    }
+
+    /**
+     * A list of keys, keeping only the ones the rules name.
+     *
+     * @param  array<string, mixed>  $row
+     * @param  list<string>  $allowed
+     * @return list<string>
+     */
+    private function keyList(array $row, string $key, array $allowed): array
+    {
+        $value = $row[$key] ?? [];
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter($value, fn ($item) => is_string($item) && in_array($item, $allowed, true))));
     }
 
     /**

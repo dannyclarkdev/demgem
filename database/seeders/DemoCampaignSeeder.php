@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Actions\Calendars\SaveCalendar;
 use App\Actions\Campaigns\CreateCampaign;
+use App\Actions\Characters\SaveSheet;
 use App\Actions\Clocks\CreateClock;
 use App\Actions\Clocks\SetClockVisibility;
 use App\Actions\Clocks\TickClock;
@@ -209,6 +210,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedReputation($campaign, $dm);
         $this->seedLedger($campaign, $dm, $player);
         $this->seedDowntime($campaign, $dm, $player);
+        $this->seedSheets($campaign);
         $this->seedEncounter($campaign, $dm);
         $this->seedTables($campaign, $dm);
         $this->seedGenerators($campaign, $dm);
@@ -517,6 +519,41 @@ class DemoCampaignSeeder extends Seeder
         $record->coin($campaign, $player, -40, 'The gate sergeant', $second);
         $record->item($campaign, $player, 'Torch', 6, null, null, $second);
         $record->item($campaign, $player, 'Torch', -2, null, 'Burned in the corridor', $second);
+    }
+
+    /**
+     * The two PCs' sheets, on the rules the campaign runs: a rogue with expertise in
+     * Stealth and a cleric with slots half spent, so the page has numbers on it and
+     * the long rest has something to give back.
+     */
+    private function seedSheets(Campaign $campaign): void
+    {
+        $save = app(SaveSheet::class);
+        $named = fn (string $name): Entity => $campaign->entities()->where('name', $name)->firstOrFail();
+
+        $save->handle($named('Wren Ashgrove'), [
+            'strength' => 10, 'dexterity' => 17, 'constitution' => 14, 'intelligence' => 12, 'wisdom' => 14, 'charisma' => 8,
+            'saving_throws' => ['dex', 'int'],
+            'skills' => ['stealth', 'sleight_of_hand', 'perception', 'acrobatics', 'deception'],
+            'expertise' => ['stealth', 'sleight_of_hand'],
+            'hp_max' => 38, 'hp_current' => 31, 'hp_temp' => 0,
+            'hit_die' => 8, 'hit_dice_spent' => 1,
+            'spell_slots' => [],
+            'spellcasting_ability' => null,
+            'armor_class' => 15, 'speed' => 30,
+        ]);
+
+        $save->handle($named('Halder Bream'), [
+            'strength' => 14, 'dexterity' => 10, 'constitution' => 15, 'intelligence' => 11, 'wisdom' => 17, 'charisma' => 13,
+            'saving_throws' => ['wis', 'cha'],
+            'skills' => ['insight', 'medicine', 'religion'],
+            'expertise' => [],
+            'hp_max' => 43, 'hp_current' => 43, 'hp_temp' => 0,
+            'hit_die' => 8, 'hit_dice_spent' => 0,
+            'spell_slots' => [1 => ['total' => 4, 'used' => 2], 2 => ['total' => 3, 'used' => 1], 3 => ['total' => 2, 'used' => 0]],
+            'spellcasting_ability' => 'wis',
+            'armor_class' => 18, 'speed' => 30,
+        ]);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Actions\Campaigns;
 use App\Models\Calendar;
 use App\Models\Campaign;
 use App\Models\CampaignMember;
+use App\Models\CharacterSheet;
 use App\Models\Clock;
 use App\Models\Combatant;
 use App\Models\Decision;
@@ -60,6 +61,7 @@ class ExportCampaign
         'quest_objectives' => 'entities[].objectives',
         'map_markers' => 'entities[].markers',
         'entity_relations' => 'entities[].relations',
+        'character_sheets' => 'entities[].sheet',
         'scenes' => 'sessions[].scenes',
         'secrets' => 'sessions[].secrets',
         'game_session_entities' => 'sessions[].prepped',
@@ -355,7 +357,7 @@ class ExportCampaign
             ->withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'viewers', 'media', 'objectives', 'markers', 'relations', 'statBlock'])
+            ->with(['tags', 'viewers', 'media', 'objectives', 'markers', 'relations', 'statBlock', 'sheet'])
             ->orderBy('created_at')
             ->cursor()
             ->map(fn (Entity $entity) => [
@@ -408,6 +410,9 @@ class ExportCampaign
                         'player_visible' => $relation->player_visible,
                         'position' => $relation->position,
                     ])->values()->all(),
+                // The ruleset's sheet, one-to-one with the character, so nested. Null
+                // for a character with none and for every other type.
+                'sheet' => $this->sheet($entity->sheet),
                 'image' => $this->media($entity->getFirstMedia('image')),
                 // A handout's attachments, in the same shape as the single image: the
                 // facts about each file and a URL, never the bytes. The zip with the
@@ -639,6 +644,43 @@ class ExportCampaign
                 'created_at' => $entry->created_at?->toIso8601String(),
                 'updated_at' => $entry->updated_at?->toIso8601String(),
             ]);
+    }
+
+    /**
+     * The SRD 5.2.1 sheet as the row holds it: the scores, the three lists, the hit
+     * points, the die, and the slots. Nothing derived, because nothing derived is
+     * stored.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function sheet(?CharacterSheet $sheet): ?array
+    {
+        if ($sheet === null) {
+            return null;
+        }
+
+        return [
+            'strength' => $sheet->strength,
+            'dexterity' => $sheet->dexterity,
+            'constitution' => $sheet->constitution,
+            'intelligence' => $sheet->intelligence,
+            'wisdom' => $sheet->wisdom,
+            'charisma' => $sheet->charisma,
+            'saving_throws' => $sheet->saving_throws,
+            'skills' => $sheet->skills,
+            'expertise' => $sheet->expertise,
+            'hp_max' => $sheet->hp_max,
+            'hp_current' => $sheet->hp_current,
+            'hp_temp' => $sheet->hp_temp,
+            'hit_die' => $sheet->hit_die,
+            'hit_dice_spent' => $sheet->hit_dice_spent,
+            // JSON has no integer keys, so the levels travel as strings and the
+            // reader turns them back.
+            'spell_slots' => (object) array_map(fn (array $slot) => ['total' => $slot['total'], 'used' => $slot['used']], array_combine(array_map('strval', array_keys($sheet->slots())), $sheet->slots())),
+            'spellcasting_ability' => $sheet->spellcasting_ability,
+            'armor_class' => $sheet->armor_class,
+            'speed' => $sheet->speed,
+        ];
     }
 
     /**

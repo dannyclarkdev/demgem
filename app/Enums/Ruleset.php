@@ -32,4 +32,14 @@ enum Ruleset: string
     {
         return $this === self::Srd5e2024;
     }
+
+    /**
+     * Whether a character on this ruleset gets a sheet of the rules' own shape. The
+     * card, the write, the export section and the API key all read this rather than
+     * comparing cases, the compendium's way.
+     */
+    public function hasCharacterSheet(): bool
+    {
+        return $this === self::Srd5e2024;
+    }
 }

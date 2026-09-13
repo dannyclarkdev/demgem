@@ -2,7 +2,7 @@
 title: "feat: The 5e character sheet, as a ruleset module"
 type: feat
 date: 2026-09-13
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-13-feat-family-trees-plan.md
 ---
@@ -144,3 +144,35 @@ Then the full suite with `memory_limit=1G`, and a browser pass: as the player, o
 - `.ai/rules/models.md` — a scalar gets a column, a list gets a child table, and the calendar's JSON exception.
 - `.ai/rules/entities.md` — the character fields are not DM fields; the owning player edits their own PC.
 - `.ai/rules/campaigns.md` — a new campaign-scoped table joins the export in the same commit.
+
+## Implementation Results — 2026-09-13
+
+Implemented in full. 34 new tests, 24 of them unit tests on the maths; the suite is 1476 tests, 1475 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| The seam | `Ruleset::hasCharacterSheet()`. The component aborts 404 without it, the page does not mount the card, and the API sets the relation only on such a campaign. |
+| `character_sheets` | As planned. The three lists and the slots are JSON on the row. Nothing derived is stored. |
+| The maths | `Support\Sheets\FifthEdition`, pure and unit-tested; `CharacterSheet` wraps it with the character's level. |
+| The card | Reading, one form for every field, damage, healing, and the long rest, with the compendium's attribution under it and the party's pack from the ledger. |
+| Who writes | `EntityPolicy::update()`, with no policy of the sheet's own. |
+| The round trip and the vault | Nested under the character as `sheet`; the reader refuses a score outside the bounds and clamps the rest; the vault page gains a "Character sheet" section with the derived numbers printed. |
+| The API | `sheet` on the show route, with the derived numbers beside the stored ones. |
+| The demo world | Wren's rogue and Halder's cleric, the cleric with slots half spent. |
+
+### Deviations
+
+| Planned | Shipped | Why |
+|---|---|---|
+| A browser check that switches the campaign to the system-agnostic ruleset | A test instead | The ruleset is chosen at creation and settings do not change it, so the check is `offers no sheet on a system-agnostic campaign` in the feature test. |
+| The spell save DC and attack bonus were not in the plan | Printed on the slots block when a spellcasting ability is set | Two numbers the same maths gives for free, and the table reads them as often as the slots. |
+
+### Browser checks
+
+Driven end to end on the seeded world at 1100px as the player and 1400px as the GM:
+
+- Wren's page shows the player "No sheet yet" and "Edit sheet". The form takes the six scores, two saving throws, Stealth with expertise, Perception, 38 hit points with 5 temporary, a d8, armour class 15 and speed 30, and the card reads Dexterity 17 +3, Stealth +9, Perception +5, save +6 on Dexterity, Passive Perception 15, initiative +3, and "5 of 5d8".
+- Taking 12 damage reads "31 / 38" with the temporary hit points gone. "Long rest" reads "38 / 38".
+- The GM opens the same page and reads the sheet with "Edit sheet" and "Long rest", and the attribution notice under it.

@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -371,6 +372,16 @@ class Entity extends Model implements HasMedia
     public function downtimeActivities(): HasMany
     {
         return $this->hasMany(DowntimeActivity::class, 'entity_id')->orderBy('created_at')->orderBy('id');
+    }
+
+    /**
+     * The SRD 5.2.1 sheet, on a campaign whose ruleset has one. Null otherwise.
+     *
+     * @return HasOne<CharacterSheet, $this>
+     */
+    public function sheet(): HasOne
+    {
+        return $this->hasOne(CharacterSheet::class, 'entity_id');
     }
 
     public function isCharacter(): bool
