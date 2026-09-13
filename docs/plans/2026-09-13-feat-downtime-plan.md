@@ -2,7 +2,7 @@
 title: "feat: Downtime, what each character did between sessions"
 type: feat
 date: 2026-09-13
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-13-feat-player-screen-plan.md
 ---
@@ -140,3 +140,32 @@ Then the full suite with `memory_limit=1G`, and a browser pass: as the player, w
 - `.ai/rules/livewire.md` — nested and it writes, so it enters the campaign itself.
 - `.ai/rules/campaigns.md` — a new table joins the export in the same commit.
 - `.ai/rules/reckoning.md` — every number from a browser or a file goes through `Bounds`.
+
+## Implementation Results — 2026-09-13
+
+Implemented in full. 12 new tests; the suite is 1434 tests, 1433 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `downtime_activities` | As planned, with the date as three columns under `GameDateCast` and the total never stored. |
+| The character's gate | `DowntimeActivity::scopeVisibleTo()` is a `whereIn` over `Entity::visibleTo()`. The snapshot test holds that a GM-only character's row never reaches a player's payload. |
+| The policy | `DowntimeActivityPolicy` follows the character, not the author, with the `CurrentCampaign` fallback the ledger's policy uses. |
+| `Downtime\Log` in three places | The character's page, the session's page, and `/downtime`. The character picker's list is also its validation rule. |
+| The date | The session form's check, copied into the component. The end date is computed through `Reckoning::add()` and the row prints the range. |
+| The round trip and the vault | `downtime` is a new top-level section with both links remapped; the character's vault page gains a "Downtime" section. |
+| The demo world | Three rows in the fortnight between sessions 1 and 2, two of Wren's and one of Halder's, each with a day in the world. |
+
+### Deviations
+
+None from the plan's decisions. The `/downtime` page's totals are two queries rather than one join, so the names go through `Entity`'s own scope and not a raw select.
+
+### Browser checks
+
+Driven end to end on the seeded world at 1024px as the player and 1400px as the GM:
+
+- Wren's page shows the player the "Downtime" card with the form, the calendar's date picker, and "0 days of downtime" before the first row.
+- The player writes "Forged the harbor papers", 5 days, from 22 Saltrise 312, around session 1. The page reads "5 days of downtime, over 1 entry" and the row prints "22 Saltrise 312 AF to 26 Saltrise 312 AF".
+- Halder's page shows the same player no form and "No downtime recorded yet".
+- Session 1's page shows the GM the row under the decisions, with a character picker in the form, and `/downtime` shows "Days spent" with Wren at 5 days above the log.

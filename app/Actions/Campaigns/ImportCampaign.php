@@ -8,6 +8,7 @@ use App\Models\Campaign;
 use App\Models\Clock;
 use App\Models\Combatant;
 use App\Models\Decision;
+use App\Models\DowntimeActivity;
 use App\Models\Encounter;
 use App\Models\Entity;
 use App\Models\EntityBodyRevision;
@@ -93,6 +94,7 @@ class ImportCampaign
                 $this->decisions($document, $campaign, $importer, $ids);
                 $this->ledger($document, $campaign, $importer, $ids);
                 $this->reputation($document, $campaign, $importer, $ids);
+                $this->downtime($document, $campaign, $importer, $ids);
                 $this->screen($document, $campaign, $ids);
             });
 
@@ -503,6 +505,31 @@ class ImportCampaign
                     'position' => $entry['position'],
                 ]);
             }
+        }
+    }
+
+    /**
+     * What each character did between sessions. The character and the session are
+     * remapped; the date travels as the triple; the importer is the author, because
+     * the file cannot say who was.
+     *
+     * @param  array<string, mixed>  $document
+     */
+    private function downtime(array $document, Campaign $campaign, User $importer, IdMap $ids): void
+    {
+        foreach ($document['downtime'] as $row) {
+            $this->write(new DowntimeActivity, [
+                'id' => $ids->remember($row['id']),
+                'campaign_id' => $campaign->id,
+                'entity_id' => $ids->newFor($row['entity_id']),
+                'game_session_id' => $ids->newForNullable($row['game_session_id']),
+                'activity' => $row['activity'],
+                'days' => $row['days'],
+                'notes' => $row['notes'],
+                'starts_on' => $row['starts_on'],
+                'created_at' => $row['created_at'],
+                'created_by' => $importer->id,
+            ]);
         }
     }
 

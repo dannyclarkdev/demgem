@@ -4,6 +4,7 @@ namespace App\Actions\Campaigns;
 
 use App\Models\Campaign;
 use App\Models\Decision;
+use App\Models\DowntimeActivity;
 use App\Models\Entity;
 use App\Models\EntityRelation;
 use App\Models\GameSession;
@@ -51,7 +52,7 @@ class WriteCampaignMarkdown
         $entities = Entity::withoutGlobalScopes()
             ->where('campaign_id', $campaign->id)
             ->whereNull('deleted_at')
-            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source', 'reputationChanges.gameSession'])
+            ->with(['tags', 'parent', 'arc', 'player', 'objectives', 'relations.target', 'incomingRelations.source', 'reputationChanges.gameSession', 'downtimeActivities.gameSession'])
             ->orderBy('name')
             ->get();
 
@@ -239,6 +240,21 @@ class WriteCampaignMarkdown
                     .(filled($change->reason) ? ' '.$change->reason : '')
                     .($change->gameSession !== null ? ' *('.$change->gameSession->label().')*' : '')
                     .($change->player_visible ? '' : ' *(GM only)*'))
+                ->implode("\n");
+        }
+
+        // What the character did between sessions, oldest first, with the days, the
+        // range in the world when there is one, and the session it happened around.
+        if ($entity->isCharacter() && $entity->downtimeActivities->isNotEmpty()) {
+            $body[] = "## Downtime\n\n".$entity->downtimeActivities
+                ->map(function (DowntimeActivity $activity): string {
+                    $range = $this->reckoning === null ? null : $activity->range($this->reckoning);
+                    $line = '- '.$activity->activity.', '.DowntimeActivity::dayCount($activity->days)
+                        .($range !== null ? ', '.$range : '')
+                        .($activity->gameSession !== null ? ' *('.$activity->gameSession->label().')*' : '');
+
+                    return $activity->hasNotes() ? $line."\n  ".$activity->notes : $line;
+                })
                 ->implode("\n");
         }
 

@@ -20,6 +20,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Livewire/Decisions/** | .ai/rules/decisions.md |
 | app/Support/Dice/** | .ai/rules/dice.md |
 | app/Discord/** | .ai/rules/discord.md |
+| app/Livewire/Downtime/** | .ai/rules/downtime.md |
 | app/Support/Encounters/** | .ai/rules/encounters.md |
 | app/Livewire/Entities/** | .ai/rules/entities.md |
 | app/Events/** | .ai/rules/events.md |

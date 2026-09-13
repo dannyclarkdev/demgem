@@ -363,6 +363,16 @@ class Entity extends Model implements HasMedia
         return $this->hasMany(Clock::class)->orderBy('position');
     }
 
+    /**
+     * What this character did between sessions, oldest first.
+     *
+     * @return HasMany<DowntimeActivity, $this>
+     */
+    public function downtimeActivities(): HasMany
+    {
+        return $this->hasMany(DowntimeActivity::class, 'entity_id')->orderBy('created_at')->orderBy('id');
+    }
+
     public function isCharacter(): bool
     {
         return $this->type === EntityType::Character;

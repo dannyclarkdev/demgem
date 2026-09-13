@@ -105,6 +105,12 @@
                 <livewire:decisions.log :campaign="$campaign" :session="$session" :wire:key="'decisions-'.$session->id" />
             </x-ui.card>
 
+            {{-- What each character did around this session. The same component as
+                 /downtime, scoped to this session. --}}
+            <x-ui.card title="Downtime">
+                <livewire:downtime.log :campaign="$campaign" :session="$session" :wire:key="'downtime-'.$session->id" />
+            </x-ui.card>
+
             {{-- A poll is names against dates and needs the width; an RSVP list does not. --}}
             @if ($session->isPolling())
                 <livewire:sessions.attendance :campaign="$campaign" :session="$session" :wire:key="'attendance-'.$session->id" />

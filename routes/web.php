@@ -22,6 +22,7 @@ use App\Livewire\Compendium\Editor as CompendiumEditor;
 use App\Livewire\Compendium\Index as CompendiumIndex;
 use App\Livewire\Compendium\Show as CompendiumShow;
 use App\Livewire\Decisions\Index as DecisionsIndex;
+use App\Livewire\Downtime\Index as DowntimeIndex;
 use App\Livewire\Encounters\Index as EncountersIndex;
 use App\Livewire\Encounters\Show as EncountersShow;
 use App\Livewire\Entities\Form as EntitiesForm;
@@ -144,6 +145,10 @@ Route::middleware('auth')->group(function () {
 
             // The party's purse and pack. Every member reads and writes it.
             Route::get('/ledger', LedgerIndex::class)->name('ledger.index');
+
+            // What each character did between sessions. Every member; what a player
+            // reads and writes is the log's own query and policy.
+            Route::get('/downtime', DowntimeIndex::class)->name('downtime.index');
 
             // The shipped reference data. Addressed by slug, unlike an entity: a stat
             // block is not a GM's to rename, so the slug is stable in a way an entity's
