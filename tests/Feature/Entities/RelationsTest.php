@@ -120,6 +120,7 @@ it('exports both ends and the round trip remaps them', function () {
         'target_entity_id' => $mara->id,
         'label' => 'employer of',
         'reverse_label' => 'works for',
+        'kinship' => null,
         'player_visible' => true,
         'position' => 0,
     ]]);

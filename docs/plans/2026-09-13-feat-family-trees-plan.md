@@ -2,7 +2,7 @@
 title: "feat: Family trees, drawn from typed relationships"
 type: feat
 date: 2026-09-13
-status: planned
+status: implemented
 brainstorm: docs/brainstorms/2026-09-02-demgem-campaign-manager-brainstorm.md
 follows: docs/plans/2026-09-13-feat-downtime-plan.md
 ---
@@ -104,3 +104,32 @@ Then the full suite with `memory_limit=1G`, and a browser pass: as the GM, relat
 - `.ai/rules/entities.md` — relationships are a GM's to write; the target picker and the per-page lookup.
 - `.ai/rules/models.md` — a relationship is gated at both ends, in the scope.
 - `.ai/rules/api.md` — an added key on a resource.
+
+## Implementation Results — 2026-09-13
+
+Implemented in full. 8 new tests; the suite is 1442 tests, 1441 passing, 1 skipped, with Larastan clean and Pint clean.
+
+### What shipped, against the plan
+
+| Planned | Shipped |
+|---|---|
+| `entity_relations.kinship` | As planned, cast to `Kinship`, with `label()`, `reverse()`, and `plural()` on the enum. |
+| The labels from the kinship | `required_without:kinship` on the label; a blank label and a blank reverse label take the two words, and typed ones win. |
+| The tree as one query and a walk | `Relations::family()`: every kinship row the viewer may see, both ends eager-loaded, walked two up and two down in memory. The leak test reads a hidden spouse and a GM-only sister from the player's seat and finds neither in the markup or the snapshot. |
+| The card | A "Family" card above "Relationships" on a character's page, generations as rows of name chips, with a "Hidden" mark for a GM. |
+| The round trip and the API | `kinship` on every relation row; the reader accepts an absent key and refuses a value it does not know; both API relation lists carry it, the incoming one from the page's side. |
+| The demo world | Abbess Corvane is Mara's mother, revealed; Iselle Ashgrove is a new GM-only page, Wren's sister, on a hidden row. |
+
+### Deviations
+
+| Planned | Shipped | Why |
+|---|---|---|
+| `RelationsTest` unchanged | One expected array gained `kinship: null` | The test compares the exported relation row in full, and an added key is the export policy. |
+
+### Browser checks
+
+Driven end to end on the seeded world at 1400px as the GM and 1024px as the player:
+
+- On Mara Voss the GM picks Abbess Corvane, "Child of", and "Show the party", with both labels blank. The row reads "child of Abbess Corvane" and the Family card reads "Parents: Abbess Corvane".
+- The abbess's page reads "parent of Mara Voss" and "Children: Mara Voss" without a second row.
+- The player opens Mara and reads the same Family card, and no picker.
