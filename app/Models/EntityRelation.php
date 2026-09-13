@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CampaignRole;
+use App\Enums\Kinship;
 use App\Models\Concerns\BelongsToCampaign;
 use Database\Factories\EntityRelationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,7 +22,8 @@ use Illuminate\Support\Carbon;
  * It adds one gate the pin does not need, on the source, because the incoming list
  * on the target's page is built from rows whose source is somebody else.
  *
- * @property string $id
+ * @property string|null $reverse_label
+ * @property Kinship|null $kinship What the row means when it is family, from the source's side.
  * @property string $campaign_id
  * @property string $entity_id
  * @property string $target_entity_id
@@ -36,7 +38,7 @@ use Illuminate\Support\Carbon;
  * @property-read Entity $target
  */
 #[Fillable([
-    'campaign_id', 'entity_id', 'target_entity_id', 'label', 'reverse_label', 'player_visible', 'position',
+    'campaign_id', 'entity_id', 'target_entity_id', 'label', 'reverse_label', 'kinship', 'player_visible', 'position',
 ])]
 class EntityRelation extends Model
 {
@@ -50,6 +52,7 @@ class EntityRelation extends Model
     protected function casts(): array
     {
         return [
+            'kinship' => Kinship::class,
             'player_visible' => 'boolean',
             'position' => 'integer',
         ];

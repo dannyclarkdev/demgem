@@ -6,6 +6,7 @@ use App\Actions\Clocks\Segments;
 use App\Actions\Maps\Coordinate;
 use App\Enums\EncounterStatus;
 use App\Enums\EntityType;
+use App\Enums\Kinship;
 use App\Enums\LedgerKind;
 use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
@@ -534,6 +535,8 @@ class ReadCampaignFile
                 'target_entity_id' => $this->reference($relation, 'target_entity_id'),
                 'label' => $this->text($relation, 'label', EntityRelation::MAX_LABEL_LENGTH) ?? 'related to',
                 'reverse_label' => $this->text($relation, 'reverse_label', EntityRelation::MAX_LABEL_LENGTH),
+                // Absent from a file older than slice 26, and null is what that means.
+                'kinship' => isset($relation['kinship']) ? $this->enum(Kinship::class, $relation, 'kinship', 'a relationship') : null,
                 'player_visible' => (bool) ($relation['player_visible'] ?? false),
                 'position' => $this->integer($relation, 'position') ?? $index,
             ];

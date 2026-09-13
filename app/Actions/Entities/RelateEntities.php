@@ -2,6 +2,7 @@
 
 namespace App\Actions\Entities;
 
+use App\Enums\Kinship;
 use App\Models\Entity;
 use App\Models\EntityRelation;
 
@@ -11,7 +12,7 @@ class RelateEntities
      * Writes one row from $source's side. The caller has already checked that the
      * target is in the same campaign and is not the source itself.
      */
-    public function handle(Entity $source, Entity $target, string $label, ?string $reverseLabel, bool $playerVisible = false): EntityRelation
+    public function handle(Entity $source, Entity $target, string $label, ?string $reverseLabel, bool $playerVisible = false, ?Kinship $kinship = null): EntityRelation
     {
         $position = $source->relations()->exists() ? (int) $source->relations()->max('position') + 1 : 0;
 
@@ -20,6 +21,7 @@ class RelateEntities
             'target_entity_id' => $target->id,
             'label' => $label,
             'reverse_label' => $reverseLabel,
+            'kinship' => $kinship,
             'player_visible' => $playerVisible,
             'position' => $position,
         ]);

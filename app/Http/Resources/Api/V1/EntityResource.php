@@ -85,12 +85,15 @@ class EntityResource extends JsonResource
                 'id' => $relation->id,
                 'label' => $relation->label,
                 'reverse_label' => $relation->reverse_label,
+                'kinship' => $relation->kinship?->value,
                 'target' => self::link($relation->target),
             ])->values()->all());
         $data['incoming_relations'] = $this->whenLoaded('incomingRelations', fn () => $this->incomingRelations
             ->map(fn (EntityRelation $relation) => [
                 'id' => $relation->id,
                 'label' => $relation->readsFromTargetAs(),
+                // From this page's side, like the label above it.
+                'kinship' => $relation->kinship?->reverse()->value,
                 'source' => self::link($relation->source),
             ])->values()->all());
 

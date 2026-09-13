@@ -56,6 +56,8 @@ Slice 24 adds **the player screen**, for the television at the end of the table.
 
 Slice 25 adds **downtime**, what each character did between sessions. A row is what they did, how many days it cost, an optional note in Markdown, the session it happened around, and, when the campaign has a calendar, the day in the world it began, from which the page prints the range it covered. A player writes their own PC's rows and a GM writes anyone's; whoever may see the character reads them, and there is no second switch. The same log sits on the character's page, on the session's page, and at `/downtime`, where the days are summed per character on every read. It travels in the export and lands on the character's page in the vault.
 
+Slice 26 adds **family trees**. A relationship may carry a kinship, parent, child, sibling, or spouse, read from the side it was written on, and the labels fill in from it when the GM leaves them blank. A character's page draws a "Family" card from the typed rows, two generations up and two down, walked through the relations card's own gate at both ends: a hidden row or a GM-only relative never reaches the party's tree, and the GM reads a mark on each. The kinship travels in the export and on both relation lists of the API.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup

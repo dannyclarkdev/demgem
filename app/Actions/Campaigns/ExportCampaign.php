@@ -404,6 +404,7 @@ class ExportCampaign
                         'target_entity_id' => $relation->target_entity_id,
                         'label' => $relation->label,
                         'reverse_label' => $relation->reverse_label,
+                        'kinship' => $relation->kinship?->value,
                         'player_visible' => $relation->player_visible,
                         'position' => $relation->position,
                     ])->values()->all(),

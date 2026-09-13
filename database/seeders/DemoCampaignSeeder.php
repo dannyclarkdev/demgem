@@ -43,6 +43,7 @@ use App\Actions\Sessions\ToggleDateVote;
 use App\Actions\Table\SetScreen;
 use App\Enums\CampaignRole;
 use App\Enums\EntityType;
+use App\Enums\Kinship;
 use App\Enums\PrepRole;
 use App\Enums\QuestStatus;
 use App\Enums\Rsvp;
@@ -213,7 +214,7 @@ class DemoCampaignSeeder extends Seeder
         $this->seedGenerators($campaign, $dm);
         $this->seedDiceLog($campaign, $dm, $player);
         $this->seedMaps($campaign, $dm);
-        $this->seedRelations($campaign);
+        $this->seedRelations($campaign, $dm);
         $this->seedClocks($campaign);
         $this->seedHandouts($campaign, $dm);
 
@@ -285,10 +286,23 @@ class DemoCampaignSeeder extends Seeder
     /**
      * Who is what to whom. One of them the party has not been told.
      */
-    private function seedRelations(Campaign $campaign): void
+    private function seedRelations(Campaign $campaign, User $dm): void
     {
         $named = fn (string $name): Entity => $campaign->entities()->where('name', $name)->firstOrFail();
         $relate = app(RelateEntities::class);
+
+        // The family. The abbess is Mara's mother and the party knows it; Wren's
+        // sister is a GM-only page, so the sibling row is a tree the GM alone reads.
+        $iselle = app(CreateEntity::class)->handle($campaign, $dm, [
+            'type' => EntityType::Character,
+            'name' => 'Iselle Ashgrove',
+            'visibility' => Visibility::Dm,
+            'body' => "[[Wren Ashgrove]]'s sister. Alive, underwater, at [[The Drowned Duke]]'s right hand.",
+            'tags' => ['npc'],
+        ]);
+
+        $relate->handle($named('Abbess Corvane'), $named('Mara Voss'), 'mother of', 'daughter of', true, Kinship::Parent);
+        $relate->handle($iselle, $named('Wren Ashgrove'), 'sister of', 'sister of', false, Kinship::Sibling);
 
         $relate->handle($named('Mara Voss'), $named('Tidewarden Signet'), 'keeper of', 'kept by', true);
         $relate->handle($named('The Drowned Duke'), $named('Mara Voss'), 'employer of', 'secretly works for', false);
