@@ -6,6 +6,7 @@ use App\Actions\Auth\DiscordSignInRefused;
 use App\Actions\Auth\SignInWithDiscord;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Auth\RegistrationGate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +36,7 @@ class DiscordAuthController extends Controller
         return $driver->scopes(['identify', 'email'])->redirect();
     }
 
-    public function callback(Request $request, SignInWithDiscord $signIn): RedirectResponse
+    public function callback(Request $request, SignInWithDiscord $signIn, RegistrationGate $gate): RedirectResponse
     {
         abort_unless(self::isConfigured(), 404);
 
@@ -54,7 +55,7 @@ class DiscordAuthController extends Controller
         $current = Auth::user();
 
         try {
-            $user = $signIn->handle($discord, $current);
+            $user = $signIn->handle($discord, $current, mayRegister: $gate->allows($request));
         } catch (DiscordSignInRefused $refused) {
             return $current !== null
                 ? redirect()->route('profile.edit')->with('status', $refused->getMessage())

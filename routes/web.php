@@ -64,6 +64,13 @@ Route::get('/auth/discord/callback', [DiscordAuthController::class, 'callback'])
     ->middleware('throttle:20,1')
     ->name('auth.discord.callback');
 
+// An invite is the front door for a player with no account yet, so the page that
+// shows it is open to guests. The token in the URL is the credential, and a wrong one
+// is a bare 404. Accepting stays behind auth.
+Route::get('/invites/{token}', [InviteController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('invites.show');
+
 Route::middleware('auth')->group(function () {
     Route::get('/campaigns', CampaignsIndex::class)->name('campaigns.index');
     Route::get('/campaigns/create', CampaignsCreate::class)->name('campaigns.create');
@@ -74,7 +81,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/campaigns/import', CampaignsImport::class)->name('campaigns.import');
     Route::get('/profile', ProfileEdit::class)->name('profile.edit');
 
-    Route::get('/invites/{token}', [InviteController::class, 'show'])->name('invites.show');
     Route::post('/invites/{token}', [InviteController::class, 'accept'])
         ->middleware('throttle:20,1')
         ->name('invites.accept');

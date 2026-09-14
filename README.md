@@ -60,6 +60,8 @@ Slice 26 adds **family trees**. A relationship may carry a kinship, parent, chil
 
 Slice 27 adds **the 5e character sheet**, as a ruleset module. On a campaign on the SRD 5.2.1 rules a character's page carries a sheet: six ability scores, saving throw and skill proficiencies with expertise, hit points and hit dice, spell slots, armour class and speed, with every modifier, the proficiency bonus, every save and skill bonus, passive Perception and initiative computed from the scores and the level on every read and never stored. The character's player or a GM edits it, takes damage and healing on it, and presses "Long rest"; whoever may read the character reads it, and the party's pack from the ledger sits under it. The sheet lives in its own table behind `Ruleset::hasCharacterSheet()`, so a system-agnostic campaign never sees it, and it travels nested under its character in the export, the vault, and the API.
 
+Slice 28 adds **invite-only registration**. The register page takes two people: whoever holds a valid invite link, and the first person to reach an install that has no users yet. Everyone else gets a closed door that says to ask their GM for a link, and the login page stops offering to make an account. An invite link is now the front door for a guest: it shows the campaign and the role, offers "Create an account" and "Log in", and both land back on the invite with a Join button. "Continue with Discord" for someone nobody has seen goes through the same gate. `DEMGEM_REGISTRATION=open` restores a public register page.
+
 Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
 
 ## Local setup
@@ -105,7 +107,7 @@ docker compose run --rm --no-deps app php artisan key:generate --show
 docker compose up -d
 ```
 
-Open <http://localhost:8000> and register. The first account is an ordinary account: demgem has no instance administrator and does not need one.
+Open <http://localhost:8000> and register. The first account is an ordinary account: demgem has no instance administrator and does not need one. It is also the only account the register page takes on its own; after it, every account arrives through an invite link, unless `DEMGEM_REGISTRATION=open`.
 
 | Service | What it does |
 |---|---|

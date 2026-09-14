@@ -49,8 +49,8 @@ it('makes a new account for a Discord user nobody has seen, and lands them on th
     $campaign = Campaign::factory()->create();
     $invite = CampaignInvite::factory()->for($campaign)->create();
 
-    // A guest opens the invite, is sent to log in, and continues with Discord.
-    $this->get(route('invites.show', $invite->token))->assertRedirect(route('login'));
+    // A guest opens the invite, which unlocks registration, and continues with Discord.
+    $this->get(route('invites.show', $invite->token))->assertOk();
 
     discordSays('123456789012345678', 'tobin@example.test', verified: true, name: 'Tobin Ashgrove', avatar: 'https://cdn.discordapp.com/avatars/1/abc.png');
 
@@ -65,6 +65,33 @@ it('makes a new account for a Discord user nobody has seen, and lands them on th
         ->and($user->email_verified_at)->not->toBeNull()
         ->and($user->socialAccount('discord')?->provider_id)->toBe('123456789012345678')
         ->and($user->socialAccount('discord')?->avatar_url)->toBe('https://cdn.discordapp.com/avatars/1/abc.png');
+});
+
+it('refuses to make an account through Discord while registration is closed', function () {
+    User::factory()->create();
+
+    discordSays('555', 'stranger@example.test', verified: true);
+
+    $this->get(route('auth.discord.callback', ['code' => 'x', 'state' => 'y']))
+        ->assertRedirect(route('login'))
+        ->assertSessionHas('status', fn (string $status) => str_contains($status, 'invite only'));
+
+    $this->assertGuest();
+    expect(User::query()->where('email', 'stranger@example.test')->exists())->toBeFalse()
+        ->and(SocialAccount::query()->count())->toBe(0);
+});
+
+it('still signs a linked user in while registration is closed', function () {
+    User::factory()->create();
+    $user = User::factory()->create();
+    SocialAccount::factory()->for($user)->discord('42')->create();
+
+    discordSays('42', 'other@example.test');
+
+    $this->get(route('auth.discord.callback', ['code' => 'x', 'state' => 'y']))
+        ->assertRedirect(route('campaigns.index'));
+
+    $this->assertAuthenticatedAs($user);
 });
 
 it('signs a linked user in without touching their name', function () {
