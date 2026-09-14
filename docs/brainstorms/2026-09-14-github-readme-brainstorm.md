@@ -18,7 +18,7 @@ A visitor to the GitHub page today reads twenty-eight paragraphs that each begin
 1. A centered header: an SVG wordmark in `docs/readme/`, the one-sentence pitch, and a badge row. The badges are the CI status from `.github/workflows/ci.yml`, the license, PHP 8.4, Laravel 13, Livewire 4, and "Self-host with Docker". All come from shields.io. No external account is needed.
 2. A hero screenshot of the run screen with the initiative tracker, full width.
 3. "What it does", a two-column HTML table of about twelve cells. Each cell has a small icon, a bold title, and two lines: sessions, the live table, the player screen, maps, handouts and clocks, the compendium and fights, the 5e sheet, the world calendar, quests and arcs, the export to an Obsidian vault, the API, and Discord with scheduling.
-4. Three screenshots in a row: the dashboard, a map, and `/table`.
+4. Three screenshots in a row: the dashboard, the world calendar, and `/table`. The calendar took the map's place because the demo map is a dark placeholder image, and the month grid with two moons reads better at a third of the width.
 5. "Run it in three commands", the Docker block, and a one-line pointer to the local setup page.
 6. "Documentation", a table of links into `docs/guide/`.
 7. "Built with", "Contributing" in three lines with a link to the rules page, "Content licensing" as one paragraph with the SRD notice, and "License".
@@ -41,7 +41,7 @@ Content licensing stays in the README because `database/srd/ATTRIBUTION.md` asks
 
 ## Screenshots
 
-Four PNG files under `docs/readme/`, captured at 1440 px wide from a local run of the demo world, signed in as the demo GM: the run screen with the tracker, the campaign dashboard, a map with pins, and `/table`. The demo seeder already builds the fight, the maps, and the pins, so no manual setup is needed.
+Four PNG files under `docs/readme/`, captured at 1440 px wide at 2x from a local run of the demo world, signed in as the demo GM, and compressed with pngquant: the run screen with the tracker, the campaign dashboard, the world calendar, and `/table`. The demo seeder already builds the fight, the maps, and the pins, so no manual setup is needed.
 
 ## Out of scope
 
