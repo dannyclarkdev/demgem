@@ -21,5 +21,9 @@
         <x-ui.button type="submit" class="w-full">Log in</x-ui.button>
     </form>
 
-    <x-slot:footer>New here? <x-ui.link :href="route('register')">Create an account</x-ui.link></x-slot:footer>
+    @if (app(\App\Support\Auth\RegistrationGate::class)->allows(request()))
+        <x-slot:footer>New here? <x-ui.link :href="route('register')">Create an account</x-ui.link></x-slot:footer>
+    @else
+        <x-slot:footer>New here? Ask your GM for an invite link.</x-slot:footer>
+    @endif
 </x-layouts.guest>

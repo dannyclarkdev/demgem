@@ -42,6 +42,8 @@ it('rejects an empty payload', function () {
 });
 
 it('rejects an email that is already registered', function () {
+    // A user exists, so the invite-only default would close the page first.
+    config()->set('registration.mode', 'open');
     User::factory()->create(['email' => 'taken@example.com']);
 
     $this->post(route('register'), [

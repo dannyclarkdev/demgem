@@ -5,12 +5,23 @@ use App\Models\Campaign;
 use App\Models\CampaignInvite;
 use App\Models\User;
 
-it('sends a guest to login and remembers the invite url', function () {
+it('shows a guest the invite, remembers it, and sends them to register or log in', function () {
     $invite = CampaignInvite::factory()->create();
 
     $this->get($invite->url())
-        ->assertRedirect(route('login'))
+        ->assertOk()
+        ->assertSee($invite->campaign->name)
+        ->assertSee('Create an account')
+        ->assertSee('Log in')
         ->assertSessionHas('url.intended', $invite->url());
+});
+
+it('keeps accepting behind the login', function () {
+    $invite = CampaignInvite::factory()->create();
+
+    $this->post(route('invites.accept', $invite->token))->assertRedirect(route('login'));
+
+    expect($invite->fresh()->uses)->toBe(0);
 });
 
 it('shows the campaign name and role to a logged in non-member', function () {

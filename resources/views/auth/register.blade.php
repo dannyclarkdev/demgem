@@ -2,6 +2,10 @@
     <h1 class="font-display text-xl font-semibold">Create your account</h1>
     <p class="mt-1 text-sm text-ink-muted">One account for every table you run or play at.</p>
 
+    @if ($invite)
+        <x-ui.alert class="mt-4">You are joining <span class="font-medium text-ink">{{ $invite->campaign->name }}</span> as a {{ $invite->role->label() }}. Create your account and the invite is waiting on the other side.</x-ui.alert>
+    @endif
+
     <div class="mt-6">
         <x-auth.discord-button label="Sign up with Discord" />
     </div>

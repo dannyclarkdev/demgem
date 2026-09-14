@@ -17,13 +17,15 @@ use Laravel\Socialite\Contracts\User as ProviderUser;
  * 3. A user with this email: linked and signed in, when Discord says the email is
  *    verified. Refused otherwise, because an unverified email is how an account is
  *    taken over.
- * 4. Nobody: a new user, with a random password they never see.
+ * 4. Nobody: a new user, with a random password they never see. That is a
+ *    registration, so it happens only when the caller says the register page
+ *    would have taken this person too.
  */
 class SignInWithDiscord
 {
     public const PROVIDER = SocialAccount::DISCORD;
 
-    public function handle(ProviderUser $discord, ?User $current = null): User
+    public function handle(ProviderUser $discord, ?User $current = null, bool $mayRegister = true): User
     {
         $providerId = (string) $discord->getId();
 
@@ -31,7 +33,7 @@ class SignInWithDiscord
             throw new DiscordSignInRefused('Discord did not say who you are. Try again.');
         }
 
-        return DB::transaction(function () use ($discord, $providerId, $current): User {
+        return DB::transaction(function () use ($discord, $providerId, $current, $mayRegister): User {
             $linked = SocialAccount::query()
                 ->where('provider', self::PROVIDER)
                 ->where('provider_id', $providerId)
@@ -67,6 +69,10 @@ class SignInWithDiscord
                 $this->link($existing, $discord, $providerId);
 
                 return $existing;
+            }
+
+            if (! $mayRegister) {
+                throw new DiscordSignInRefused('demgem is invite only. Open the invite link your GM sent you, then continue with Discord from there.');
             }
 
             $user = User::create([
