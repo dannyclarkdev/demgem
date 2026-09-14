@@ -1,290 +1,160 @@
-# demgem
+<p align="center">
+  <img src="docs/readme/wordmark.svg" width="560" alt="demgem">
+</p>
 
-An open source campaign manager for Dungeon Masters and Game Masters. Session-first: prep, play, recap, repeat. A campaign wiki with wiki links, per-entity visibility, and player views supports that loop.
+<p align="center">
+  <strong>An open source campaign manager for Dungeon Masters and Game Masters.</strong><br>
+  Session-first: prep, play, recap, repeat. The wiki serves the session, not the other way around.
+</p>
 
-Built with Laravel 13, Livewire 4, Alpine, and Tailwind 4. PostgreSQL in production. Fully custom UI.
+<p align="center">
+  <a href="https://github.com/dannyclarkdev/demgem/actions/workflows/ci.yml"><img src="https://github.com/dannyclarkdev/demgem/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/dannyclarkdev/demgem?color=2ea44f" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/PHP-8.4-777BB4?logo=php&logoColor=white" alt="PHP 8.4">
+  <img src="https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white" alt="Laravel 13">
+  <img src="https://img.shields.io/badge/Livewire-4-FB70A9?logo=livewire&logoColor=white" alt="Livewire 4">
+  <a href="docs/guide/docker.md"><img src="https://img.shields.io/badge/Self--host-Docker-2496ED?logo=docker&logoColor=white" alt="Self-host with Docker"></a>
+</p>
 
-## Status
+<p align="center">
+  <a href="#run-it-in-three-commands">Run it</a> ·
+  <a href="#what-it-does">What it does</a> ·
+  <a href="#documentation">Documentation</a> ·
+  <a href="docs/guide/api.md">API</a> ·
+  <a href="docs/guide/changelog.md">Changelog</a>
+</p>
 
-Slice 1 is done: accounts, campaigns, members with roles, invite links, entities (characters, locations, factions, items, quests, notes) with Markdown, `[[wiki links]]`, backlinks, GM-only notes, visibility, tags, nesting, images, and search.
+<br>
 
-Slice 2 is done: sessions with a number, title, date, and status; a prep screen with a strong start, ordered scenes, secrets and clues, and four entity buckets; a run screen with autosaving live notes and one-click secret reveals; and a recap the GM publishes on purpose. Unrevealed secrets carry into the next session.
+<p align="center">
+  <img src="docs/readme/run.png" alt="The run screen: a strong start, the initiative tracker with hit points and conditions, the encounter budget, and the card that puts a handout or a map on the party's screen." width="100%">
+</p>
 
-Slice 3 is done: quests with a status, a giver, rewards, and an ordered objective checklist that records the session each step was finished in; an initiative tracker with hit points, conditions, rounds, and a turn marker that survives a refresh; a dice roller with keep-highest, keep-lowest, and advantage; and weighted random tables that can nest one inside another. The tracker sits on the run screen, and dice and tables live in a drawer beside it.
+<p align="center"><sub>The run screen. Everything the GM needs at the table, on one page, with the fight in the middle of it.</sub></p>
 
-Slice 5 is done: **the live table**. A GM advances the turn and every screen at the table changes at once, over one authorised websocket channel per campaign. `/table` is the player's screen: the turn order, the round, whose turn it is, and each combatant the GM chose to show, with health as a word rather than a number. Dice are shared, so a player rolls at their end of the table and everyone sees it, and a GM can still roll behind the screen. The strip at the top of both screens says who has the campaign open.
+<br>
 
-Slice 4 is done, and the MVP with it: a character record with a class, a level, and a link to the sheet a player actually plays from, editable by that player; the party on the dashboard and behind a filter on the character index; **The story so far**, every recap in order, with drafts and missing recaps shown to the GM only; key-value fields on any entity, searchable; a streamed JSON export of a whole campaign; and a Docker stack a self-hoster can run with one command. See `docs/plans/`.
+## Why demgem
 
-Slice 6 is done: **maps**. A map is an entity, so it has a body, GM notes, tags, wiki links, and visibility like everything else, plus an image the viewer pans and zooms on a phone, a tablet, or a laptop. A GM drops pins that point at any entity, reveals each one as the party finds the place, and pins one map inside another so the world leads to the duchy and the duchy to the city. A player opens the same map and sees the half they have earned, and a reveal lands on their screen without a refresh.
+Most tools cluster in two groups. World wikis keep the encyclopedia and treat the session as an afterthought. Virtual tabletops keep the battle map and leave the prep somewhere else. demgem owns the loop a GM lives in every week: **prep** a session from a strong start and a handful of scenes, **play** it with a tracker that every screen at the table follows, **recap** it on purpose, and carry the loose ends into the next one.
 
-Slice 7 is done: **handouts and clocks**. A handout is an entity with a gallery of up to ten files, images and PDFs, and **Show the party** is one press that puts it on every open table screen. A progress clock is a named dial cut into 4, 6, 8, or 12 segments that the GM fills, or empties as a countdown, and a revealed clock ticks on `/table` while the party watches.
+The core is system agnostic. Rulesets plug in as modules, and the first is the SRD 5.2.1 ruleset, with 330 creatures, an encounter budget, and a character sheet. A campaign on no ruleset keeps every other feature and writes its own creatures.
 
-Slices 8 and 9 are done: **the round trip**. A campaign leaves as one archive, a zip holding the JSON, every image and attachment, and the whole campaign as Markdown with front matter that Obsidian opens as a vault. The importer takes the archive or the bare JSON, validates the whole file before writing a row, remaps every id, restores the media, and tells the GM what could not come across before they commit. `php artisan demgem:import` does the same for the JSON from a terminal.
+## What it does
 
-Slice 10 is done: **scheduling**. A member says whether they are coming, the GM records who was there, a dateless session is a poll with candidate times the party votes on, one reminder email goes out before each session at a lead time the GM chooses, and every user has a private calendar feed that carries nothing but the session names.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🎬 Sessions, prepped and run</h3>
+      A strong start, ordered scenes, secrets and clues, and four buckets of NPCs, locations, monsters, and treasure. The run screen carries live notes that autosave, one-press secret reveals, and a recap the GM publishes on purpose. Unrevealed secrets carry into the next session.
+    </td>
+    <td width="50%" valign="top">
+      <h3>⚡ The live table</h3>
+      The GM advances the turn and every screen at the table changes at once, over one authorised websocket channel per campaign. Players see the turn order, the round, and health as a word. Dice are shared, and a GM can still roll behind the screen.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🖥️ The player screen</h3>
+      <code>/screen</code> is one page for the television at the end of the table: no sidebar, no controls, only what the whole party may see. The GM puts a fight, a handout, a map, or the clocks on it from the run screen.
+    </td>
+    <td valign="top">
+      <h3>⚔️ Fights that price themselves</h3>
+      An initiative tracker with hit points, conditions, concentration, death saves, legendary and lair actions, and a budget from Trivial to Deadly. Add a creature from the compendium and its numbers come with it. Duplicate a whole fight in one press.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>📖 A compendium, shipped and homebrew</h3>
+      All 330 SRD creatures, filterable by type and challenge, plus your own written in Markdown. <strong>Copy to my campaign</strong> turns any shipped creature into an editable one.
+    </td>
+    <td valign="top">
+      <h3>📜 A 5e character sheet</h3>
+      Six scores, proficiencies with expertise, hit dice, spell slots, and every modifier computed on read and never stored. The player edits it, takes damage on it, and presses <strong>Long rest</strong>.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🗺️ Maps, handouts, and clocks</h3>
+      A map is an entity with an image the viewer pans and zooms. Pins point at any entity, reveal one at a time, and nest one map inside another. A handout holds up to ten files. A progress clock is a dial the GM fills while the party watches.
+    </td>
+    <td valign="top">
+      <h3>🌙 The world's own calendar</h3>
+      Name the months, set the week, hang a moon or two, add a leap rule and an era. Every member reads today on the dashboard and on a month grid with the moons on every day. Events and sessions land on a timeline in world order.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🧭 A wiki that gates itself</h3>
+      Characters, locations, factions, items, quests, arcs, journals, and notes with Markdown, <code>[[wiki links]]</code>, backlinks, tags, nesting, images, and search. GM notes and <code>:::secret</code> fences never reach a player: not on the page, not in search, not in the API.
+    </td>
+    <td valign="top">
+      <h3>🧾 Quests, arcs, and the party's log</h3>
+      Quests with an objective checklist that records the session each step was finished in. Story arcs that file quests and sessions into chapters. A decision log, a ledger of coin and items, downtime per character, faction reputation, family trees, and relationships between any two pages.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>📦 Take your data with you</h3>
+      One archive holds the JSON, every image and attachment, and the whole campaign as Markdown with front matter that Obsidian opens as a vault. Either file imports back into any demgem, validated before a row is written.
+    </td>
+    <td valign="top">
+      <h3>🔌 An API, Discord, and scheduling</h3>
+      <code>/api/v1</code> serves every screen's data in JSON behind the same policies as every page. A Discord webhook gets one line when a recap is published. Members RSVP, vote on candidate times, and get one reminder email per session.
+    </td>
+  </tr>
+</table>
 
-Slice 11 is done: **relationships**. A typed link between two entities with a label written from one side and an optional reverse label for the other, revealed to the party when the GM says so and gated at both ends, and drawn as wiki links in the Obsidian vault so its graph shows them.
+<br>
 
-Slice 12 is done: **the world's own calendar**. A GM names the months, sets the week, hangs a moon or two, adds a leap rule and an era, and says what day it is; every member reads today on the dashboard and on a month grid with the moons on every day. An event is an entity with a day. A session carries the days the party spent in the world. The timeline lists every dated event and session the viewer may see, in world order, with a marker for today. The calendar and every date travel in the export and the Markdown front matter.
+<table>
+  <tr>
+    <td width="33%"><img src="docs/readme/dashboard.png" alt="The campaign dashboard: the day in the world with two moons, the next session, the latest recap, the party, and the quests in play."></td>
+    <td width="33%"><img src="docs/readme/calendar.png" alt="The world calendar: a month grid with the phase of both moons on every day and the sessions on the days the party spent there."></td>
+    <td width="33%"><img src="docs/readme/table.png" alt="The player's table screen: the round, whose turn it is, health as a fraction for the party and hidden for the creatures the GM has not shown."></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>The dashboard</sub></td>
+    <td align="center"><sub>The calendar</sub></td>
+    <td align="center"><sub>The table, as a player sees it</sub></td>
+  </tr>
+</table>
 
-Slice 13 is done: **a key, an API, and the party's channel**. A user mints a named API key from their profile, read-only or read and write, shown once and revoked with a click. `/api/v1` serves the campaigns that key belongs to, the entities and sessions its role may see, search, and the same writes a GM makes on screen, gated by the same scopes and policies as every page. A campaign can hold one Discord webhook, and when a recap is published or a reminder goes out the channel gets one line and a link, never the prose.
+## Run it in three commands
 
-Slice 15 adds **the compendium**. A campaign on the SRD 5.2.1 ruleset gets all 330 creatures of the System Reference Document as a searchable reference: filter by creature type and challenge band, read one stat block as the book prints it, and put it in the fight. Adding a creature brings its hit points, armour class and initiative bonus with it, optionally rolling each copy's hit dice so four goblins are four different totals. An NPC can name what it fights as, so a session's Monsters bucket fills the turn order with numbers. The data is shipped, global and read-only; the API serves it beside the rest; and a campaign export carries the reference rather than the licensed text.
-
-Slice 14 adds **entity templates and body history**. GMs keep named starting bodies per entity type in campaign settings, copy one into a new page, and edit the copy freely. Earlier bodies are kept whenever a form or API save replaces the text. GMs can inspect and restore them from the entity page; restoring preserves the displaced body too. Templates and history travel in campaign JSON and archives.
-
-Slice 16 adds **what a fight is worth, and the four rules the tracker used to make you keep on paper**. The turn order says what the creatures in it cost against what the party can afford, in five bands from Trivial to Deadly. A combatant holds one named effect, and damage prints the concentration DC rather than rolling it. A character on nought collects death saves, three of either ending the question, and the party's own screen carries the pips because the whole table is counting them out loud anyway. A creature from the book arrives with its legendary actions counted and gets them back when the turn marker reaches it. A lair action is the GM's own words on a count they choose, sitting in the turn order as a marker the party sees without the text. **Duplicate this fight** builds the whole thing again, at full health with nobody's initiative rolled.
-
-The budget numbers are demgem's own, and the read-out says so. The SRD prices every creature and that data ships with the app, but it publishes no encounter building budget. `config/encounters.php` states one rule instead and derives the rest from the ladder the dataset itself carries: a character of level N affords a quarter, a half and three quarters of the XP of a CR N creature. A fight holding rows the compendium cannot price says so, and calls its band a floor.
-
-Slice 17 adds **the GM's own monsters**. A campaign writes its own creatures into the same compendium as the shipped ones: the numbers the tracker copies, six ability scores, and traits, actions, bonus actions, reactions and legendary actions as lists you can write in Markdown. Every field but the name is optional. **Copy to my campaign** takes any shipped creature and hands you an editable copy, which is the fastest way to a homebrew ogre. Your creatures come first in the book, in the tracker's picker, and on any NPC that names what it fights as, and they carry XP so the encounter budget prices them. The compendium is now open to every campaign, not only one on a ruleset with a shipped book: a system-agnostic table writes its own creatures and reads a compendium holding exactly those.
-
-Slice 18 adds **story arcs, and the log of what the party earned and chose**. An arc is an entity, a chapter of the campaign: a quest and a session may each be filed under one, and the arc's page lists its quests by status and its sessions in order, each list gated by the viewer's own role. A session carries what the party earned that night, XP or a milestone or both, and the story page totals it over the sessions the reader may see. The decision log is what the party chose and what it cost them, written at the table on the run screen or on the session page, the consequence filled in when the world answers, and revealed to the party a row at a time. All three travel in the export, the import, and the Markdown vault.
-
-Slice 19 adds **the players' own pages, and the party's purse**. A journal is the one entity a player creates: they write it, keep it between them and the GM or share it with the party, and it gets wiki links, backlinks, search, the export, and the vault like everything else. The ledger is one list of coin and item movements any member writes to, summed into a balance and a pack on every read, in the one currency the campaign names in settings. Both travel in the export and the Markdown vault.
-
-Slice 20 adds **what the party may not read, and how the factions feel about them**. A `:::secret` fence inside any Markdown body is a paragraph the GM reads as a marked aside and a player never receives: not on the page, not in the API, not in a backlink, not in a search hit, not in their own editor. A faction carries a log of the moments that changed its standing with the party, each with a reason, a session, and an eye; the party reads the sum of the moments the GM revealed, and the GM reads that number beside the true one.
-
-Slice 21 adds **the generators**: six shipped table sets, names, someone the party meets, a tavern, the weather, loot, and a rumour, that a GM adds from the tables index with one press. A set copies in as ordinary tables, nested three and four deep so one roll reads as a whole person or a whole evening, and the copies are the GM's to edit. The content is demgem's own.
-
-Slice 22 adds **Continue with Discord**. A button on the login and register pages, shown when the install has a Discord app: it signs a returning user in, links a verified Discord email to the account that already has it, or makes a new account with a password the user never sees. A player handed an invite link in Discord taps it, continues with Discord, and lands on the invite. The profile gains a card to link or unlink it. To turn it on, make an application at https://discord.com/developers/applications, add `APP_URL/auth/discord/callback` as a redirect, and set `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; with the id empty the button does not show.
-
-Slice 23 adds **a ceiling on a campaign's files**. `CAMPAIGN_STORAGE_MB`, 500 by default, is one limit for every campaign on the install, over its cover, every image, and every handout file. An upload that would cross it is refused on the form with the numbers in the sentence, an archive import stops attaching files at the ceiling and says how many it left before the GM commits, and campaign settings shows a bar of what is used. Zero turns it off.
-
-Slice 24 adds **the player screen**, for the television at the end of the table. `/screen` is one page with no sidebar and no controls that shows what the whole party may see and nothing else, whoever opened it: the turn order with health as a word, a handout full size, a map with the pins the party found, or the revealed clocks, with the clocks in a strip along the bottom the rest of the time. The GM chooses from a card on the Run screen, and putting a hidden handout up shows the party on the way. It changes on every open screen at once over the same channel as the table, and it falls back on its own: to the fight while one runs, then to the campaign's name and the party.
-
-Slice 25 adds **downtime**, what each character did between sessions. A row is what they did, how many days it cost, an optional note in Markdown, the session it happened around, and, when the campaign has a calendar, the day in the world it began, from which the page prints the range it covered. A player writes their own PC's rows and a GM writes anyone's; whoever may see the character reads them, and there is no second switch. The same log sits on the character's page, on the session's page, and at `/downtime`, where the days are summed per character on every read. It travels in the export and lands on the character's page in the vault.
-
-Slice 26 adds **family trees**. A relationship may carry a kinship, parent, child, sibling, or spouse, read from the side it was written on, and the labels fill in from it when the GM leaves them blank. A character's page draws a "Family" card from the typed rows, two generations up and two down, walked through the relations card's own gate at both ends: a hidden row or a GM-only relative never reaches the party's tree, and the GM reads a mark on each. The kinship travels in the export and on both relation lists of the API.
-
-Slice 27 adds **the 5e character sheet**, as a ruleset module. On a campaign on the SRD 5.2.1 rules a character's page carries a sheet: six ability scores, saving throw and skill proficiencies with expertise, hit points and hit dice, spell slots, armour class and speed, with every modifier, the proficiency bonus, every save and skill bonus, passive Perception and initiative computed from the scores and the level on every read and never stored. The character's player or a GM edits it, takes damage and healing on it, and presses "Long rest"; whoever may read the character reads it, and the party's pack from the ledger sits under it. The sheet lives in its own table behind `Ruleset::hasCharacterSheet()`, so a system-agnostic campaign never sees it, and it travels nested under its character in the export, the vault, and the API.
-
-Slice 28 adds **invite-only registration**. The register page takes two people: whoever holds a valid invite link, and the first person to reach an install that has no users yet. Everyone else gets a closed door that says to ask their GM for a link, and the login page stops offering to make an account. An invite link is now the front door for a guest: it shows the campaign and the role, offers "Create an account" and "Log in", and both land back on the invite with a Join button. "Continue with Discord" for someone nobody has seen goes through the same gate. `DEMGEM_REGISTRATION=open` restores a public register page.
-
-Your creatures travel in your export with the prose you wrote. A shipped creature never does — it is named in the file and nothing more, exactly as before. The CC BY notice follows the words rather than the table: a creature you wrote carries none, and a copy of a shipped one keeps the source and licence it came from, so the credit travels with the text.
-
-## Local setup
-
-Requirements: PHP 8.4, Composer, Node 20+, PostgreSQL 17+.
-
-```sh
-composer install
-cp .env.example .env
-php artisan key:generate
-# Point DB_* at your Postgres, then:
-php artisan migrate
-php artisan demgem:import-srd   # the SRD compendium; skip it for system-agnostic campaigns
-php artisan storage:link
-npm install && npm run build
-```
-
-For the live table locally, run a queue worker and Reverb beside the app:
-
-```sh
-php artisan queue:work
-php artisan reverb:start
-```
-
-`php artisan dev` runs both for you, along with Vite. Without them, screens fall back to their sixty-second poll. Reminder emails also need `php artisan schedule:work`, and go to the log until `MAIL_MAILER` is a real mailer.
-
-Optional demo world with a GM and a player:
-
-```sh
-php artisan db:seed --class=DemoCampaignSeeder
-```
-
-It creates `dev@demgem.test` and `tobin@demgem.test`, both with the password `password`.
-
-## Run it with Docker
-
-Requirements: Docker 24 or newer with Compose v2. Nothing else: no PHP, no Node, no PostgreSQL.
+Docker 24 or newer with Compose v2. Nothing else on the host: no PHP, no Node, no PostgreSQL.
 
 ```sh
 cp .env.docker.example .env.docker
-docker compose run --rm --no-deps app php artisan key:generate --show
-# Paste the whole base64:... string into APP_KEY in .env.docker, then:
+docker compose run --rm --no-deps app php artisan key:generate --show   # paste the key into APP_KEY in .env.docker
 docker compose up -d
 ```
 
-Open <http://localhost:8000> and register. The first account is an ordinary account: demgem has no instance administrator and does not need one. It is also the only account the register page takes on its own; after it, every account arrives through an invite link, unless `DEMGEM_REGISTRATION=open`.
+Open <http://localhost:8000> and register. The first account is an ordinary account, and after it every account arrives through an invite link. The stack runs the app, a queue worker, the scheduler, the Reverb websocket server, PostgreSQL, and Redis. The [Docker guide](docs/guide/docker.md) covers ports, HTTPS, object storage, and running without the websocket.
 
-| Service | What it does |
-|---|---|
-| `app` | FrankenPHP, serving the app on port 8000. Runs the migrations on boot. |
-| `worker` | `queue:work`. It carries the live table's broadcasts and the reminder emails, so the table is only as quick as this container. |
-| `scheduler` | `schedule:work`. Every fifteen minutes it queues the reminder emails that are due. |
-| `reverb` | The websocket server, on port 8080. Every open browser holds a connection to it. |
-| `db` | PostgreSQL 17, in the `pgdata` volume. |
-| `redis` | Cache and queue. Sessions stay in PostgreSQL, so a Redis restart keeps everyone signed in. |
+For a development machine with PHP 8.4, Node 20, and PostgreSQL, see [Local setup](docs/guide/local-setup.md). A demo world with a GM and a player is one seeder away.
 
-- `APP_PORT=8099 docker compose up -d` publishes on another port.
-- Change `DB_PASSWORD` in `.env.docker` and `POSTGRES_PASSWORD` in `compose.yaml` together before anyone else can reach the instance.
-- `AUTO_MIGRATE=false` stops the migration on boot. Run `docker compose exec app php artisan migrate --force` yourself.
-- Uploaded images live in the `storage` volume. Use `MEDIA_DISK=s3` with the `AWS_*` keys for object storage.
-- `SERVER_NAME=demgem.example.com` in `.env.docker` gets automatic HTTPS from Caddy. A bare `:8000` serves plain HTTP for a proxy in front.
-- The container refuses to start with an empty `APP_KEY`, or with `BROADCAST_CONNECTION=reverb` and no Reverb credentials. It says how to fix either.
+## Documentation
 
-## The live table
+| Guide | What it covers |
+| --- | --- |
+| [Local setup](docs/guide/local-setup.md) | Requirements, the install, the queue and Reverb beside the app, the demo seeder. |
+| [Run it with Docker](docs/guide/docker.md) | The compose stack, every service, and the operator switches. |
+| [The live table](docs/guide/live-table.md) | The websocket channel, the Reverb addresses, proxies, and the poll it falls back to. |
+| [Reminders, Discord, and the calendar feed](docs/guide/reminders-and-discord.md) | Reminder emails, the mailer, the scheduler, the webhook, and the per-user feed. |
+| [Take your data with you](docs/guide/export-and-import.md) | The archive, the JSON, the Obsidian vault, and the importer. |
+| [Templates and body history](docs/guide/templates-and-history.md) | Reusable outlines per entity type, and every replaced body kept. |
+| [The API](docs/guide/api.md) | Keys, every endpoint, and the rules the API holds itself to. |
+| [Contributing](docs/guide/contributing.md) | The rules of the codebase, the commands, the environment keys, and timezones. |
+| [Changelog](docs/guide/changelog.md) | What each of the 28 slices added, with a link to the plan behind it. |
 
-Three services make it work: `app` serves the page, `worker` picks the broadcast off the queue, and `reverb` pushes it to every open browser. Stop any of them and the tracker falls back to a sixty-second poll, which is a worse table but never a broken one.
+## Built with
 
-Before the first start, put three strings in `.env.docker`:
+[Laravel 13](https://laravel.com), [Livewire 4](https://livewire.laravel.com), [Alpine](https://alpinejs.dev), and [Tailwind 4](https://tailwindcss.com), on PHP 8.4. [Reverb](https://reverb.laravel.com) carries the live table. PostgreSQL in production, SQLite in the test suite. The UI is custom from the ground up, in a serif and an ember.
 
-```sh
-REVERB_APP_ID=$(openssl rand -hex 8)
-REVERB_APP_KEY=$(openssl rand -hex 16)
-REVERB_APP_SECRET=$(openssl rand -hex 16)
-```
+## Contributing
 
-Everyone at the table needs to reach the websocket server, so `REVERB_HOST` and `REVERB_PORT` must be the address **their browser** uses, not the container name:
-
-| Where you run it | `REVERB_HOST` | `REVERB_PORT` | `REVERB_SCHEME` |
-|---|---|---|---|
-| Your own laptop | `localhost` | `8080` | `http` |
-| A box on the LAN | its LAN address | `8080` | `http` |
-| A server, behind a proxy | your domain | `443` | `https` |
-
-The page reads these at runtime and the bundle never sees them, so one built image serves any host. Publish port 8080 to the network the table is on, or put a proxy in front.
-
-The app and the worker need a *second* address: they publish to the websocket server rather than connecting to it as a browser does, and inside Docker that is `reverb:8080` on the compose network. `.env.docker.example` sets `REVERB_PUBLISH_HOST`, `REVERB_PUBLISH_PORT`, and `REVERB_PUBLISH_SCHEME` for you. Leave them alone unless you move the service; on a single machine they are unnecessary and fall back to `REVERB_HOST`.
-
-**Behind a proxy.** Forward `/app` and `/apps` to the `reverb` container on port 8080, with the websocket upgrade headers, and set `REVERB_HOST` to your domain with `REVERB_SCHEME=https` and `REVERB_PORT=443`. Everything else stays on the `app` container.
-
-**Running without it.** Set `BROADCAST_CONNECTION=null` and stop the `reverb` service. Every screen keeps working on its poll.
-
-**A sluggish table is a queue question, not a socket one.** Broadcasts are queued, so the wait is the worker picking the job up. Redis, which this stack uses, blocks on pop and pays nothing; the database queue driver adds a second or three.
-
-## Reminders
-
-A GM turns on a reminder email in campaign settings: a day, two days, or a week before each session with a date. Every member who wants one gets one, in the campaign's timezone, with a link back to the session to say whether they are coming. A member who said no is not reminded, and every member has their own switch on the members page.
-
-**With `MAIL_MAILER=log`, which is the default, a reminder is written to the log and nobody receives it.** Set a real mailer before a GM turns reminders on. In `.env.docker`:
-
-```sh
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.example.com
-MAIL_PORT=587
-MAIL_USERNAME=you
-MAIL_PASSWORD=secret
-MAIL_FROM_ADDRESS=demgem@example.com
-```
-
-The compose stack runs the scheduler for you. Outside Docker, run `php artisan schedule:work` beside the queue worker, or add `php artisan schedule:run` to cron every minute. To see what would go out right now, run `php artisan demgem:send-reminders` by hand.
-
-**Discord.** A GM pastes a channel's webhook URL into campaign settings and sends a test message. From then on the channel gets one line when a recap is published and one when a reminder goes out: the campaign, the session, and a link. Never the recap itself. The URL is stored encrypted and never exported, and the server only ever posts to `discord.com`; any other address is refused when it is pasted.
-
-Every session you can see is also available as a calendar feed. Get the link from your profile and subscribe to it in Google Calendar, Apple Calendar, or Outlook; it covers every campaign you belong to, and the times land in your own timezone. The feed carries the session's number, title, and campaign, and never its prep or recap.
-
-## Take your data with you
-
-A GM downloads the whole campaign from campaign settings, two ways:
-
-- **The archive**, a zip. Inside it is `campaign.json`, every image and attachment beside it, and a Markdown folder with one file per page, foldered by type, with front matter and the wiki links left exactly as written. Obsidian opens that folder as a vault.
-- **The JSON alone**, for anything that only wants the data.
-
-Both carry every entity with its GM notes, every session with its prep, secrets, and recaps, plus quests, encounters, tables, maps, handouts, clocks, and the dice log. They leave out email addresses, invite links, and deleted things. `ExportCoverageTest` reads the schema and fails when a new campaign table is neither exported nor documented as excluded, so the export cannot quietly fall behind.
-
-Either file imports back into any demgem, as a new campaign, from `/campaigns/import`. The JSON also imports from a terminal:
-
-```sh
-php artisan demgem:import path/to/campaign.json --user=you@example.com
-```
-
-The importer validates the whole file before it writes a row, remaps every id, and reports what it could not carry before the GM commits. It never fetches a URL found in the file and never uses a string from the archive as a path, so an untrusted file cannot reach the network or the disk. Four things stay behind on purpose: the members, because the file carries no email addresses, so the GM invites the party again; the viewer lists on entities shown to selected players, which import as GM-only rather than guess wider; the dice log, because the file cannot say who rolled; and the answers about sessions, who said yes and who turned up, for the same reason.
-
-## Templates and body history
-
-Open **Entity templates** from campaign settings to create a reusable Markdown outline for a character, location, quest, or any other entity type. On a new page, choose an outline and press **Use template**. Replacing an unsaved body requires confirmation. Only the body is copied; the page keeps its own name, visibility, tags, and other fields. Editing or deleting a template never changes existing pages.
-
-**Body history** on an entity page lets a GM inspect and restore earlier text. Every changed body saved through the form or API preserves the body it replaces, including an empty body. History starts with the first body change after this feature is installed; earlier edits cannot be recovered. Automatic wiki-link replacements following a rename do not add revisions, and old snapshots retain their original link text. Restoring an old link may therefore leave it unresolved until edited.
-
-History is GM-only, including on a player's own character: an earlier body may hold a secret removed before the page was revealed. Revision labels say who replaced the body and when, rather than claiming who originally wrote it. A restore changes only the body. This is not an undo for GM notes, media, visibility, or other fields.
-
-Bodies are kept without expiry or individual deletion. Deleting an entity hides its history and leaves it out of exports; permanently deleting the entity or campaign removes it. Templates and history are carried in `campaign.json` inside an archive. The Markdown vault contains current pages only. Imported history keeps the replacement time and name, without linking that name to a local account.
-
-The importer reads documents up to **25 MiB**, in both the browser and the Artisan command. Keeping all history can eventually exceed that limit. Exports still include every revision; they never silently drop history to fit. Larger imports and configurable retention are future work.
-
-## The API
-
-Every screen's data, in JSON, for a script or an assistant. Get a key from your profile: it reads what you can read in every campaign you belong to, and writes what you can write if you ticked **Can write** when you made it. Send it as a bearer token.
-
-```sh
-curl -H "Authorization: Bearer $DEMGEM_KEY" https://demgem.example/api/v1/me
-```
-
-| Method and path | What it does |
-|---|---|
-| `GET /api/v1/me` | You, and the campaigns you belong to with your role in each. |
-| `GET /api/v1/campaigns` | The same campaigns, with each calendar's current date. |
-| `GET /api/v1/campaigns/{id}` | One campaign. |
-| `GET /api/v1/campaigns/{id}/entities` | Every entity you may see. Filter with `type=locations`, `tag=harbor`, or `q=bell`. Fifty a page. |
-| `GET /api/v1/campaigns/{id}/entities/{entityId}` | One entity with its parent, children, and relationships, each through its own visibility gate. |
-| `GET /api/v1/campaigns/{id}/search?q=` | Full-text search over what you may see. |
-| `GET /api/v1/campaigns/{id}/sessions` | Every session you may see. A player gets the schedule and the published recap; a GM gets the prep too. |
-| `GET /api/v1/campaigns/{id}/sessions/{number}` | One session, with scenes, secrets, and prepped entities for GM roles. |
-| `POST /api/v1/campaigns/{id}/entities` | Create an entity. GM roles, write key. |
-| `PATCH /api/v1/campaigns/{id}/entities/{entityId}` | Change one. GM roles on anything; a player on their own PC's body and record. |
-| `PATCH /api/v1/campaigns/{id}/sessions/{number}` | Change a session's title, status, and notes. GM roles, write key. |
-| `POST /api/v1/campaigns/{id}/sessions/{number}/publish-recap` | Publish the recap, and save a new one on the way if you send `recap`. |
-
-Templates and history use the same campaign prefix, `/api/v1/campaigns/{id}`:
-
-| Method and path | What it does |
-|---|---|
-| `GET /entity-templates` | GM-only summaries, 50 per page. Optional `type=character` filter uses the singular entity type. |
-| `GET /entity-templates/{templateId}` | GM-only template with its body. |
-| `POST /entity-templates` | Create with `name`, singular `type`, and optional `body`. GM role, write key. |
-| `PATCH /entity-templates/{templateId}` | Change the template's name, type, or body. GM role, write key. |
-| `GET /entities/{entityId}/body-revisions` | GM-only summaries, 25 per page, newest first. |
-| `GET /entities/{entityId}/body-revisions/{revisionId}` | One previous body with `recorded_at` and `replaced_by_name`. GM-only. |
-| `POST /entities/{entityId}/body-revisions/{revisionId}/restore` | Restore the body and return the updated entity. No payload. GM role, write key. |
-
-`POST /entities` also accepts `template_id` for a matching entity type. Omit `body` to use the template's text; an explicitly supplied body, including null, takes precedence. A template is resolved within the campaign even when the body is overridden. `PATCH /entities/{entityId}` cannot apply a template. Markdown body whitespace is preserved.
-
-The API creates and changes; it never deletes. A field your key may not set comes back as a 422 that names it, not a silent drop. Sixty requests a minute per key. A campaign you are not a member of is a 404, the same as on the web.
-
-## Commands
-
-| Command | What it does |
-|---|---|
-| `composer test` | Pest suite, SQLite in memory |
-| `composer lint` | Pint |
-| `composer analyse` | Larastan, level 6 |
-| `npm run dev` | Vite with hot reload |
-| `npm run build` | Production assets |
-
-## Environment
-
-| Key | Notes |
-|---|---|
-| `DB_CONNECTION=pgsql` | PostgreSQL. The local suite runs on SQLite in memory; CI runs the same suite on Postgres. |
-| `SCOUT_DRIVER=database` | Search uses `ILIKE` on name and body. Swap for Meilisearch later. |
-| `MEDIA_DISK=public` | Entity images and campaign covers. Use `s3` with the `AWS_*` keys in production. |
-
-## Rules for contributors
-
-- **Every campaign-scoped query runs inside a campaign context.** HTTP routes under `/campaigns/{campaign}` get it from `EnsureCampaignMember`. Livewire pages use `InteractsWithCampaign`. Jobs and commands set `CurrentCampaign` themselves. Never call `Entity::find()` from code that has no campaign.
-- **Every list of entities goes through `Entity::visibleTo()`.** Index, search, autocomplete, backlinks, tag counts, children, breadcrumbs, sidebar counts. A new query on `entities` gets a visibility test.
-- **GM notes never reach a player.** Not in HTML, not in a Livewire snapshot, not in search, not in a preview.
-- **A broadcast carries ids and nothing else.** Every listener is a Livewire component that re-renders on the server under its own viewer's role, so there is no payload to filter and none to leak. A new event that carries data needs a very good reason and a test that names the payload.
-- **Never bake a deploy-specific value into the Vite bundle.** The layout renders the websocket settings and the bundle reads them at runtime, so one built image serves any host.
-- **Every list of sessions goes through `GameSession::visibleTo()`.** Index, dashboard cards, sidebar count, and the "Appears in sessions" panel on an entity.
-- **A session's prep is GM-only.** Strong start, scenes, secrets, live notes, GM notes, and an unpublished recap. Only a published recap on a visible session reaches a player.
-- **The API is the screens in JSON.** Every list goes through the same scope the page uses; every resource under `App\Http\Resources\Api` reads the viewer's role from `CurrentCampaign` and leaves a GM-only key out rather than nulling it; every write calls the action the form calls, behind the same policy. A new endpoint gets the leak tests its screen has, asserted on the JSON.
-- **The server posts to Discord and to nothing else.** `DiscordWebhook` is the one place the host rule is spelled. A URL the server will request is validated there before it is stored, and a second destination is a change to that class with its own allow-list, never a field that takes any URL.
-- **Markdown renders through `MarkdownRenderer` only.** Raw HTML is stripped and unsafe links are blocked there.
-- **`entities.sheet_url` is the one user URL rendered as an `href` outside the renderer.** It is validated with `url:http,https` at write time and rendered with `rel="noopener noreferrer nofollow"`. A second such field needs the same two things.
-- **A new campaign-scoped table joins the export in the same commit that creates it.** Give it a section in `ExportCampaign`, nest it in one, or write down why it stays behind. `ExportCoverageTest` reads the schema and fails until you do.
-- **A list gets a child table; a scalar gets a column.** `quest_objectives` earned its table by being a list. Class, level, and sheet link are one-to-one with the row, so they are columns.
-- **Never name a JSON column `attributes`.** It shadows Eloquent's own property inside every model method. The key-value column is `custom_fields`, and it is `text` rather than `json` because Scout's database engine runs `ilike` against it and PostgreSQL has no `ilike` for `json`.
-- **A nested Livewire component re-checks membership itself.** `InteractsWithCampaign` does that per component, not per page, so a child that writes needs the trait too.
-- **The game session table is `game_sessions`.** `sessions` belongs to the database session driver.
-- Tests are Pest feature tests. Run the narrowest set that covers your change, then the suite.
-
-## Timezones
-
-A campaign has one timezone, set in campaign settings. Session times are stored in UTC and shown in that zone, and reminder emails use it. The calendar feed sends UTC and every calendar app converts, so a player in another zone sees the session at their own local time there. Per-user timezones inside the app are a later feature.
+Issues and pull requests are welcome. Read [Contributing](docs/guide/contributing.md) first: it holds the rules every change is checked against, and most of them are about what a player must never see. Tests are Pest feature tests, and CI runs Pint, Larastan, and the suite on PostgreSQL, then builds and boots the Docker image.
 
 ## Content licensing
 
@@ -292,13 +162,7 @@ demgem's code is MIT. The creature data in `database/srd/` is not: it is System 
 
 > This work includes material taken from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC and is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
 
-That notice renders on every compendium screen and on every stat block the API returns. `database/srd/ATTRIBUTION.md` says where it has to appear; `database/srd/README.md` records the provenance and the checksum that pins the dataset.
-
-CC BY 4.0 licenses the text and grants no trademark rights. Dungeons & Dragons, D&D and their logos are trademarks of Wizards of the Coast LLC; demgem uses none of them, and nothing here implies endorsement. The ruleset is named "SRD 5.2.1 (2024 rules)" for that reason.
-
-Only SRD content is in the dataset. A campaign export carries a stat block as a `{ruleset, slug}` reference and never its prose, so an export redistributes nothing.
-
-`php artisan demgem:import-srd` loads the compendium. `php artisan db:seed` and the Docker entrypoint both run it, and it is idempotent.
+That notice renders on every compendium screen and on every stat block the API returns. CC BY 4.0 licenses the text and grants no trademark rights. Dungeons & Dragons, D&D and their logos are trademarks of Wizards of the Coast LLC; demgem uses none of them, and nothing here implies endorsement. Only SRD content is in the dataset, and a campaign export carries a stat block as a reference and never its prose, so an export redistributes nothing. `database/srd/ATTRIBUTION.md` says where the notice has to appear, and `database/srd/README.md` records the provenance and the checksum that pins the dataset.
 
 ## License
 
